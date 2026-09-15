@@ -87,20 +87,12 @@ class RuleCollection(RuleCollectionBase):
 
         auth_org = obtain_auth_organization()
 
-        # check if the entity has global permission
-        global_perm = getattr(self, get_attribute_name(operation, Scope.GLOBAL))
-        if global_perm and global_perm.can():
-            return True
-
-        # check if the entity has organization permission and organization is
-        # the same as the subject organization
-        org_perm = getattr(self, get_attribute_name(operation, Scope.ORGANIZATION))
-        if auth_org.id == subject_org_id and org_perm and org_perm.can():
+        if self._has_global_or_org_permission(operation, subject_org_id, auth_org):
             return True
 
         # check if the entity has collaboration permission and the subject
         # organization is in any collaboration of the own organization
-        col_perm = getattr(self, get_attribute_name(operation, Scope.COLLABORATION))
+        col_perm = self._scope_permission(operation, Scope.COLLABORATION)
         if col_perm and col_perm.can():
             for col in auth_org.collaborations:
                 if subject_org_id in [org.id for org in col.organizations]:
@@ -146,21 +138,13 @@ class RuleCollection(RuleCollectionBase):
 
         auth_org = obtain_auth_organization()
 
-        # check if the entity has global permission
-        global_perm = getattr(self, get_attribute_name(operation, Scope.GLOBAL))
-        if global_perm and global_perm.can():
-            return True
-
-        # check if the entity has organization permission and organization is
-        # the same as the subject organization
-        org_perm = getattr(self, get_attribute_name(operation, Scope.ORGANIZATION))
-        if auth_org.id == subject_org_id and org_perm and org_perm.can():
+        if self._has_global_or_org_permission(operation, subject_org_id, auth_org):
             return True
 
         # check if the entity has collaboration permission and this is one of
         # the auth's own collaborations
-        col_perm = getattr(self, get_attribute_name(operation, Scope.COLLABORATION))
-        return (
+        col_perm = self._scope_permission(operation, Scope.COLLABORATION)
+        return bool(
             col_perm
             and col_perm.can()
             and self._id_in_list(collaboration_id, obtain_auth_collaborations())
@@ -185,18 +169,74 @@ class RuleCollection(RuleCollectionBase):
         auth_collabs = obtain_auth_collaborations()
 
         # check if the entity has global permission
-        global_perm = getattr(self, get_attribute_name(operation, Scope.GLOBAL))
+        global_perm = self._scope_permission(operation, Scope.GLOBAL)
         if global_perm and global_perm.can():
             return True
 
         # check if the entity has collaboration permission and the subject
         # collaboration is in the collaborations of the user/node
-        col_perm = getattr(self, get_attribute_name(operation, Scope.COLLABORATION))
-        return (
+        col_perm = self._scope_permission(operation, Scope.COLLABORATION)
+        return bool(
             col_perm
             and col_perm.can()
             and self._id_in_list(collaboration_id, auth_collabs)
         )
+
+    def _has_global_or_org_permission(
+        self,
+        operation: Operation,
+        subject_org_id: int,
+        auth_org: db.Organization,
+    ) -> bool:
+        """
+        Check if the entity has global permission, or organization-scope
+        permission and `auth_org` is the subject organization.
+
+        Shared by `allowed_for_org` and `allowed_for_org_in_col`, which both
+        fall through to their own collaboration-scope check when this
+        returns False.
+
+        Parameters
+        ----------
+        operation: Operation
+            Operation to check if allowed
+        subject_org_id: int
+            Organization id on which the operation should be allowed
+        auth_org: db.Organization
+            Organization of the authenticated user, node or container
+
+        Returns
+        -------
+        bool
+            True if the entity has global or matching organization
+            permission, False otherwise
+        """
+        global_perm = self._scope_permission(operation, Scope.GLOBAL)
+        if global_perm and global_perm.can():
+            return True
+
+        org_perm = self._scope_permission(operation, Scope.ORGANIZATION)
+        return bool(auth_org.id == subject_org_id and org_perm and org_perm.can())
+
+    def _scope_permission(self, operation: Operation, scope: str):
+        """
+        Get the Permission object for an operation/scope combination, if the
+        entity has any rule registered for it.
+
+        Parameters
+        ----------
+        operation: Operation
+            Operation to check
+        scope: str
+            Scope to check
+
+        Returns
+        -------
+        Permission | None
+            The Permission object, or None if no rule for this
+            operation/scope is registered
+        """
+        return getattr(self, get_attribute_name(operation, scope), None)
 
     def get_max_scope(self, operation: Operation) -> Scope | None:
         """
@@ -213,13 +253,13 @@ class RuleCollection(RuleCollectionBase):
             Highest scope that the entity has for the operation. None if the
             entity has no permission for the operation
         """
-        if getattr(self, get_attribute_name(operation, Scope.GLOBAL)):
+        if self._scope_permission(operation, Scope.GLOBAL):
             return Scope.GLOBAL
-        elif getattr(self, get_attribute_name(operation, Scope.COLLABORATION)):
+        elif self._scope_permission(operation, Scope.COLLABORATION):
             return Scope.COLLABORATION
-        elif getattr(self, get_attribute_name(operation, Scope.ORGANIZATION)):
+        elif self._scope_permission(operation, Scope.ORGANIZATION):
             return Scope.ORGANIZATION
-        elif getattr(self, get_attribute_name(operation, Scope.OWN)):
+        elif self._scope_permission(operation, Scope.OWN):
             return Scope.OWN
         else:
             return None
@@ -243,7 +283,7 @@ class RuleCollection(RuleCollectionBase):
         """
         scopes: list[Scope] = self._get_scopes_from(scope)
         for s in scopes:
-            perm = getattr(self, get_attribute_name(operation, s), None)
+            perm = self._scope_permission(operation, s)
             if perm and perm.can():
                 return True
         return False
