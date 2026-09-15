@@ -11,7 +11,11 @@ from vantage6.common.globals import (
     InstanceType,
 )
 
-from vantage6.common.globals import Ports, DEFAULT_PROMETHEUS_EXPORTER_PORT
+from vantage6.common.globals import (
+    MAX_CHUNKED_INPUT_PART,
+    Ports,
+    DEFAULT_PROMETHEUS_EXPORTER_PORT,
+)
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.rabbitmq.queue_manager import RabbitMQManager
 from vantage6.cli.server.common import stop_ui
@@ -174,6 +178,7 @@ def cli_server_start(
     cmd = (
         f"uwsgi --http :{internal_port} --gevent 1000 --http-websockets "
         "--http-chunked-input --http-keepalive --post-buffering 0 "
+        f"--chunked-input-limit {MAX_CHUNKED_INPUT_PART} "
         "--master --callable app --disable-logging "
         "--wsgi-file /vantage6/vantage6-server/vantage6/server/wsgi.py "
         f"--pyargv {config_file}"
