@@ -521,7 +521,7 @@ class SingleRunBase(RunBase):
         if not run:
             return {"msg": f"Run id={id} not found!"}, HTTPStatus.NOT_FOUND
 
-        if not self.r.allowed_for_org(
+        if not self.r.allowed_for_org_in_col(
             P.VIEW, run.task.init_org_id, run.task.collaboration_id
         ) and not (self.r.v_own.can() and run.task.init_user_id == g.user.id):
             return {
