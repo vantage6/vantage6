@@ -3707,6 +3707,8 @@ class TestResources(unittest.TestCase):
         headers = self.create_user_and_login(org, [rule])
         result = self.app.get(f"/api/run/{res_bc.id}", headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+        result = self.app.get(f"/api/run?task_id={task_bc.id}", headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
         # test with global permission
         rule = Rule.get_by_("run", Scope.GLOBAL, Operation.VIEW)
