@@ -642,7 +642,7 @@ class Task(TaskBase):
         schema = self._select_schema()
 
         # check permissions
-        if not self.r.allowed_for_org(
+        if not self.r.allowed_for_org_in_col(
             P.VIEW, task.init_org_id, task.collaboration_id
         ) and not (self.r.v_own.can() and g.user and task.init_user_id == g.user.id):
             return {
@@ -651,7 +651,7 @@ class Task(TaskBase):
         # if results are included, check permissions for results
         if (
             self.is_included("results")
-            and not self.r_run.allowed_for_org(
+            and not self.r_run.allowed_for_org_in_col(
                 P.VIEW, task.init_org_id, task.collaboration_id
             )
             and not (self.r.v_own.can() and g.user and task.init_user_id == g.user.id)
@@ -710,7 +710,7 @@ class Task(TaskBase):
             return {"msg": f"Task id={id} not found"}, HTTPStatus.NOT_FOUND
 
         # validate permissions
-        if not self.r.allowed_for_org(
+        if not self.r.allowed_for_org_in_col(
             P.DELETE, task.init_org_id, task.collaboration_id
         ) and not (self.r.d_own.can() and task.init_user_id == g.user.id):
             return {
@@ -858,6 +858,6 @@ class TaskStatusEndpoint(TaskBase):
         bool
             True if the user has permission, False otherwise.
         """
-        return self.r.allowed_for_org(
+        return self.r.allowed_for_org_in_col(
             P.VIEW, task.init_org_id, task.collaboration_id
         ) or (self.r.v_own.can() and g.user and task.init_user_id == g.user.id)

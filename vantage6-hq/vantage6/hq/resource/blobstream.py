@@ -181,7 +181,7 @@ class BlobStream(BlobStreamBase):
             return {
                 "msg": f"No run found with input or result id={id}"
             }, HTTPStatus.NOT_FOUND
-        if not self.r_run.allowed_for_org(
+        if not self.r_run.allowed_for_org_in_col(
             P.VIEW, run.task.init_org_id, run.task.collaboration_id
         ):
             return {
