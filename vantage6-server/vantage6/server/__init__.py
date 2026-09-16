@@ -886,6 +886,7 @@ class ServerApp:
             try:
                 cleanup.cleanup_runs_data(
                     self.ctx.config,
+                    storage_adapter=self.storage_adapter,
                     include_input=include_input,
                 )
             except Exception as e:
