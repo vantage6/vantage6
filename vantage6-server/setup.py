@@ -42,7 +42,6 @@ setup(
         "flask-marshmallow==0.15.0",
         "flask-socketio==5.6.1",
         "gevent==25.4.2",
-        "ipython==8.10.0",
         "kombu==5.2.4",
         "marshmallow==3.26.2",
         "pyjwt==2.12.1",
@@ -53,15 +52,18 @@ setup(
         "schema==0.7.5",
         "SQLAlchemy==1.4.46",
         "werkzeug==3.1.8",
-        f"vantage6 == {version_ns['__version__']}",
         f"vantage6-common == {version_ns['__version__']}",
+        f"vantage6-backend-common == {version_ns['__version__']}",
     ],
     extras_require={
         "dev": [
             "coverage==6.4.4",
             "black",
             "pre-commit",
-        ]
+        ],
+        "shell": [
+            "ipython==8.10.0",
+        ],
     },
     package_data={
         "vantage6.server": [
