@@ -34,7 +34,7 @@ from vantage6.common.globals import (
 )
 from vantage6.common.task_status import TaskStatus, has_task_failed
 from vantage6.common.docker.network_manager import NetworkManager
-from vantage6.cli.context.node import NodeContext
+from vantage6.common.node_context import NodeContext
 from vantage6.node.context import DockerNodeContext
 from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.vpn_manager import VPNManager
