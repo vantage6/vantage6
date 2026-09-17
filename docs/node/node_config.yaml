@@ -296,11 +296,19 @@ debug:
 # directory where local task files (input/output) are stored
 task_dir: C:\Users\<your-user>\AppData\Local\vantage6\node\mydir
 
-# Whether or not your node shares some configuration (e.g. which images are
-# allowed to run on your node) with the central server. This can be useful
-# for other organizations in your collaboration to understand why a task
-# is not completed. Obviously, no sensitive data is shared. Default true
+# Whether or not we share the encryption setting, allowed users and organizations,
+# and database labels and types with the central server. Default is true. Setting
+# this to false also disables the optional sharing settings below.
 share_config: true
+
+# Whether or not we share the allowed algorithm names and regular expressions with
+# the central server. The node enforces these locally even when we do not share them.
+# Default is false.
+share_allowed_algorithms: false
+
+# Column-name sharing is currently unsupported. Enabling this setting logs an error
+# and does not share any column names. Default is false.
+share_column_names: false
 
 
 # Whether or not to share algorithm logs with the server. Otherwise they will
