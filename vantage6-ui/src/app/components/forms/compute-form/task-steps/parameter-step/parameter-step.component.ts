@@ -95,8 +95,9 @@ export class ParameterStepComponent implements OnInit, OnDestroy {
         argument.type == ArgumentType.StringList
       ) {
         const controls = this.getFormArrayControls(argument);
+        const values = Array.isArray(parameter.value) ? parameter.value : [parameter.value];
         let isFirst = true;
-        for (const value of parameter.value) {
+        for (const value of values) {
           if (!isFirst) controls.push(this.getNewControlForArgumentList(argument));
           controls[controls.length - 1].setValue(value);
           isFirst = false;

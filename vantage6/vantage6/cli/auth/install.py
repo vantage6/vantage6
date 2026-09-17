@@ -1,10 +1,9 @@
-import os
+import re
 import subprocess
 import sys
 import time
 
 import click
-import requests
 from kubernetes.config.config_exception import ConfigException
 
 from vantage6.common import error, info, warning
@@ -12,58 +11,19 @@ from vantage6.common import error, info, warning
 from vantage6.cli.common.k8s_utils import run_kubectl_command
 from vantage6.cli.k8s_config import KubernetesConfig, select_k8s_config
 
+SUPPORTED_KEYCLOAK_OPERATOR_VERSION = "26.6.2"
+KEYCLOAK_CLIENT_CRDS_MIN_VERSION = (26, 7, 0)
 
-def _get_latest_keycloak_version() -> str:
-    """
-    Get the latest Keycloak Operator version from GitHub releases. Exits when unable
-    to find what version is the latest version.
 
-    Returns
-    -------
-    str
-        The latest version found in the Keycloak Github releases.
-    """
-    github_api_url = "https://api.github.com/repos/keycloak/keycloak/releases/latest"
-
-    # Prepare headers with optional GitHub token for authentication
-    headers = {"Accept": "application/vnd.github.v3+json"}
-    github_token = os.environ.get("GITHUB_TOKEN")
-    if github_token:
-        headers["Authorization"] = f"token {github_token}"
-
-    try:
-        response = requests.get(
-            github_api_url,
-            timeout=5,
-            headers=headers,
+def _parse_operator_version(version: str) -> tuple[int, int, int]:
+    """Validate and convert a Keycloak operator version to a comparable tuple."""
+    match = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)", version)
+    if not match:
+        raise click.BadParameter(
+            "must use semantic version format 'major.minor.patch'",
+            param_hint="--operator-version",
         )
-        response.raise_for_status()
-        release_data = response.json()
-        version = release_data.get("tag_name")
-        if not version:
-            error("No version found in the Keycloak Github releases.")
-            info("Please specify a version manually using the --operator-version flag.")
-            sys.exit(1)
-        # Remove 'v' prefix if present (e.g., "v24.0.0" -> "24.0.0")
-        version = version.removeprefix("v")
-        return version
-    except requests.HTTPError as e:
-        if e.response.status_code == 403:
-            error(
-                "GitHub API rate limit exceeded. "
-                "Set GITHUB_TOKEN environment variable to authenticate and increase rate "
-                "limits, or specify a version manually using the --operator-version flag."
-            )
-        else:
-            error(
-                f"Failed to fetch latest Keycloak Operator version from GitHub: {e}. "
-            )
-        info("Please specify a version manually using the --operator-version flag.")
-        sys.exit(1)
-    except (requests.RequestException, KeyError, ValueError) as e:
-        error(f"Failed to fetch latest Keycloak Operator version from GitHub: {e}. ")
-        info("Please specify a version manually using the --operator-version flag.")
-        sys.exit(1)
+    return tuple(int(part) for part in match.groups())
 
 
 @click.command()
@@ -71,8 +31,12 @@ def _get_latest_keycloak_version() -> str:
 @click.option("--namespace", default=None, help="Kubernetes namespace for the operator")
 @click.option(
     "--operator-version",
-    default=None,
-    help="Keycloak Operator version to install (defaults to latest from GitHub)",
+    default=SUPPORTED_KEYCLOAK_OPERATOR_VERSION,
+    show_default=True,
+    help=(
+        "Keycloak Operator version to install. Overriding the default opts into an "
+        "operator release that may not have been compatibility-tested with vantage6."
+    ),
 )
 @click.option(
     "--skip-crds/--no-skip-crds",
@@ -82,7 +46,7 @@ def _get_latest_keycloak_version() -> str:
 def cli_auth_install_operator(
     context: str | None,
     namespace: str | None,
-    operator_version: str | None,
+    operator_version: str,
     skip_crds: bool,
 ) -> None:
     """
@@ -93,9 +57,7 @@ def cli_auth_install_operator(
     the docs in
     https://www.keycloak.org/operator/installation#_installing_by_using_kubectl_without_operator_lifecycle_manager
     """
-    # Get the latest version if not specified
-    if operator_version is None:
-        operator_version = _get_latest_keycloak_version()
+    parsed_operator_version = _parse_operator_version(operator_version)
 
     k8s_config = select_k8s_config(context=context, namespace=namespace)
 
@@ -109,8 +71,14 @@ def cli_auth_install_operator(
     crd_files_to_install = [
         "keycloaks.k8s.keycloak.org-v1.yml",
         "keycloakrealmimports.k8s.keycloak.org-v1.yml",
-        "kubernetes.yml",
     ]
+    if parsed_operator_version >= KEYCLOAK_CLIENT_CRDS_MIN_VERSION:
+        crd_files_to_install.extend(
+            [
+                "keycloakoidcclients.k8s.keycloak.org-v1.yml",
+                "keycloaksamlclients.k8s.keycloak.org-v1.yml",
+            ]
+        )
     if not skip_crds:
         info("Installing Keycloak CRDs...")
         for crd_file in crd_files_to_install:
@@ -120,6 +88,12 @@ def cli_auth_install_operator(
                 k8s_config,
             )
         info("CRDs installed successfully.")
+
+    # Install the operator only after all CRDs required by this version are available.
+    run_kubectl_command(
+        ["apply", "-f", f"{base_url}/kubernetes.yml"],
+        k8s_config,
+    )
 
     # Adapt the clusterrolebinding to use the correct namespace (see
     # https://www.keycloak.org/operator/installation)
@@ -214,6 +188,9 @@ def _wait_for_operator_ready(
     warning(
         "You can check the operator status manually with: "
         f"kubectl get deployment keycloak-operator -n {namespace}"
+    )
+    raise click.ClickException(
+        f"Keycloak Operator did not become ready within {timeout} seconds."
     )
 
 
