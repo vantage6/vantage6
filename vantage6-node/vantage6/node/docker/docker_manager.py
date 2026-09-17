@@ -361,7 +361,7 @@ class DockerManager(DockerBaseManager):
                 "No policies on allowed algorithms have been set for this node!"
             )
             self.log.warning(
-                "This means that all algorithms are allowed to run on this node."
+                "This means that all algorithms will be rejected by this node."
             )
         return policies
 
@@ -391,7 +391,8 @@ class DockerManager(DockerBaseManager):
         Checks the docker image name.
 
         Against a list of regular expressions as defined in the configuration
-        file. If no expressions are defined, all docker images are accepted.
+        file. If no algorithm or algorithm-store policy is defined, all Docker
+        images are rejected.
 
         Parameters
         ----------
@@ -419,7 +420,8 @@ class DockerManager(DockerBaseManager):
                     "this node does not allow to run."
                 )
                 return False
-            # else: basics are allowed, so we don't need to check the regex
+            # The basics setting is an additional check. If it is enabled, the
+            # algorithm must still pass the policies below.
 
         # check if user or their organization is allowed
         allowed_users = self._policies.get(NodePolicy.ALLOWED_USERS, [])
@@ -530,16 +532,20 @@ class DockerManager(DockerBaseManager):
                         if expr_.match(store_from_task):
                             store_whitelisted = True
 
-        allowed_from_whitelist = not allowed_algorithms or algorithm_whitelisted
-        allowed_from_store = not allowed_stores or store_whitelisted
-        if allow_either_whitelist_or_store:
+        algorithm_policy_set = bool(allowed_algorithms)
+        store_policy_set = bool(allowed_stores)
+        if not algorithm_policy_set and not store_policy_set:
+            allowed = False
+        elif allow_either_whitelist_or_store:
             # if we allow an algorithm if it is defined in the whitelist or the store,
             # we return True if either the algorithm or the store is whitelisted
-            allowed = allowed_from_whitelist or allowed_from_store
+            allowed = algorithm_whitelisted or store_whitelisted
         else:
-            # only allow algorithm if it is allowed for both the allowed_algorithms and
-            # the allowed_algorithm_stores
-            allowed = allowed_from_whitelist and allowed_from_store
+            # We require the algorithm to pass each configured policy. Policies that
+            # have not been configured do not restrict the algorithm.
+            allowed = (not algorithm_policy_set or algorithm_whitelisted) and (
+                not store_policy_set or store_whitelisted
+            )
 
         if not allowed:
             self.log.warning(
