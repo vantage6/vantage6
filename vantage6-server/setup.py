@@ -31,8 +31,8 @@ setup(
     packages=find_namespace_packages(),
     python_requires=">=3.10",
     install_requires=[
-        "azure-identity>=1.22.0",
-        "azure-storage-blob>=12.25.1",
+        "azure-identity==1.22.0",
+        "azure-storage-blob==12.25.1",
         "bcrypt==4.0.1",
         "flask==3.1.3",
         "flask-cors==6.0.0",
@@ -60,6 +60,9 @@ setup(
             "coverage==6.4.4",
             "black",
             "pre-commit",
+        ],
+        "postgres": [
+            "psycopg2-binary==2.9.10",
         ],
         "shell": [
             "ipython==8.10.0",
