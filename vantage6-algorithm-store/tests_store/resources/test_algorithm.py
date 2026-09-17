@@ -562,6 +562,31 @@ class TestAlgorithmResources(TestResources):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json["description"], "new_description")
 
+        # check that another developer cannot update this algorithm - they are
+        # not its owner
+        other_username = "other_developer"
+        self.register_user(
+            server.id,
+            username=other_username,
+            user_rules=[Rule.get_by_("algorithm", Operation.EDIT)],
+        )
+        validate_token_mock.return_value = (
+            MockResponse({"username": other_username}),
+            HTTPStatus.OK,
+        )
+        response = self.app.patch(
+            f"/api/algorithm/{algorithm.id}",
+            json={"description": "other_description"},
+            headers=HEADERS,
+        )
+        self.assertEqual(response.status_code, 403)
+
+        # switch back to the algorithm's own developer for the remaining checks
+        validate_token_mock.return_value = (
+            MockResponse({"username": USERNAME}),
+            HTTPStatus.OK,
+        )
+
         # check that algorithm cannot be updated if it is approved
         algorithm.status = AlgorithmStatus.APPROVED
         algorithm.approved_at = datetime.datetime.now(datetime.timezone.utc)

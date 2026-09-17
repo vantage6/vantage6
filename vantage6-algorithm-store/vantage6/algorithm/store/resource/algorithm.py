@@ -971,6 +971,12 @@ class Algorithm(AlgorithmBaseResource):
         if not algorithm:
             return {"msg": "Algorithm not found"}, HTTPStatus.NOT_FOUND
 
+        # only the algorithm's own developer may edit it
+        if algorithm.developer_id != g.user.id:
+            return {
+                "msg": "You can only edit algorithms you submitted yourself."
+            }, HTTPStatus.FORBIDDEN
+
         data = request.get_json()
 
         # validate the request body
