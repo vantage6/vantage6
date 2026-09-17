@@ -232,6 +232,22 @@ class ContainerManager:
             )
         return policies
 
+    def _get_image_pull_policy(self) -> str:
+        """
+        Determine the Kubernetes image pull policy from the node's policies.
+
+        Returns
+        -------
+        str
+            "Always" if the algorithm image must always be pulled (the
+            default), otherwise "IfNotPresent" so a locally built image can
+            be used without a registry.
+        """
+        require_algorithm_pull = self._policies.get(
+            NodePolicy.REQUIRE_ALGORITHM_PULL.value, True
+        )
+        return "Always" if require_algorithm_pull else "IfNotPresent"
+
     def _get_database_metadata(self) -> dict:
         """
         Collect information about the databases.
@@ -522,14 +538,10 @@ class ContainerManager:
                 priv_regs, image, run_io.run_id
             )
 
-        require_algorithm_pull = self.ctx.config.get("node", {}).get(
-            "require_algorithm_pull", True
-        )
-
         container = k8s_client.V1Container(
             name=run_io.container_name,
             image=image,
-            image_pull_policy="Always" if require_algorithm_pull else "IfNotPresent",
+            image_pull_policy=self._get_image_pull_policy(),
             tty=True,
             volume_mounts=_volume_mounts,
             env=io_env_vars,
