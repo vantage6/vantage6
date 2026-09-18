@@ -508,8 +508,10 @@ class ContainerManager:
                 priv_regs, image, run_io.run_id
             )
 
-        require_algorithm_pull = self.ctx.config.get("node", {}).get(
-            "require_algorithm_pull", True
+        # The node Helm chart and the documented node configuration place this
+        # setting under ``policies`` (not under ``node``).
+        require_algorithm_pull = self.ctx.config.get("policies", {}).get(
+            NodePolicy.REQUIRE_ALGORITHM_PULL.value, True
         )
 
         container = k8s_client.V1Container(
