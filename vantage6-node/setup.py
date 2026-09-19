@@ -41,7 +41,6 @@ setup(
         "nvidia-ml-py==12.535.133",
         f"vantage6 == {version_ns['__version__']}",
         f"vantage6-client == {version_ns['__version__']}",
-        f"vantage6-algorithm-tools == {version_ns['__version__']}",
     ],
     extras_require={
         "dev": [
