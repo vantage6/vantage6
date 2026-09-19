@@ -8,6 +8,8 @@ from vantage6.common.configuration_manager import (
     NodeConfigurationManager,
     ServerConfiguration,
     ServerConfigurationManager,
+    TestConfiguration,
+    TestingConfigurationManager,
 )
 
 __all__ = [
@@ -21,16 +23,3 @@ __all__ = [
     "TestConfiguration",
     "TestingConfigurationManager",
 ]
-
-
-class TestConfiguration(Configuration):
-    VALIDATORS = {}
-
-
-class TestingConfigurationManager(ConfigurationManager):
-    def __init__(self, name, *args, **kwargs):
-        super().__init__(conf_class=TestConfiguration, name=name)
-
-    @classmethod
-    def from_file(cls, path):
-        return super().from_file(path, conf_class=TestConfiguration)
