@@ -284,6 +284,46 @@ more details regarding the lower-level changes required to accomplish it.*
     are multiple concurrent services start at the same time
     (`PR#2510 <https://github.com/vantage6/vantage6/pull/2510>`_).
 
+4.15.2
+------
+
+*21 September 2026*
+
+- **Security**
+
+  - Nodes can now authenticate directly with their own algorithm store, so that
+    endpoints which opt in can let a node independently verify that an algorithm
+    image is a registered, approved algorithm. Before, the ``allowed_algorithm_stores``
+    policy was not enforced node-side, only server-side
+    (`GHSA-j43v-wwjr-9grj
+    <https://github.com/vantage6/vantage6/security/advisories/GHSA-j43v-wwjr-9grj>`_).
+  - Only members of an organization may now update its public key. Before, any user
+    with organization-edit permission could overwrite the public key of another
+    organization, which is used to encrypt task input intended for that organization
+    (`GHSA-82cm-vgqg-chcw
+    <https://github.com/vantage6/vantage6/security/advisories/GHSA-82cm-vgqg-chcw>`_).
+  - Prevent a user with collaboration-scoped permissions from accessing another
+    collaboration's tasks and runs. The collaboration-scope permission check compared
+    a resource's organization against any collaboration the user's own organization
+    belongs to, rather than the collaboration the resource itself belongs to, so
+    access leaked across collaborations that shared an organization
+    (`GHSA-3q9m-83r4-x32j
+    <https://github.com/vantage6/vantage6/security/advisories/GHSA-3q9m-83r4-x32j>`_).
+  - Only the developer that submitted an algorithm to an algorithm store may edit it
+    while it is pending review. Before, any user with algorithm edit permission could
+    edit another developer's submission
+    (`PR#2721 <https://github.com/vantage6/vantage6/pull/2721>`_).
+
+- **Bugfix**
+
+  - Fix the server URL the UI sent when creating a task: it was missing the API path,
+    so it did not point at a usable endpoint
+    (`PR#2680 <https://github.com/vantage6/vantage6/pull/2680>`_).
+  - Only move the floating ``latest`` Docker tag for the current major version. Before,
+    any release moved ``latest`` regardless of its major version, so a 4.15.x patch
+    release published after 5.0.0 pulled ``latest`` back to a v4 image
+    (`PR#2747 <https://github.com/vantage6/vantage6/pull/2747>`_).
+
 4.15.1
 ------
 
