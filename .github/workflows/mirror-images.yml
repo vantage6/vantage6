@@ -65,8 +65,8 @@ jobs:
         uses: regclient/actions/regctl-login@1b705e32d40851370799ea5814e83d0a5f6a70dc
         with:
           registry: dhi.io
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
 
       - name: Log in to GHCR
         # pinned to: https://github.com/regclient/actions/releases/tag/v0.1.0
