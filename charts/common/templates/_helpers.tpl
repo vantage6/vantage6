@@ -56,13 +56,16 @@ it was tested against. See docker/mirror-images.txt.
 
 Pass 'override' to use a different image, e.g. one from an internal registry.
 
+Chart.AppVersion is SemVer (e.g. "5.0.3-rc5"), but mirror-images.yml tags these
+images with the plain vantage6 version (e.g. "5.0.3rc5") - strip the dash to match.
+
 Usage: {{ include "common.supportImage" (dict "Chart" .Chart "name" "curl" "override" $cfg.image) }}
 */}}
 {{- define "common.supportImage" -}}
 {{- if .override -}}
 {{ .override }}
 {{- else -}}
-{{ printf "ghcr.io/vantage6/infrastructure/%s:%s" .name .Chart.AppVersion }}
+{{ printf "ghcr.io/vantage6/infrastructure/%s:%s" .name (.Chart.AppVersion | replace "-" "") }}
 {{- end -}}
 {{- end }}
 
