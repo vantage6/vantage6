@@ -709,6 +709,14 @@ class ContainerManager:
         task_id: int
             Task ID
         """
+        if not self.share_algorithm_logs:
+            self.log.info(
+                "Algorithm logs will not be shared with HQ for run %s because "
+                "share_algorithm_logs is disabled.",
+                run_io.run_id,
+            )
+            return
+
         w = watch.Watch()
         try:
             pod_list = self.core_api.list_namespaced_pod(
