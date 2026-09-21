@@ -1,14 +1,13 @@
 import logging
 
 from flask import g
-from vantage6.server import db
-
-from vantage6.backend.common.permission import RuleCollectionBase, PermissionManagerBase
+from vantage6.backend.common.permission import PermissionManagerBase, RuleCollectionBase
 from vantage6.backend.common.resource.error_handling import UnauthorizedError
+from vantage6.common import logger_name
+from vantage6.server import db
 from vantage6.server.model.base import Base
 from vantage6.server.model.role import Role
-from vantage6.server.model.rule import Rule, Operation, Scope
-from vantage6.common import logger_name
+from vantage6.server.model.rule import Operation, Rule, Scope
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -55,7 +54,11 @@ class RuleCollection(RuleCollectionBase):
     permissions of the vantage6 server.
     """
 
-    def allowed_for_org(self, operation: Operation, subject_org_id: int | str) -> bool:
+    def allowed_for_org(
+        self,
+        operation: Operation,
+        subject_org_id: int | str,
+    ) -> bool:
         """
         Check if an operation is allowed on a certain organization
 
@@ -90,7 +93,7 @@ class RuleCollection(RuleCollectionBase):
             return True
 
         # check if the entity has collaboration permission and the subject
-        # organization is in the collaboration of the own organization
+        # organization is in any collaboration of the own organization
         col_perm = getattr(self, f"{operation}_{Scope.COLLABORATION}")
         if col_perm and col_perm.can():
             for col in auth_org.collaborations:
@@ -99,6 +102,65 @@ class RuleCollection(RuleCollectionBase):
 
         # no permission found
         return False
+
+    def allowed_for_org_in_col(
+        self,
+        operation: Operation,
+        subject_org_id: int | str,
+        collaboration_id: int | str,
+    ) -> bool:
+        """
+        Check if an operation is allowed on a certain organization, for a
+        resource that itself belongs to a given collaboration.
+
+        Unlike `allowed_for_org`, the collaboration-scope check here requires
+        `collaboration_id` to be one of the auth's own collaborations, rather
+        than just checking whether `subject_org_id` is a member of any
+        collaboration the auth is in.
+
+        Parameters
+        ----------
+        operation: Operation
+            Operation to check if allowed
+        subject_org_id: int | str
+            Organization id on which the operation should be allowed. If a
+            string is given, it will be converted to an int
+        collaboration_id: int | str
+            Id of the collaboration the resource itself belongs to. If a
+            string is given, it will be converted to an int
+
+        Returns
+        -------
+        bool
+            True if the operation is allowed on the organization, False
+            otherwise
+        """
+        if isinstance(subject_org_id, str):
+            subject_org_id = int(subject_org_id)
+        if isinstance(collaboration_id, str):
+            collaboration_id = int(collaboration_id)
+
+        auth_org = obtain_auth_organization()
+
+        # check if the entity has global permission
+        global_perm = getattr(self, f"{operation}_{Scope.GLOBAL}")
+        if global_perm and global_perm.can():
+            return True
+
+        # check if the entity has organization permission and organization is
+        # the same as the subject organization
+        org_perm = getattr(self, f"{operation}_{Scope.ORGANIZATION}")
+        if auth_org.id == subject_org_id and org_perm and org_perm.can():
+            return True
+
+        # check if the entity has collaboration permission and this is one of
+        # the auth's own collaborations
+        col_perm = getattr(self, f"{operation}_{Scope.COLLABORATION}")
+        return (
+            col_perm
+            and col_perm.can()
+            and self._id_in_list(collaboration_id, obtain_auth_collaborations())
+        )
 
     def can_for_col(self, operation: Operation, collaboration_id: int | str) -> bool:
         """
@@ -126,15 +188,11 @@ class RuleCollection(RuleCollectionBase):
         # check if the entity has collaboration permission and the subject
         # collaboration is in the collaborations of the user/node
         col_perm = getattr(self, f"{operation}_{Scope.COLLABORATION}")
-        if (
+        return (
             col_perm
             and col_perm.can()
             and self._id_in_list(collaboration_id, auth_collabs)
-        ):
-            return True
-
-        # no permission found
-        return False
+        )
 
     def get_max_scope(self, operation: Operation) -> Scope | None:
         """
@@ -306,7 +364,7 @@ class PermissionManager(PermissionManagerBase):
 
         if rule not in role.rules:
             role.rules.append(rule)
-            log.info(f"Rule ({rule_params}) added to " f"{fixedrole} role!")
+            log.info(f"Rule ({rule_params}) added to {fixedrole} role!")
 
     def get_new_collection(self, name: str) -> RuleCollection:
         """
