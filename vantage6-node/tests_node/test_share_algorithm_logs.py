@@ -73,12 +73,9 @@ class TestFinishedTaskLogSharing(unittest.TestCase):
             data="output-data",
             status=RunStatus.COMPLETED,
             parent_id=None,
+            init_org_id=5,
         )
         node.client = Mock()
-        node.client.request.side_effect = [
-            {"task": {"id": 2}},
-            {"init_org": {"id": 5}},
-        ]
         node.client.whoami = Mock(id_=1, organization_id=1)
         node.client.collaboration_id = 1
         node.socketIO = Mock()
