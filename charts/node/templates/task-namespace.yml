@@ -1,0 +1,32 @@
+{{- if and (eq (include "node.taskNamespaceOwnedByOtherRelease" .) "true") .Values.node.production }}
+{{ fail (printf `node.taskNamespace '%s' already exists and is owned by another Helm
+release, not this one ('%s'). node.production is true, so this is refused rather than
+silently sharing a task namespace between node deployments.
+
+Set a unique 'node.taskNamespace' value for this release, or set node.production=false if
+this is an intentional shared/development setup.` .Values.node.taskNamespace .Release.Name) }}
+{{- end }}
+{{- if and .Values.node.manageTaskNamespace (eq (include "node.taskNamespaceExists" .) "false") }}
+# Owning the task namespace here lets the Role/RoleBinding below be scoped to this namespace
+# instead of needing cluster-wide permissions to reach it.
+#
+# Helm always creates Namespace resources before Role/RoleBinding/other kinds in the same
+# release, so this is guaranteed to exist by the time anything below needs it - no
+# install-order hooks required.
+#
+# Only declared when it doesn't exist yet: Helm refuses to manage a resource that already
+# exists without this release's ownership metadata (e.g. left over from before this chart
+# managed it, or another release's namespace we're intentionally sharing) - skipping
+# declaration entirely avoids that rather than fighting Helm's adoption checks.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.node.taskNamespace }}
+  labels:
+{{- include "node.labels" . | nindent 4 }}
+  annotations:
+    # Don't delete a task namespace. In many k8s clusters permission to create
+    # namespaces is not always available, so we should not delete task namespace to
+    # prevent that we cannot create it again
+    "helm.sh/resource-policy": keep
+{{- end }}

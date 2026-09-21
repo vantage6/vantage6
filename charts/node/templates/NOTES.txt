@@ -1,0 +1,11 @@
+{{- if and (eq (include "node.taskNamespaceOwnedByOtherRelease" .) "true") (not .Values.node.production) }}
+⚠️  WARNING: node.taskNamespace '{{ .Values.node.taskNamespace }}' already exists and is
+    owned by another Helm release, not this one ('{{ .Release.Name }}'). Multiple vantage6
+    node releases will share this task namespace.
+
+    This is fine for an intentional shared/development setup, but for production
+    deployments each node should normally use its own dedicated task namespace:
+      - set a unique 'node.taskNamespace' for this release, or
+      - set node.production=true to make installs into an already-owned task namespace
+        fail instead of warning.
+{{- end }}
