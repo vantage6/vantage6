@@ -1,6 +1,6 @@
 dependencies:
 - name: common
   repository: file://../common
-  version: 5.0.3-rc2
+  version: 5.0.3-rc3
 digest: sha256:c060d6767e3a966ed99950cf03301408aca016c80dbc2af66a40dfc09347e6f0
-generated: "2026-09-21T07:18:01.471901+00:00"
+generated: "2026-09-21T08:34:25.972350+00:00"
