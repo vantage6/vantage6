@@ -107,6 +107,11 @@ from vantage6.cli.utils import prompt_config_name
     help="Local chart repository to use.",
 )
 @click.option(
+    "--chart-version",
+    default=None,
+    help="Chart version to use. Ignored if --local-chart-dir is set.",
+)
+@click.option(
     "--external-dbs",
     is_flag=True,
     default=False,
@@ -129,6 +134,7 @@ def cli_new_sandbox(
     namespace: str | None,
     data_dir: str | None,
     local_chart_dir: Path | None,
+    chart_version: str | None,
     with_prometheus: bool,
     external_dbs: bool,
 ) -> None:
@@ -192,4 +198,5 @@ def cli_new_sandbox(
         add_dataset=add_dataset,
         custom_data_dir=data_dir,
         local_chart_dir=local_chart_dir,
+        chart_version=chart_version,
     )

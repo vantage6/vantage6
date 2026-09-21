@@ -25,6 +25,7 @@ def execute_cli_start(
     local_chart_dir: Path | None,
     system_folders: bool,
     is_sandbox: bool = False,
+    chart_version: str | None = None,
     extra_args: list[str] | None = None,
 ) -> None:
     """
@@ -43,6 +44,8 @@ def execute_cli_start(
         Whether to use system folders or user folders
     is_sandbox: bool
         Whether to use sandbox mode
+    chart_version: str | None
+        The version of the Helm chart to use. Ignored if `local_chart_dir` is set.
     extra_args: list[str] | None
         Extra options to pass to the start command
     """
@@ -62,6 +65,8 @@ def execute_cli_start(
         cmd.append("--sandbox")
     if local_chart_dir:
         cmd.extend(["--local-chart-dir", local_chart_dir])
+    elif chart_version:
+        cmd.extend(["--chart-version", chart_version])
     if extra_args:
         cmd.extend(extra_args)
     subprocess.run(cmd, check=True)

@@ -65,11 +65,13 @@ the following steps to test a release:
 
 .. code:: bash
 
+    version=<your_version>
     v6 sandbox new \
-        --hq-image ghcr.io/vantage6/infrastructure/hq:<version> \
-        --ui-image ghcr.io/vantage6/infrastructure/ui:<version> \
-        --node-image ghcr.io/vantage6/infrastructure/node:<version> \
-        --store-image ghcr.io/vantage6/infrastructure/algorithm-store:<version>
+        --hq-image ghcr.io/vantage6/infrastructure/hq:$version \
+        --ui-image ghcr.io/vantage6/infrastructure/ui:$version \
+        --node-image ghcr.io/vantage6/infrastructure/node:$version \
+        --store-image ghcr.io/vantage6/infrastructure/algorithm-store:$version \
+        --chart-version 5.x.y-rcN
 
 4. *Test code changes*. Go through all issues that are part of the new release
    and test if they work as intended.
@@ -197,10 +199,10 @@ clients only pull from our registry. They are Docker Hardened Images
 requires a Docker Hub account - hence ``DOCKERHUB_USERNAME`` and
 ``DOCKERHUB_TOKEN``.
 
-A release also gives these images the floating ``major.minor`` tag (e.g. 
-``curl:5.1``) and, for final releases only, ``latest``. A pre-release moves 
-``major.minor`` only when no final release has been made for that minor version yet, 
-so that e.g. ``5.2.0rc1`` claims ``curl:5.2`` but ``5.1.1rc1`` leaves ``curl:5.1`` 
+A release also gives these images the floating ``major.minor`` tag (e.g.
+``curl:5.1``) and, for final releases only, ``latest``. A pre-release moves
+``major.minor`` only when no final release has been made for that minor version yet,
+so that e.g. ``5.2.0rc1`` claims ``curl:5.2`` but ``5.1.1rc1`` leaves ``curl:5.1``
 pointing at ``5.1.0``.
 
 Apart from running as part of a release, the mirroring can be triggered on its
