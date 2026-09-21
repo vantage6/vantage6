@@ -2,58 +2,47 @@ import logging
 from collections.abc import Callable
 from functools import wraps
 
-import pandas as pd
-
 from vantage6.common import logger_name
 
-from vantage6.algorithm.tools.exceptions import AlgorithmRuntimeError
+from vantage6.algorithm.tools.exceptions import AlgorithmError, AlgorithmRuntimeError
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
 
-def _collect_pandas_error_types() -> tuple[type, ...]:
+def handle_data_errors(func: Callable) -> Callable:
     """
-    Collect all exception classes exported from pandas.errors.
+    Decorator to catch errors from data manipulation in algorithm functions and
+    prevent leaking privacy-sensitive data via error messages or tracebacks.
 
-    Returns a tuple of exception types to be used in an except clause.
-    """
-    exception_types = []
-    errors_module = pd.errors
-    for attr_name in errors_module.__all__:
-        attr = getattr(errors_module, attr_name, None)
-        if isinstance(attr, type) and issubclass(attr, Exception):
-            exception_types.append(attr)
+    Any exception that is not a vantage6 ``AlgorithmError`` is replaced by a generic
+    ``AlgorithmRuntimeError``. This includes non-pandas exceptions such as
+    ``ValueError`` or ``KeyError``, which are commonly raised by pandas operations and
+    tend to contain data values in their message.
 
-    return tuple(exception_types)
-
-
-PANDAS_ERROR_TYPES = _collect_pandas_error_types()
-
-
-def handle_pandas_errors(func: Callable) -> Callable:
-    """
-    Decorator to catch pandas-related errors from algorithm functions and
-    prevent leaking privacy-sensitive data via tracebacks.
-
-    - Catches pandas-specific exceptions and common data-manipulation errors.
-    - Logs a minimal, non-identifying message (no traceback, no exception str).
-    - Returns a safe, generic error response with 400 Bad Request.
-    - Other unexpected exceptions continue to log with traceback for debugging.
+    The vantage6 ``AlgorithmError`` exceptions are re-raised unchanged: their messages
+    are written by algorithm developers and are meant to be shown to the user.
     """
 
     @wraps(func)
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except PANDAS_ERROR_TYPES as e:
-            # Avoid logging tracebacks or exception messages that may contain data
+        except AlgorithmError:
+            raise
+        except Exception as e:  # noqa: BLE001
             msg = (
-                f"Pandas-related error of type {type(e).__name__} occurred in "
-                "algorithm function. Details have been omitted to protect privacy."
+                f"An error of type {type(e).__name__} occurred in "
+                f"'{func.__qualname__}'. Details have been omitted to protect privacy."
             )
             log.error(msg)
-            # pylint: disable=raise-missing-from
-            raise AlgorithmRuntimeError(msg)
+            # `from None` suppresses the exception context: without it, the original
+            # exception, including its message, is still printed when the traceback
+            # is logged
+            raise AlgorithmRuntimeError(msg) from None
 
     return wrapper
+
+
+# Backwards-compatible alias
+handle_pandas_errors = handle_data_errors

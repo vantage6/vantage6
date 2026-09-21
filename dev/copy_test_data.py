@@ -12,9 +12,9 @@ import argparse
 import shutil
 from pathlib import Path
 
-from vantage6.cli.sandbox.populate.helpers.utils import replace_wsl_path
-
 from create_mount_directory import create_mount_directory
+
+from vantage6.cli.sandbox.populate.helpers.utils import replace_wsl_path
 
 SOURCE_DIR = Path(__file__).parent
 

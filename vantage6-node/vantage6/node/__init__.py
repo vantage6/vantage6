@@ -569,8 +569,12 @@ class Node:
         results : Result
             Result of the completed run
         """
+        if self.config.get("share_algorithm_logs", True):
+            logs = results.logs
+        else:
+            logs = "Node does not allow sharing algorithm logs"
         data = {
-            "log": results.logs,
+            "log": logs,
             "status": results.status.value,
             "finished_at": datetime.datetime.now(datetime.UTC).isoformat(),
             "result": results.data,
@@ -807,13 +811,14 @@ class Node:
         )
         # update logs of killed tasks. Note that the status is already set to KILLED
         # by HQ.
-        for killed_algo in killed_algos:
-            self.client.run.patch(
-                id_=killed_algo.run_id,
-                data={
-                    "log": killed_algo.logs,
-                },
-            )
+        if self.config.get("share_algorithm_logs", True):
+            for killed_algo in killed_algos:
+                self.client.run.patch(
+                    id_=killed_algo.run_id,
+                    data={
+                        "log": killed_algo.logs,
+                    },
+                )
         return killed_algos
 
     def share_node_details(self) -> None:
