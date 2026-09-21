@@ -49,10 +49,15 @@ jobs:
           if [[ $MAJOR == '1' ]]; then MAJOR_NAME="trolltunga"; fi
           echo "major_name=${MAJOR_NAME}" >> $GITHUB_OUTPUT
 
+          # The major version the shared 'latest' Docker tags point at. Bump on
+          # every maintained release branch when a new major becomes current.
+          LATEST_MAJOR=5
+
           # define boolean whether or not to give images the 'latest' tag. Only set to
-          # true if the stage is empty, meaning it is a final release.
+          # true for a final release (empty stage) of the current major version:
+          # 'latest' is shared across majors, so an older major must not move it.
           TAG_LATEST=false
-          if [[ "$STAGE" == "" ]]; then TAG_LATEST=true; fi
+          if [[ "$STAGE" == "" && "$MAJOR" == "$LATEST_MAJOR" ]]; then TAG_LATEST=true; fi
           echo "tag_latest=${TAG_LATEST}" >> $GITHUB_OUTPUT
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -230,6 +235,16 @@ jobs:
 
       - name: Build and push support images
         run: make support-image TAG=$version PUSH_REG=true TAG_LATEST=$tag_latest
+
+  # Re-publish the third-party images defined in docker/mirror-images.txt.
+  mirror-images:
+    name: Re-publish third-party images
+    needs: version
+    uses: ./.github/workflows/mirror-images.yml
+    secrets: inherit
+    with:
+      version: ${{ needs.version.outputs.version }}
+      floating_tags: true
 
   infrastructure-images:
     name: Build infrastructure images

@@ -11,6 +11,24 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     chart: {{ .Chart.Name }}
+  {{- $waitForKeycloak := (.Values.keycloak.realmImport.waitForKeycloak | default (dict)) }}
+  {{- if ne $waitForKeycloak.enabled false }}
+  annotations:
+    # Applied as a hook so it's only ever reconciled after keycloak-wait-for-ready-job.yml
+    # confirms the Keycloak CR is Ready - avoids the race where the realm-import controller
+    # sees "no Deployment found yet" on a fresh install and never gets requeued.
+    #
+    # post-install only (deliberately not post-upgrade): re-creating this CR makes the
+    # operator run a fresh import Job against an already-populated realm, which risks
+    # overwriting state created at runtime (e.g. users the backend adds via
+    # backend-admin-client). The realm is imported once, on install.
+    #
+    # before-hook-creation is Helm's default anyway; it's explicit here so it's clear that
+    # a stale CR left over from a previous release is replaced on a fresh install.
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation
+  {{- end }}
 spec:
   keycloakCRName: {{ .Release.Name }}-kc
   realm:

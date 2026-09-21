@@ -1,0 +1,43 @@
+{{- $realmImport := .Values.keycloak.realmImport | default (dict) }}
+{{- $realmImportEnabled := and .Values.keycloak.realmImport (ne $realmImport.enabled false) }}
+{{- $waitForKeycloak := $realmImport.waitForKeycloak | default (dict) }}
+{{- if and $realmImportEnabled (ne $waitForKeycloak.enabled false) }}
+{{- $namespace := .Values.namespace | default .Release.Namespace }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Release.Name }}-realm-import-waiter
+  namespace: {{ $namespace }}
+  labels:
+{{ include "auth.labels" . | indent 4 }}
+---
+# Grants only what's needed to wait for the Keycloak CR to become Ready before the
+# realm import is applied (see keycloak-wait-for-ready-job.yml).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ .Release.Name }}-realm-import-waiter
+  namespace: {{ $namespace }}
+  labels:
+{{ include "auth.labels" . | indent 4 }}
+rules:
+- apiGroups: ["k8s.keycloak.org"]
+  resources: ["keycloaks"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ .Release.Name }}-realm-import-waiter
+  namespace: {{ $namespace }}
+  labels:
+{{ include "auth.labels" . | indent 4 }}
+subjects:
+- kind: ServiceAccount
+  name: {{ .Release.Name }}-realm-import-waiter
+  namespace: {{ $namespace }}
+roleRef:
+  kind: Role
+  name: {{ .Release.Name }}-realm-import-waiter
+  apiGroup: rbac.authorization.k8s.io
+{{- end }}
