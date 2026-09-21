@@ -38,6 +38,8 @@ spec:
           value: {{ .Values.node.keycloak.url | quote }}
         - name: KEYCLOAK_REALM
           value: {{ .Values.node.keycloak.realm | quote }}
+        - name: V6_K8S_NODE_NAME
+          value: {{ .Values.node.k8sNodeName | default "" | quote }}
         envFrom:
         - secretRef:
             name: {{ .Release.Name }}-secrets

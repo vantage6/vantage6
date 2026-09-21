@@ -47,6 +47,10 @@ class NodeClient(ClientBase):
 
         self.run = self.Run(self)
         self.algorithm_store = self.AlgorithmStore(self)
+        # ClientBase.request()/generate_path_to() look up `self.store` for
+        # `is_for_algorithm_store=True` requests (i.e. requests sent to the algorithm
+        # store itself, rather than to HQ).
+        self.store = self.algorithm_store
         self.column = self.Column(self)
 
         self.kc_openid = KeycloakOpenID(
@@ -276,7 +280,7 @@ class NodeClient(ClientBase):
                     data["result"] = result_uuid
             return self.parent.request(f"run/{id_}", json=data, method="patch")
 
-    class AlgorithmStore(ClientBase.SubClient):
+    class AlgorithmStore(ClientBase.AlgorithmStoreSubClientBase):
         """Subclient for the algorithm store endpoint."""
 
         def get(self, id_) -> dict:
@@ -294,6 +298,39 @@ class NodeClient(ClientBase):
                 The algorithms as json.
             """
             return self.parent.request(f"algorithmstore/{id_}")
+
+        def get_algorithm(self, image: str) -> dict | None:
+            """
+            Ask the algorithm store directly whether `image` is a registered,
+            approved algorithm. Unlike `get`, this talks to the algorithm store
+            server itself rather than to HQ's own record of it - use `set` first to
+            select which store to query.
+
+            Parameters
+            ----------
+            image : str
+                URI of the image to look up in the store.
+
+            Returns
+            -------
+            dict | None
+                The algorithm as registered in the store, or None if the store could
+                not confirm that this image is a registered, approved algorithm
+                (including when the store could not be reached at all, or does not
+                yet support node requests - callers should treat this as "could not
+                verify", not just "not found").
+            """
+            response = self.parent.request(
+                "algorithm",
+                params={"image": image},
+                is_for_algorithm_store=True,
+                # don't retry indefinitely if the store is unreachable - a single
+                # task's policy check should not be able to stall the node
+                attempts_on_timeout=3,
+                silent_on_connection_error=True,
+            )
+            data = (response or {}).get("data") or []
+            return data[0] if data else None
 
     class Column(ClientBase.SubClient):
         """Subclient for the column endpoint."""

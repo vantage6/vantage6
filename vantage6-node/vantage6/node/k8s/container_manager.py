@@ -35,6 +35,7 @@ from vantage6.common.kubernetes.utils import database_env_label
 
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.node.common.task_cleanup import delete_run_related_pods
+from vantage6.cli.utils_kubernetes import replace_localhost_for_k8s
 
 from vantage6.node.enum import KillInitiator
 from vantage6.node.globals import (
@@ -1335,20 +1336,51 @@ class ContainerManager:
             except Exception:  # noqa: BLE001
                 store_id = None
             if store_id:
-                store = self.client.algorithm_store.get(store_id)
-                store_from_task = store["url"]
+                store_info = self.client.algorithm_store.get(store_id)
+                store_from_task = store_info["url"]
                 # check if the store matches any of the regex cases
                 if isinstance(allowed_stores, str):
                     allowed_stores = [allowed_stores]
-                for store in allowed_stores:
-                    if not self._is_regex_pattern(store):
+                store_url_whitelisted = False
+                for allowed_store in allowed_stores:
+                    if not self._is_regex_pattern(allowed_store):
                         # check if string matches exactly
-                        if store == store_from_task:
-                            store_whitelisted = True
+                        if allowed_store == store_from_task:
+                            store_url_whitelisted = True
                     else:
-                        expr_ = re.compile(store)
+                        expr_ = re.compile(allowed_store)
                         if expr_.match(store_from_task):
-                            store_whitelisted = True
+                            store_url_whitelisted = True
+
+                if store_url_whitelisted:
+                    # The store's URL is whitelisted, but that alone does not prove
+                    # that the evaluated image is actually a registered, approved
+                    # algorithm in that store - HQ is the one asserting that
+                    # association, and HQ is not fully trusted here. Re-verify
+                    # directly with the store itself instead of trusting HQ's claim.
+                    #
+                    # If the store is registered under a `localhost` URL (dev env)
+                    # translate it to an address reachable from inside this pod
+                    reachable_store_url = replace_localhost_for_k8s(
+                        store_info["url"], os.environ.get("V6_K8S_NODE_NAME") or None
+                    )
+                    self.client.algorithm_store.url = (
+                        f"{reachable_store_url}{store_info['api_path']}"
+                    )
+                    self.client.algorithm_store.store_id = store_id
+                    algorithm = self.client.algorithm_store.get_algorithm(evaluated_img)
+                    if algorithm:
+                        store_whitelisted = True
+                    else:
+                        self.log.warning(
+                            "Algorithm store %s did not confirm that image %s is a "
+                            "registered, approved algorithm there. Denying the "
+                            "allowed_algorithm_stores policy for this image. This "
+                            "can also happen if the algorithm store does not yet "
+                            "support node verification requests.",
+                            store_from_task,
+                            evaluated_img,
+                        )
 
         allowed_from_whitelist = not allowed_algorithms or algorithm_whitelisted
         allowed_from_store = not allowed_stores or store_whitelisted
