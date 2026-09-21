@@ -7,7 +7,7 @@ from http import HTTPStatus
 from typing import TYPE_CHECKING
 
 from flask import g, request
-from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
+from flask_jwt_extended import get_jwt, get_jwt_identity, verify_jwt_in_request
 from flask_mail import Mail
 from flask_restful import Api
 
@@ -105,6 +105,26 @@ def _authorize_user(
     return None, None
 
 
+def _is_node_request() -> bool:
+    """
+    Check whether the current request carries a valid node JWT.
+
+    Nodes are never registered as a store `User` - unlike `_authenticate`, this does
+    not do a database lookup. It only relies on the `vantage6_client_type` claim set
+    by the shared vantage6 Keycloak realm.
+
+    Note that this function does not raise if no token is present at all, so it is safe
+    to call unconditionally before any policy-based access checks.
+
+    Returns
+    -------
+    bool
+        Whether the request is authenticated as a node.
+    """
+    verify_jwt_in_request(optional=True)
+    return get_jwt().get("vantage6_client_type") == "node"
+
+
 def with_authentication() -> Callable:
     """
     Decorator to verify that the user is authenticated from the linked Keycloak service.
@@ -169,9 +189,20 @@ def with_permission(resource: str, operation: Operation) -> Callable:
     return protection_decorator
 
 
-def with_permission_to_view_algorithms() -> Callable:
+def with_permission_to_view_algorithms(allow_node: bool = False) -> Callable:
     """
     Decorator to verify that the user has as a permission on a resource.
+
+    Parameters
+    ----------
+    allow_node : bool, optional
+        If True, also allow requests authenticated as a node (see `_is_node_request`)
+        to view approved algorithms, regardless of the store's `algorithm_view` policy.
+        This lets nodes independently re-verify - for their own
+        `allowed_algorithm_stores` policy - that an image is a registered, approved
+        algorithm in this store, without requiring the node to be registered as a
+        store `User`. Node access is still restricted to approved algorithms only.
+        Default is False.
 
     Returns
     -------
@@ -183,13 +214,6 @@ def with_permission_to_view_algorithms() -> Callable:
     def protection_decorator(fn):
         @wraps(fn)
         def decorator(self, *args, **kwargs):
-            policies = Policy.get_as_dict()
-            # check if everyone has permission to view algorithms
-            algorithm_view_policy = policies.get(
-                StorePolicies.ALGORITHM_VIEW.value,
-                DefaultStorePolicies.ALGORITHM_VIEW.value,
-            )
-
             # check if user is trying to view algorithms that are not approved by review
             # or have been invalidated - these algorithms always require authentication
             # even when algorithms are open to all
@@ -199,6 +223,20 @@ def with_permission_to_view_algorithms() -> Callable:
                 or request_args.get("under_review")
                 or request_args.get("in_review_process")
                 or request_args.get("invalidated")
+            )
+
+            # nodes re-verifying an image against this store's catalog are always
+            # allowed to see approved algorithms, independent of the store's
+            # algorithm_view policy - they are never allowed to see non-approved ones
+            if allow_node and request_approved and _is_node_request():
+                g.node = True
+                return fn(self, *args, **kwargs)
+
+            policies = Policy.get_as_dict()
+            # check if everyone has permission to view algorithms
+            algorithm_view_policy = policies.get(
+                StorePolicies.ALGORITHM_VIEW.value,
+                DefaultStorePolicies.ALGORITHM_VIEW.value,
             )
 
             # if the algorithm is public and approved, allow access

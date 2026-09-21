@@ -32,7 +32,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     services : dict
         Dictionary with services required for the resource endpoints
     """
-    path = "/".join([api_base, module_name])
+    path = f"{api_base}/{module_name}"
     log.info('Setting up "%s" and subdirectories', path)
     api.add_resource(
         ResetAPIKey,
@@ -57,7 +57,7 @@ class ResetAPIKey(ServicesResources):
         super().__init__(socketio, storage_adapter, mail, api, permissions, config)
 
         # obtain permissions to check if user is allowed to modify nodes
-        self.r = getattr(self.permissions, "node")
+        self.r = self.permissions.node
 
     @with_user
     def post(self):

@@ -16,6 +16,7 @@ from flask_restful import Api
 from flask_socketio import SocketIO
 
 from vantage6.common import logger_name
+from vantage6.common.exceptions import AuthenticationException
 
 from vantage6.backend.common.permission import RuleNeed
 from vantage6.backend.common.resource.error_handling import UnauthorizedError
@@ -178,9 +179,9 @@ def only_for(types: tuple[str] = ("user", "node", "container")) -> Callable:
         def decorator(*args, **kwargs):
             try:
                 _validate_user_or_node_token(types)
-            except Exception as exc:
+            except Exception:
                 if "container" not in types:
-                    raise exc
+                    raise
                 _validate_container_token()
 
             return fn(*args, **kwargs)
@@ -222,9 +223,9 @@ def _validate_user_or_node_token(types: tuple[str]) -> None:
     if g.type == "user":
         try:
             user = _get_and_update_authenticatable_info(identity)
-        except Exception as e:
+        except Exception:
             log.error("No user found for keycloak id %s", identity)
-            raise e
+            raise
 
         g.user = user
         assert g.user.type == g.type
@@ -247,7 +248,7 @@ def _validate_container_token():
     # Get the token from the Authorization header
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
-        raise Exception("Missing or invalid Authorization header")
+        raise AuthenticationException("Missing or invalid Authorization header")
 
     # Extract the token
     token = auth_header.replace("Bearer ", "")
@@ -262,13 +263,13 @@ def _validate_container_token():
             algorithms=["HS256"],
             options={"verify_sub": False},
         )
-    except Exception as container_error:
+    except jwt.PyJWTError as container_error:
         log.error("Container authentication failed: %s", str(container_error))
-        raise Exception("Authentication failed")
+        raise AuthenticationException("Authentication failed")
 
     # Verify this is a container token
     if claims.get("sub", {}).get("vantage6_client_type") != "container":
-        raise Exception("Not a container token")
+        raise AuthenticationException("Not a container token")
 
     # Set the container info in the global context
     g.type = "container"
@@ -312,7 +313,7 @@ def _get_and_update_authenticatable_info(keycloak_id: int) -> db.Authenticatable
         User or node database model
     """
     auth = db.Authenticatable.get_by_keycloak_id(keycloak_id)
-    auth.last_seen = dt.datetime.now(dt.timezone.utc)
+    auth.last_seen = dt.datetime.now(dt.UTC)
     auth.save()
     return auth
 
@@ -329,7 +330,9 @@ with_node = only_for(("node",))
 with_container = only_for(("container",))
 
 
-def get_org_ids_from_collabs(auth: Authenticatable, collab_id: int = None) -> list[int]:
+def get_org_ids_from_collabs(
+    auth: Authenticatable, collab_id: int | None = None
+) -> list[int]:
     """
     Get all organization ids from the collaborations the user or node is in.
 

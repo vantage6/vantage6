@@ -26,7 +26,7 @@ def running_in_wsl() -> bool:
     """
     release = platform.uname().release
     return platform.system() == "Linux" and (
-        release.endswith("Microsoft") or release.endswith("microsoft-standard-WSL2")
+        release.endswith(("Microsoft", "microsoft-standard-WSL2"))
     )
 
 

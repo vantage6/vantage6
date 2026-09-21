@@ -18,6 +18,7 @@ from vantage6.common.globals import (
 )
 
 module_name = __name__.split(".")[1]
+log = logging.getLogger(module_name)
 
 
 @staticmethod
@@ -40,7 +41,7 @@ def _log_completion(task_id: int, start_time: float, log_animation: bool) -> Non
     if log_animation:
         print(f"\r{message}                     ")
     else:
-        logging.info(message)
+        log.info(message)
 
 
 @staticmethod
@@ -67,7 +68,7 @@ def _log_progress(
     if log_animation:
         print(f"\r{message}", end="")
     else:
-        logging.info(message)
+        log.info(message)
 
 
 class ClientBase(BlobStorageMixin):
@@ -196,13 +197,13 @@ class ClientBase(BlobStorageMixin):
     def request(
         self,
         endpoint: str,
-        json: dict = None,
+        json: dict | None = None,
         method: str = "get",
-        params: dict = None,
-        headers: dict = None,
+        params: dict | None = None,
+        headers: dict | None = None,
         first_try: bool = True,
         retry: bool = True,
-        attempts_on_timeout: int = None,
+        attempts_on_timeout: int | None = None,
         is_for_algorithm_store: bool = False,
         silent_on_connection_error: bool = False,
     ) -> dict:
@@ -283,8 +284,7 @@ class ClientBase(BlobStorageMixin):
                 msg = response.json().get("msg", "")
                 # remove dot at the end of the message if it is there to prevent double
                 # dots in the log message
-                if msg.endswith("."):
-                    msg = msg[:-1]
+                msg = msg.removesuffix(".")
                 self.log.error("msg: %s. Endpoint: %s", msg, endpoint)
                 if response.json().get("errors"):
                     self.log.error("errors:" + str(response.json().get("errors")))
@@ -469,8 +469,8 @@ class ClientBase(BlobStorageMixin):
             # of get_results
             run_data_ = cryptor.decrypt(run_data_)
 
-        except Exception as e:
-            self.log.exception(e)
+        except Exception:
+            self.log.exception("Failed to decrypt run data.")
 
         return run_data_
 
@@ -512,7 +512,7 @@ class ClientBase(BlobStorageMixin):
                     return decrypted
             try:
                 return decrypted.decode(STRING_ENCODING)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 self.log.error(
                     "Failed to decode the field %s. Skipping decoding, "
                     "returning bytes object.",
@@ -637,3 +637,52 @@ class ClientBase(BlobStorageMixin):
                 Input `data` but with the key-value pair where value is `None` removed
             """
             return {k: v for k, v in data.items() if v is not None}
+
+    class AlgorithmStoreSubClientBase(SubClient):
+        """
+        Base subclient for pointing a client at a specific algorithm store, so that
+        subsequent requests made with `is_for_algorithm_store=True` (see `request`)
+        are routed to it.
+
+        Shared by `UserClient`'s
+        `vantage6.client.subclients.store.algorithm_store.AlgorithmStoreSubClient` and
+        `NodeClient.AlgorithmStore` - both need to fetch the store's own record (e.g.
+        from HQ) via `get()`, but each does so differently (e.g. the `UserClient`
+        version applies field-filtering), so `get()` is left to subclasses. This base
+        only holds what both share: remembering which store is selected.
+        """
+
+        def __init__(self, parent) -> None:
+            super().__init__(parent)
+            self.url = None
+            self.store_id = None
+
+        def get(self, id_: int) -> dict:
+            """
+            Fetch the algorithm store's own record. Must be implemented by
+            subclasses.
+            """
+            raise NotImplementedError
+
+        def set(self, id_: int) -> dict:
+            """
+            Select the algorithm store used for `is_for_algorithm_store=True`
+            requests.
+
+            Parameters
+            ----------
+            id_ : int
+                The id of the algorithm store.
+
+            Returns
+            -------
+            dict
+                The algorithm store record, as returned by `get`.
+            """
+            store = self.get(id_)
+            try:
+                self.url = f"{store['url']}{store['api_path']}"
+                self.store_id = id_
+            except KeyError:
+                self.parent.log.error("Algorithm store URL could not be set.")
+            return store

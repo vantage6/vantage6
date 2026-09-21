@@ -94,7 +94,11 @@ def _get_latest_major_tag(major_version: int) -> str | None:
     # get the tags from the algorithm template repository
     try:
         tags = _get_algo_template_tags(ALGORITHM_TEMPLATE_REPO)
-    except Exception as e:
+    except (
+        subprocess.CalledProcessError,
+        subprocess.TimeoutExpired,
+        FileNotFoundError,
+    ) as e:
         error(f"Failed to fetch tags from {ALGORITHM_TEMPLATE_REPO}: {e}")
         warning("Will use latest version instead.")
         return None
@@ -184,10 +188,10 @@ def _get_algo_template_tags(repo_url: str) -> list[str]:
         return sorted(tags)
     except subprocess.CalledProcessError as e:
         info(f"Failed to fetch tags from {git_url}: {e}")
-        return []
+        raise
     except subprocess.TimeoutExpired:
         info(f"Timeout while fetching tags from {git_url}")
-        return []
+        raise
     except FileNotFoundError:
         info("git command not found. Please install git to fetch repository tags.")
-        return []
+        raise

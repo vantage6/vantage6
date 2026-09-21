@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+import sys
 from os import PathLike
 from pathlib import Path
 
@@ -24,6 +25,7 @@ def execute_cli_start(
     local_chart_dir: Path | None,
     system_folders: bool,
     is_sandbox: bool = False,
+    chart_version: str | None = None,
     extra_args: list[str] | None = None,
 ) -> None:
     """
@@ -42,6 +44,8 @@ def execute_cli_start(
         Whether to use system folders or user folders
     is_sandbox: bool
         Whether to use sandbox mode
+    chart_version: str | None
+        The version of the Helm chart to use. Ignored if `local_chart_dir` is set.
     extra_args: list[str] | None
         Extra options to pass to the start command
     """
@@ -61,6 +65,8 @@ def execute_cli_start(
         cmd.append("--sandbox")
     if local_chart_dir:
         cmd.extend(["--local-chart-dir", local_chart_dir])
+    elif chart_version:
+        cmd.extend(["--chart-version", chart_version])
     if extra_args:
         cmd.extend(extra_args)
     subprocess.run(cmd, check=True)
@@ -79,7 +85,7 @@ def prestart_checks(
 
     if check_running(ctx.helm_release_name, instance_type, name, system_folders):
         error(f"Instance '{name}' is already running.")
-        exit(1)
+        sys.exit(1)
 
 
 def helm_install(
@@ -181,13 +187,13 @@ def helm_install(
         )
     except subprocess.CalledProcessError:
         error(f"Failed to install release '{release_name}'.")
-        exit(1)
+        sys.exit(1)
     except FileNotFoundError:
         error(
             "Helm command not found. Please ensure Helm is installed and available in "
             "the PATH."
         )
-        exit(1)
+        sys.exit(1)
 
 
 def _helm_dependency_update(local_chart_dir: str, chart_name: ChartName) -> None:
@@ -217,10 +223,10 @@ def _helm_dependency_update(local_chart_dir: str, chart_name: ChartName) -> None
             f"Failed to update Helm dependencies for chart "
             f"'{chart_name.value}' in '{chart_path}'."
         )
-        exit(1)
+        sys.exit(1)
     except FileNotFoundError:
         error(
             "Helm command not found. Please ensure Helm is installed and "
             "available in the PATH."
         )
-        exit(1)
+        sys.exit(1)

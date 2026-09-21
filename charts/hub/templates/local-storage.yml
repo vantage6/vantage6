@@ -1,0 +1,21 @@
+{{- $global := .Values.global | default (dict) }}
+{{- $isDockerDesktop := eq ($global.k8sNodeName | default "") "docker-desktop" }}
+{{- range $sub := (list "hq" "auth" "store") }}
+  {{- $vals := index $.Values $sub | default (dict) }}
+  {{- $db := $vals.database | default (dict) }}
+  {{- if eq ($db.k8sNodeName | default ($global.k8sNodeName | default "")) "docker-desktop" }}
+    {{- $isDockerDesktop = true }}
+  {{- end }}
+{{- end }}
+{{- if and
+    $isDockerDesktop
+    (not (lookup "storage.k8s.io/v1" "StorageClass" "" "local-storage"))
+}}
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-storage
+provisioner: kubernetes.io/no-provisioner
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+{{- end }}

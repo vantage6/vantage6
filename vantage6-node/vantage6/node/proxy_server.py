@@ -4,6 +4,7 @@ with HQ. It contains general methods for any routes, and methods to handle tasks
 results, including their encryption and decryption.
 """
 
+import json
 import logging
 import traceback
 from collections.abc import Callable
@@ -17,6 +18,7 @@ from requests import Response
 from vantage6.common import base64s_to_bytes, bytes_to_base64s, logger_name
 from vantage6.common.client.node_client import NodeClient
 from vantage6.common.client.utils import is_uuid
+from vantage6.common.exceptions import ProxyRequestError
 
 # Initialize FLASK
 app = Flask(__name__)
@@ -81,9 +83,9 @@ def make_proxied_request(endpoint: str) -> Response:
 def make_request(
     method: str,
     endpoint: str,
-    json: dict = None,
-    params: dict = None,
-    headers: dict = None,
+    json: dict | None = None,
+    params: dict | None = None,
+    headers: dict | None = None,
 ) -> Response:
     """
     Make request to HQ
@@ -147,7 +149,7 @@ def make_request(
             sleep(1)
 
     # if all attempts fail, raise an exception to be handled by its parent
-    raise Exception("Proxy request failed")
+    raise ProxyRequestError("Proxy request failed")
 
 
 def decrypt_result(run: dict) -> dict:
@@ -431,7 +433,7 @@ def stream_handler(id: str) -> FlaskResponse:
         )
         try:
             log.warning("Error messages: %s", backend_response.json())
-        except Exception:
+        except json.JSONDecodeError:
             log.warning(
                 "Could not decode error response as JSON. Response text: %s",
                 backend_response.text,
@@ -515,7 +517,7 @@ def stream_handler_post() -> FlaskResponse:
         )
         try:
             log.warning("Error messages: %s", backend_response.json())
-        except Exception:
+        except json.JSONDecodeError:
             log.warning("Could not decode error response as JSON.")
         log.debug(
             "method: %s, url: %s, params: %s, headers: %s",

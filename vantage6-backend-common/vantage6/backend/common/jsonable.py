@@ -24,7 +24,7 @@ def jsonable(value: list[DeclarativeMeta] | DeclarativeMeta) -> list | dict:
 
     Raises
     ------
-    Exception
+    TypeError
         If the value is not an instance of db.Base or a list of db.Base
     """
     if isinstance(value, list):
@@ -32,7 +32,7 @@ def jsonable(value: list[DeclarativeMeta] | DeclarativeMeta) -> list | dict:
 
     elif isinstance(value, DeclarativeMeta):
         log.debug(f"preparing={value}")
-        retval = dict()
+        retval = {}
         mapper = sql.inspect(value.__class__)
 
         columns = [
@@ -56,4 +56,4 @@ def jsonable(value: list[DeclarativeMeta] | DeclarativeMeta) -> list | dict:
 
     # FIXME: does it make sense to raise an exception or should base types
     #        (or other JSON-serializable types) just be returned as-is?
-    raise Exception("value should be instance of db.Base or list!")
+    raise TypeError("value should be instance of db.Base or list!")

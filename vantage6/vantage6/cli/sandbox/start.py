@@ -1,7 +1,9 @@
+import sys
 import time
 from pathlib import Path
 
 import click
+import requests
 from colorama import Fore, Style
 
 from vantage6.common import error, info, warning
@@ -28,6 +30,11 @@ from vantage6.cli.sandbox.populate import populate_hub_sandbox
     type=click.Path(exists=True),
     default=None,
     help="Local chart repository to use.",
+)
+@click.option(
+    "--chart-version",
+    default=None,
+    help="Chart version to use. Ignored if --local-chart-dir is set.",
 )
 @click.option(
     "--re-initialize",
@@ -81,6 +88,7 @@ def cli_sandbox_start(
     context: str | None,
     namespace: str | None,
     local_chart_dir: Path | None,
+    chart_version: str | None,
     re_initialize: bool,
     num_nodes: int,
     node_image: str | None,
@@ -105,6 +113,7 @@ def cli_sandbox_start(
         add_dataset=add_dataset,
         custom_data_dir=custom_data_dir,
         local_chart_dir=local_chart_dir,
+        chart_version=chart_version,
     )
 
 
@@ -119,6 +128,7 @@ def execute_sandbox_start(
     add_dataset: tuple[str, Path] | None = None,
     custom_data_dir: Path | None = None,
     local_chart_dir: str | None = None,
+    chart_version: str | None = None,
 ) -> None:
     with_prometheus = (
         ctx.config.get("hq", {}).get("prometheus", {}).get("enabled", False)
@@ -131,6 +141,7 @@ def execute_sandbox_start(
         local_chart_dir=local_chart_dir,
         system_folders=False,
         is_sandbox=True,
+        chart_version=chart_version,
     )
 
     hq_url = f"{ctx.config['global']['urls']['external']['hq']}{ctx.config['hq']['hq']['apiPath']}"
@@ -172,6 +183,7 @@ def execute_sandbox_start(
             local_chart_dir=local_chart_dir,
             system_folders=False,
             is_sandbox=True,
+            chart_version=chart_version,
         )
 
     # Print the authentication credentials
@@ -283,10 +295,10 @@ def _wait_for_hq_to_be_ready(hq_url: str) -> None:
                 info("HQ is ready.")
                 ready = True
                 break
-        except Exception:
+        except requests.RequestException:
             info("Waiting for HQ to be ready...")
             time.sleep(wait_time)
 
     if not ready:
         error("HQ did not become ready in time. Exiting...")
-        exit(1)
+        sys.exit(1)

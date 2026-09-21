@@ -45,7 +45,7 @@ class BaseHATEOASModelSchema(SQLAlchemyAutoSchema):
     api = None
 
     def create_hateoas(
-        self, name: str, obj: DeclarativeMeta, endpoint: str = None
+        self, name: str, obj: DeclarativeMeta, endpoint: str | None = None
     ) -> dict | None:
         """
         Create a HATEOAS link to a related object.
@@ -99,7 +99,7 @@ class BaseHATEOASModelSchema(SQLAlchemyAutoSchema):
         endpoint = name + "_with_id"
         if self.api:
             if not self.api.owns_endpoint(endpoint):
-                Exception(f"Make sure {endpoint} exists!")
+                raise ValueError(f"Make sure {endpoint} exists!")
 
             verbs = list(self.api.app.url_map._rules_by_endpoint[endpoint][0].methods)
             verbs.remove("HEAD")

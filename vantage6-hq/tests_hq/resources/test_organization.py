@@ -1,3 +1,4 @@
+import base64
 import logging
 from http import HTTPStatus
 
@@ -14,6 +15,9 @@ from .test_resource_base import TestResourceBase
 
 logger = logger_name(__name__)
 log = logging.getLogger(logger)
+
+# the organization model expects the public key to be base64-encoded
+TEST_PUBLIC_KEY = base64.b64encode(b"test-key").decode()
 
 
 class TestResources(TestResourceBase):
@@ -227,6 +231,28 @@ class TestResources(TestResourceBase):
         headers = self.get_user_auth_header(organization=org2, rules=[rule2])
         results = self.app.patch(
             f"/api/organization/{org.id}", headers=headers, json={"name": "fourth-name"}
+        )
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+
+        # a user from a *different* organization within the same collaboration
+        # has EDIT rights, but should not be allowed to change the public key
+        # of an organization they are not a member of
+        results = self.app.patch(
+            f"/api/organization/{org.id}",
+            headers=headers,
+            json={"public_key": TEST_PUBLIC_KEY},
+        )
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+        self.assertEqual(Organization.get(org.id).public_key, "")
+
+        # a member of the organization itself should still be able to update
+        # its own public key
+        rule = Rule.get_by_("organization", Scope.ORGANIZATION, Operation.EDIT)
+        headers = self.get_user_auth_header(organization=org, rules=[rule])
+        results = self.app.patch(
+            f"/api/organization/{org.id}",
+            headers=headers,
+            json={"public_key": TEST_PUBLIC_KEY},
         )
         self.assertEqual(results.status_code, HTTPStatus.OK)
 

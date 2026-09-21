@@ -38,7 +38,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     services : dict
         Dictionary with services required for the resource endpoints
     """
-    path = "/".join([api_base, module_name])
+    path = f"{api_base}/{module_name}"
     log.info(f'Setting up "{path}" and subdirectories')
 
     api.add_resource(
@@ -474,6 +474,15 @@ class Organization(OrganizationBase):
                     "msg": f"Organization with name '{name}' already exists!"
                 }, HTTPStatus.BAD_REQUEST
             organization.name = name
+
+        if (
+            "public_key" in data
+            and data["public_key"] is not None
+            and self.obtain_organization_id() != id
+        ):
+            return {
+                "msg": "Only members of an organization can update its public key!"
+            }, HTTPStatus.UNAUTHORIZED
 
         fields = ["address1", "address2", "zipcode", "country", "public_key", "domain"]
         for field in fields:

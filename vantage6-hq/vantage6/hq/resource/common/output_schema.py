@@ -26,48 +26,28 @@ class HATEOASModelSchema(BaseHATEOASModelSchema):
 
     def __init__(self, *args, **kwargs) -> None:
         # set lambda functions to create links for one to one relationship
-        setattr(self, "node", lambda obj: self.create_hateoas("node", obj))
+        self.node = lambda obj: self.create_hateoas("node", obj)
 
         # Note that removing the `get_` prefix is not possible as this is a reserved
         # SQLAlchemy property.
-        setattr(self, "get_session", lambda obj: self.create_hateoas("session", obj))
+        self.get_session = lambda obj: self.create_hateoas("session", obj)
 
-        setattr(
-            self, "organization", lambda obj: self.create_hateoas("organization", obj)
+        self.organization = lambda obj: self.create_hateoas("organization", obj)
+        self.collaboration = lambda obj: self.create_hateoas("collaboration", obj)
+        self.user = lambda obj: self.create_hateoas("user", obj)
+        self.owner = lambda obj: self.create_hateoas("owner", obj, endpoint="user")
+        self.run = lambda obj: self.create_hateoas("run", obj)
+        self.task = lambda obj: self.create_hateoas("task", obj)
+        self.port = lambda obj: self.create_hateoas("port", obj)
+        self.parent_ = lambda obj: self.create_hateoas("parent", obj, endpoint="task")
+        self.init_org_ = lambda obj: self.create_hateoas(
+            "init_org", obj, endpoint="organization"
         )
-        setattr(
-            self, "collaboration", lambda obj: self.create_hateoas("collaboration", obj)
+        self.init_user_ = lambda obj: self.create_hateoas(
+            "init_user", obj, endpoint="user"
         )
-        setattr(self, "user", lambda obj: self.create_hateoas("user", obj))
-        setattr(
-            self,
-            "owner",
-            lambda obj: self.create_hateoas("owner", obj, endpoint="user"),
-        )
-        setattr(self, "run", lambda obj: self.create_hateoas("run", obj))
-        setattr(self, "task", lambda obj: self.create_hateoas("task", obj))
-        setattr(self, "port", lambda obj: self.create_hateoas("port", obj))
-        setattr(
-            self,
-            "parent_",
-            lambda obj: self.create_hateoas("parent", obj, endpoint="task"),
-        )
-        setattr(
-            self,
-            "init_org_",
-            lambda obj: self.create_hateoas("init_org", obj, endpoint="organization"),
-        )
-        setattr(
-            self,
-            "init_user_",
-            lambda obj: self.create_hateoas("init_user", obj, endpoint="user"),
-        )
-        setattr(self, "study", lambda obj: self.create_hateoas("study", obj))
-        setattr(
-            self,
-            "algorithm_store",
-            lambda obj: self.create_hateoas("algorithm_store", obj),
-        )
+        self.study = lambda obj: self.create_hateoas("study", obj)
+        self.algorithm_store = lambda obj: self.create_hateoas("algorithm_store", obj)
 
         # call super class. Do this after setting the attributes above, because
         # the super class initializer will call the attributes.
@@ -408,13 +388,11 @@ class UserWithPermissionDetailsSchema(UserSchema):
         # UI knows which organizations user has access to if they have
         # collaboration scope permissions
         orgs_in_collabs = list(
-            set(
-                [
-                    org.id
-                    for collab in obj.organization.collaborations
-                    for org in collab.organizations
-                ]
-            )
+            {
+                org.id
+                for collab in obj.organization.collaborations
+                for org in collab.organizations
+            }
         )
         return {
             "roles": role_ids,

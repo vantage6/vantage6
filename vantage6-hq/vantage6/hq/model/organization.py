@@ -115,7 +115,7 @@ class Organization(Base):
             # TODO this should be fixed properly
             try:
                 return base64.b64decode(self._public_key).decode(STRING_ENCODING)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 return ""
         else:
             return ""

@@ -27,15 +27,15 @@ class HATEOASModelSchema(BaseHATEOASModelSchema):
     def __init__(self, *args, **kwargs) -> None:
         # set lambda functions to create links for one to one relationship
         # TODO check if all below are used
-        setattr(self, "algorithm", lambda obj: self.create_hateoas("algorithm", obj))
-        setattr(self, "function", lambda obj: self.create_hateoas("function", obj))
-        setattr(self, "database", lambda obj: self.create_hateoas("database", obj))
-        setattr(self, "argument", lambda obj: self.create_hateoas("argument", obj))
-        setattr(self, "rule", lambda obj: self.create_hateoas("rule", obj))
-        setattr(self, "role", lambda obj: self.create_hateoas("role", obj))
-        setattr(self, "user", lambda obj: self.create_hateoas("user", obj))
-        setattr(self, "review", lambda obj: self.create_hateoas("review", obj))
-        setattr(self, "hq", lambda obj: self.create_hateoas("hq", obj))
+        self.algorithm = lambda obj: self.create_hateoas("algorithm", obj)
+        self.function = lambda obj: self.create_hateoas("function", obj)
+        self.database = lambda obj: self.create_hateoas("database", obj)
+        self.argument = lambda obj: self.create_hateoas("argument", obj)
+        self.rule = lambda obj: self.create_hateoas("rule", obj)
+        self.role = lambda obj: self.create_hateoas("role", obj)
+        self.user = lambda obj: self.create_hateoas("user", obj)
+        self.review = lambda obj: self.create_hateoas("review", obj)
+        self.hq = lambda obj: self.create_hateoas("hq", obj)
 
         # call super class. Do this after setting the attributes above, because
         # the super class initializer will call the attributes.

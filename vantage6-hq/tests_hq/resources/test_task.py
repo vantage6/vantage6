@@ -26,7 +26,9 @@ log = logging.getLogger(logger)
 
 class TestResources(TestResourceBase):
     def test_task_with_id(self):
-        task = Task(name="unit")
+        org = Organization()
+        col = Collaboration(organizations=[org])
+        task = Task(name="unit", collaboration=col, init_org=org)
         task.save()
         headers = self.login_as_root()
         result = self.app.get(f"/api/task/{task.id}", headers=headers)
@@ -77,6 +79,17 @@ class TestResources(TestResourceBase):
             organization=org_not_in_collab, rules=[rule]
         )
         results = self.app.get(f"/api/task/{task.id}", headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # collaboration permission should not extend to a task in a
+        # different collaboration, even if the task's initiator (org2) is
+        # also a member of `col`
+        org_c = Organization()
+        col_bc = Collaboration(organizations=[org2, org_c])
+        task_bc = Task(name="cross-collab", collaboration=col_bc, init_org=org2)
+        task_bc.save()
+        headers = self.get_user_auth_header(org, rules=[rule])
+        results = self.app.get(f"/api/task/{task_bc.id}", headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
         # test user with org permissions with id from another org
@@ -184,10 +197,13 @@ class TestResources(TestResourceBase):
         # cleanup
         task.delete()
         task2.delete()
+        task_bc.delete()
         user.delete()
         org.delete()
         org2.delete()
+        org_c.delete()
         col.delete()
+        col_bc.delete()
 
     def test_view_task_permissions_as_node_and_container(self):
         # test node with id
@@ -353,7 +369,7 @@ class TestResources(TestResourceBase):
         session = Session(name="test_session", user_id=user.id, collaboration=col)
         session.save()
 
-        parent_task = Task(collaboration=col, image="some-image")
+        parent_task = Task(collaboration=col, image="some-image", init_org=org)
         parent_task.save()
         parent_res = Run(
             organization=org,
@@ -434,13 +450,12 @@ class TestResources(TestResourceBase):
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
         # cleanup
-        Task.get()[::-1][0].delete()
+        self.delete_tasks()
         session.delete()
         org.delete()
         col.delete()
         node2.delete()
         col2.delete()
-        # delete the 1 task that was created in this unit test
 
     def test_delete_task_permissions(self):
         # test non-existing task
@@ -466,7 +481,7 @@ class TestResources(TestResourceBase):
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
         # test with global permissions
-        task = Task(collaboration=col)
+        task = Task(collaboration=col, init_org=org)
         task.save()
         rule = Rule.get_by_("task", Scope.GLOBAL, Operation.DELETE)
         headers = self.get_user_auth_header(rules=[rule])
@@ -474,13 +489,26 @@ class TestResources(TestResourceBase):
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
         # test that all results are also deleted
-        task = Task(collaboration=col)
+        task = Task(collaboration=col, init_org=org)
         run = Run(task=task)
         run.save()
         run_id = run.id  # cannot access this after deletion
         results = self.app.delete(f"/api/task/{task.id}", headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.OK)
-        self.assertIsNone(Task.get(run_id))
+        self.assertIsNone(Run.get(run_id))
+
+        # collaboration permission should not extend to a task in a
+        # different collaboration, even if the task's initiator (org2) is
+        # also a member of `col`
+        org_c = Organization()
+        col_bc = Collaboration(organizations=[org2, org_c])
+        task_bc = Task(collaboration=col_bc, init_org=org2)
+        task_bc.save()
+        headers = self.get_user_auth_header(
+            org, rules=[Rule.get_by_("task", Scope.COLLABORATION, Operation.DELETE)]
+        )
+        results = self.app.delete(f"/api/task/{task_bc.id}", headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
         # test permission to delete tasks of own organization - other
         # organization should fail
@@ -513,9 +541,12 @@ class TestResources(TestResourceBase):
 
         # cleanup
         user.delete()
+        task_bc.delete()
         org.delete()
         org2.delete()
+        org_c.delete()
         col.delete()
+        col_bc.delete()
 
     def test_view_task_result_permissions_as_user(self):
         # non-existing task
@@ -546,6 +577,21 @@ class TestResources(TestResourceBase):
         headers = self.get_user_auth_header(org, [rule])
         result = self.app.get(f"/api/run?task_id={task.id}", headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
+
+        # collaboration permission should not extend to a run whose task is
+        # in a different collaboration, even if the task's initiator (org2)
+        # is also a member of `col`
+        org_c = Organization()
+        col_bc = Collaboration(organizations=[org2, org_c])
+        task_bc = Task(collaboration=col_bc, init_org=org2)
+        task_bc.save()
+        res_bc = Run(task=task_bc, organization=org2)
+        res_bc.save()
+        headers = self.get_user_auth_header(org, [rule])
+        result = self.app.get(f"/api/run/{res_bc.id}", headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+        result = self.app.get(f"/api/run?task_id={task_bc.id}", headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
         # test with global permission
         rule = Rule.get_by_("run", Scope.GLOBAL, Operation.VIEW)
@@ -609,11 +655,15 @@ class TestResources(TestResourceBase):
         node.delete()
         task.delete()
         task2.delete()
+        task_bc.delete()
         res.delete()
         res2.delete()
+        res_bc.delete()
         org.delete()
         org2.delete()
+        org_c.delete()
         col.delete()
+        col_bc.delete()
 
     def test_get_task_status(self):
         """Test the /api/task/<id>/status endpoint"""
@@ -693,6 +743,7 @@ class TestResources(TestResourceBase):
             name="parent-task",
             image="parent-image",
             collaboration=collaboration,
+            init_org=org_parent,
             job_id=90001,
         )
         parent_task.save()
@@ -705,6 +756,7 @@ class TestResources(TestResourceBase):
             name="child-task",
             image="child-image",
             collaboration=collaboration,
+            init_org=org_parent,
             parent=parent_task,
             job_id=90001,
         )

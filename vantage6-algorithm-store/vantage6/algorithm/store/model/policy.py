@@ -130,6 +130,4 @@ class Policy(Base):
                 None,
             )
 
-        if result is None:
-            return False
-        return True
+        return result is not None

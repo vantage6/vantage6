@@ -1,4 +1,4 @@
-from typing import List
+import builtins
 
 from vantage6.common.client.client_base import ClientBase
 
@@ -37,15 +37,15 @@ class AlgorithmSubClient(ClientBase.SubClient):
     @post_filtering(iterable=True)
     def list(
         self,
-        name: str = None,
-        description: str = None,
-        image: str = None,
-        partitioning: str = None,
-        v6_version: str = None,
-        awaiting_reviewer_assignment: bool = None,
-        under_review: bool = None,
-        in_review_process: bool = None,
-        invalidated: bool = None,
+        name: str | None = None,
+        description: str | None = None,
+        image: str | None = None,
+        partitioning: str | None = None,
+        v6_version: str | None = None,
+        awaiting_reviewer_assignment: bool | None = None,
+        under_review: bool | None = None,
+        in_review_process: bool | None = None,
+        invalidated: bool | None = None,
         page: int = 1,
         per_page: int = 10,
     ) -> list[dict]:
@@ -132,8 +132,8 @@ class AlgorithmSubClient(ClientBase.SubClient):
         partitioning: str,
         vantage6_version: str,
         code_url: str,
-        functions: List[dict],
-        documentation_url: str = None,
+        functions: builtins.list[dict],
+        documentation_url: str | None = None,
     ) -> dict:
         """
         Add an algorithm to the algorithm store
@@ -307,15 +307,15 @@ class AlgorithmSubClient(ClientBase.SubClient):
     def update(
         self,
         id_: int,
-        name: str = None,
-        description: str = None,
-        image: str = None,
-        partitioning: str = None,
-        vantage6_version: str = None,
-        code_url: str = None,
-        documentation_url: str = None,
-        functions: List[dict] = None,
-        refresh_digest: bool = None,
+        name: str | None = None,
+        description: str | None = None,
+        image: str | None = None,
+        partitioning: str | None = None,
+        vantage6_version: str | None = None,
+        code_url: str | None = None,
+        documentation_url: str | None = None,
+        functions: builtins.list[dict] | None = None,
+        refresh_digest: bool | None = None,
     ) -> dict:
         """
         Update an algorithm in the algorithm store

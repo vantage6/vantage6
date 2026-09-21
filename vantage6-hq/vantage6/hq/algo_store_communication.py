@@ -58,8 +58,7 @@ def add_algorithm_store_to_database(
     # check if algorithm store is already available for the collaboration
     collaboration_id = data.get("collaboration_id", None)
     algorithm_store_url = data["algorithm_store_url"]
-    if algorithm_store_url.endswith("/"):
-        algorithm_store_url = algorithm_store_url[:-1]
+    algorithm_store_url = algorithm_store_url.removesuffix("/")
     api_path = data.get("api_path", DEFAULT_API_PATH)
 
     if not _check_algorithm_store_online(f"{algorithm_store_url}{api_path}"):
@@ -110,8 +109,8 @@ def request_algo_store(
     algo_store_url: str,
     endpoint: str,
     method: str,
-    params: dict = None,
-    headers: dict = None,
+    params: dict | None = None,
+    headers: dict | None = None,
 ) -> tuple[dict | Response, HTTPStatus]:
     """
     Whitelist this vantage6 HQ url for the algorithm store.
@@ -144,8 +143,7 @@ def request_algo_store(
         )
     except requests.exceptions.ConnectionError as exc:
         if not is_localhost_algo_store:
-            log.warning("Request to algorithm store failed")
-            log.exception(exc)
+            log.exception("Request to algorithm store failed", exc_info=exc)
         response = None
 
     # if the algorithm store is on localhost, we need to look for the local kubernetes
@@ -164,8 +162,7 @@ def request_algo_store(
                 new_url, endpoint, method, params, headers
             )
         except requests.exceptions.ConnectionError as exc:
-            log.warning("Request to algorithm store failed")
-            log.exception(exc)
+            log.exception("Request to algorithm store failed", exc_info=exc)
             response = None
 
     if response is None:
@@ -192,15 +189,15 @@ def request_algo_store(
 
 def _contains_localhost(url: str) -> bool:
     """Check if the url refers to localhost address"""
-    return url.startswith(HTTP_LOCALHOST) or url.startswith(LINUX_LOCALHOST)
+    return url.startswith((HTTP_LOCALHOST, LINUX_LOCALHOST))
 
 
 def _execute_algo_store_request(
     algo_store_url: str,
     endpoint: str,
     method: str,
-    param_dict: dict = None,
-    headers: dict = None,
+    param_dict: dict | None = None,
+    headers: dict | None = None,
 ) -> requests.Response:
     """
     Send a request to the algorithm store to whitelist this vantage6 HQ URL for the
@@ -227,12 +224,10 @@ def _execute_algo_store_request(
         reachable, None is returned
     """
     # Remove trailing slash from base URL
-    if algo_store_url.endswith("/"):
-        algo_store_url = algo_store_url[:-1]
+    algo_store_url = algo_store_url.removesuffix("/")
 
     # Remove leading slash from endpoint to avoid double slashes
-    if endpoint.startswith("/"):
-        endpoint = endpoint[1:]
+    endpoint = endpoint.removeprefix("/")
 
     param_dict = param_dict if param_dict is not None else {}
     headers = headers if headers is not None else {}

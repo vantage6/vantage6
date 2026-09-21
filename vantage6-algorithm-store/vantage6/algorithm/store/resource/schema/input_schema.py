@@ -4,9 +4,8 @@ Marshmallow schemas for validating input data for the API.
 
 import json
 
-import marshmallow.validate as validate
 from jsonschema import validate as json_validate
-from marshmallow import Schema, ValidationError, fields, validates_schema
+from marshmallow import Schema, ValidationError, fields, validate, validates_schema
 
 from vantage6.common.enum import (
     AlgorithmArgumentType,
@@ -177,14 +176,16 @@ class FunctionInputSchema(_NameDescriptionSchema):
                             f"float, while the conditional argument '{conditional_on}' "
                             "requires a float"
                         ) from exc
-                elif conditional_type == AlgorithmArgumentType.BOOLEAN:
-                    if conditional_value.lower() not in ["true", "false", "1", "0"]:
-                        raise ValidationError(
-                            f"Conditional value '{conditional_value}' is not a valid "
-                            "boolean, while the conditional argument "
-                            f"'{conditional_on}' requires a boolean. Please use 'true',"
-                            " 'false', '1', or '0'"
-                        )
+                elif (
+                    conditional_type == AlgorithmArgumentType.BOOLEAN
+                    and conditional_value.lower() not in ["true", "false", "1", "0"]
+                ):
+                    raise ValidationError(
+                        f"Conditional value '{conditional_value}' is not a valid "
+                        "boolean, while the conditional argument "
+                        f"'{conditional_on}' requires a boolean. Please use 'true',"
+                        " 'false', '1', or '0'"
+                    )
 
     @staticmethod
     def _check_circular_conditions(arguments: list[dict]) -> None:
@@ -244,7 +245,7 @@ class _MixedBaseTypeField(fields.Field):
     """
 
     def _deserialize(self, value, attr, data, **kwargs):
-        if isinstance(value, str) or isinstance(value, int) or isinstance(value, float):
+        if isinstance(value, (str, int, float)):
             return value
         else:
             raise ValidationError("Values should be str, int or float")
@@ -381,8 +382,8 @@ class ArgumentInputSchema(_NameDescriptionSchema):
                 try:
                     json_list = json.loads(default)
                     if not isinstance(json_list, list):
-                        raise ValueError(f"Not a list: {json_list}")
-                except ValueError as exc:
+                        raise TypeError(f"Not a list: {json_list}")
+                except (ValueError, TypeError) as exc:
                     raise ValidationError(
                         f"Default value '{default}' is not a valid JSON array, while "
                         f"the argument type {type_} requires a JSON array"
@@ -394,10 +395,10 @@ class ArgumentInputSchema(_NameDescriptionSchema):
                 try:
                     json_list = json.loads(default)
                     if not isinstance(json_list, list):
-                        raise ValueError(f"Not a list: {json_list}")
+                        raise TypeError(f"Not a list: {json_list}")
                     for value in json_list:
                         int(value)
-                except ValueError as exc:
+                except (ValueError, TypeError) as exc:
                     raise ValidationError(
                         f"Default value '{default}' is not a valid JSON array of "
                         f"integers, while the argument type {type_} requires a JSON "
@@ -407,10 +408,10 @@ class ArgumentInputSchema(_NameDescriptionSchema):
                 try:
                     json_list = json.loads(default)
                     if not isinstance(json_list, list):
-                        raise ValueError(f"Not a list: {json_list}")
+                        raise TypeError(f"Not a list: {json_list}")
                     for value in json_list:
                         float(value)
-                except ValueError as exc:
+                except (ValueError, TypeError) as exc:
                     raise ValidationError(
                         f"Default value '{default}' is not a valid JSON array of "
                         f"floats, while the argument type {type_} requires a JSON array"
@@ -436,9 +437,12 @@ class ArgumentInputSchema(_NameDescriptionSchema):
 
         # if there are both allowed values and a default value, validate that the
         # default value is one of the allowed values
-        if data.get("default_value") and data.get("allowed_values"):
-            if data.get("default_value") not in data.get("allowed_values"):
-                raise ValidationError("Default value is not one of the allowed values")
+        if (
+            data.get("default_value")
+            and data.get("allowed_values")
+            and data.get("default_value") not in data.get("allowed_values")
+        ):
+            raise ValidationError("Default value is not one of the allowed values")
 
 
 class UIVisualizationInputSchema(_NameDescriptionSchema):

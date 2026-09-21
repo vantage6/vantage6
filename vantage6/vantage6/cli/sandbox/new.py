@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 
 import click
@@ -106,6 +107,11 @@ from vantage6.cli.utils import prompt_config_name
     help="Local chart repository to use.",
 )
 @click.option(
+    "--chart-version",
+    default=None,
+    help="Chart version to use. Ignored if --local-chart-dir is set.",
+)
+@click.option(
     "--external-dbs",
     is_flag=True,
     default=False,
@@ -128,6 +134,7 @@ def cli_new_sandbox(
     namespace: str | None,
     data_dir: str | None,
     local_chart_dir: Path | None,
+    chart_version: str | None,
     with_prometheus: bool,
     external_dbs: bool,
 ) -> None:
@@ -142,12 +149,12 @@ def cli_new_sandbox(
         data_dir = Path(data_dir)
         if not data_dir.exists():
             error(f"Data directory {data_dir} does not exist!")
-            exit(1)
+            sys.exit(1)
 
     hub_name = prompt_config_name(name)
     if HubContext.config_exists(hub_name, False, is_sandbox=True):
         error(f"Configuration {Fore.RED}{hub_name}{Style.RESET_ALL} already exists!")
-        exit(1)
+        sys.exit(1)
 
     # If using external databases, prompt for database URIs
     external_db_uris = None
@@ -191,4 +198,5 @@ def cli_new_sandbox(
         add_dataset=add_dataset,
         custom_data_dir=data_dir,
         local_chart_dir=local_chart_dir,
+        chart_version=chart_version,
     )

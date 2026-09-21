@@ -1,4 +1,4 @@
-from typing import Self
+from typing import Any, ClassVar, Self
 
 import bcrypt
 from sqlalchemy import Column, DateTime, String, select
@@ -17,7 +17,7 @@ class Authenticatable(Base):
 
     # fields
     type = Column(String(50))
-    __mapper_args__ = {
+    __mapper_args__: ClassVar[dict[str, Any]] = {
         "polymorphic_identity": "authenticatable",
         "polymorphic_on": type,
     }

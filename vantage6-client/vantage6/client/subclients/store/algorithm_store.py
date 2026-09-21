@@ -9,14 +9,11 @@ from vantage6.client.subclients.store.rule import StoreRuleSubClient
 from vantage6.client.subclients.store.user import StoreUserSubClient
 
 
-class AlgorithmStoreSubClient(ClientBase.SubClient):
+class AlgorithmStoreSubClient(ClientBase.AlgorithmStoreSubClientBase):
     """Subclient for the algorithm store."""
 
     def __init__(self, parent: ClientBase):
         super().__init__(parent)
-        self.url = None
-        self.store_id = None
-
         self.base_client = self.parent
 
         self.role = StoreRoleSubClient(self)
@@ -24,28 +21,6 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
         self.user = StoreUserSubClient(self)
         self.policy = PolicySubClient(self)
         self.review = ReviewSubClient(self)
-
-    def set(self, id_: int) -> dict:
-        """ "
-        Set the algorithm store to use for the client.
-
-        Parameters
-        ----------
-        id_ : int
-            The id of the algorithm store.
-
-        Returns
-        -------
-        dict
-            The algorithm store.
-        """
-        store = self.get(id_)
-        try:
-            self.url = f"{store['url']}{store['api_path']}"
-            self.store_id = id_
-        except KeyError:
-            self.parent.log.error("Algorithm store URL could not be set.")
-        return store
 
     @post_filtering(iterable=False)
     def get(self, id_: int) -> dict:
@@ -73,8 +48,8 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
     @post_filtering(iterable=True)
     def list(
         self,
-        name: str = None,
-        url: str = None,
+        name: str | None = None,
+        url: str | None = None,
         collaboration: int | None = None,
         page: int = 1,
         per_page: int = 10,
@@ -184,10 +159,10 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
     @post_filtering(iterable=False)
     def update(
         self,
-        id_: int = None,
-        name: str = None,
-        collaboration: int = None,
-        all_collaborations: bool = None,
+        id_: int | None = None,
+        name: str | None = None,
+        collaboration: int | None = None,
+        all_collaborations: bool | None = None,
     ) -> dict:
         """Update an algorithm store.
 
@@ -226,7 +201,7 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
             data["collaboration_id"] = collaboration
         return self.parent.request(f"algorithmstore/{id_}", method="patch", json=data)
 
-    def delete(self, id_: int = None) -> None:
+    def delete(self, id_: int | None = None) -> None:
         """Delete an algorithm store.
 
         Parameters

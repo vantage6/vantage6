@@ -14,7 +14,11 @@ def check_devspace_installed() -> None:
     try:
         # Try to run devspace --version to verify it's working
         result = subprocess.run(
-            ["devspace", "--version"], capture_output=True, text=True, timeout=10
+            ["devspace", "--version"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
         )
         if result.returncode != 0:
             _message_devspace_not_installed()

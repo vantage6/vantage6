@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any, ClassVar
+
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, select
 from sqlalchemy.orm import relationship
 
@@ -38,11 +40,11 @@ class User(Authenticatable):
         Sessions that the user has created
     """
 
-    _hidden_attributes = ["password"]
+    _hidden_attributes: ClassVar[list[str]] = ["password"]
 
     # overwrite id with linked id to the authenticatable
     id = Column(Integer, ForeignKey("authenticatable.id"), primary_key=True)
-    __mapper_args__ = {
+    __mapper_args__: ClassVar[dict[str, Any]] = {
         "polymorphic_identity": "user",
     }
 

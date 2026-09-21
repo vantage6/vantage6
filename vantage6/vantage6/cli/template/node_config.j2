@@ -7,6 +7,11 @@ node:
   name: {{ node.name | default('put-your-node-name-here') }}
   apiKey: {{ node.apiKey | default('put-your-api-key-here') }}
 
+  # When true, the node verifies at startup that algorithm network isolation is
+  # enforced by the Kubernetes cluster (NetworkPolicies). Set to false for
+  # development and sandbox environments only.
+  production: {{ node.production | default(true) }}
+
   # Keycloak configuration
   keycloak:
     url: {{ node.keycloak.url | default('http://vantage6-auth-kc-service.vantage6.svc.cluster.local:7680') }}

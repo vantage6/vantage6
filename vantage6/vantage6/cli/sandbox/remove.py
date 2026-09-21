@@ -1,4 +1,5 @@
 import itertools
+import sys
 from pathlib import Path
 from shutil import rmtree
 
@@ -43,9 +44,9 @@ def cli_sandbox_remove(
             name = select_configuration_questionnaire(
                 type_=InstanceType.HUB, system_folders=False, is_sandbox=True
             )
-        except Exception:
+        except FileNotFoundError:
             error("No configurations could be found!")
-            exit()
+            sys.exit()
 
     ctx = get_context(InstanceType.HUB, name, system_folders=False, is_sandbox=True)
 
@@ -87,7 +88,7 @@ def cli_sandbox_remove(
     data_dirs_nodes = NodeContext.instance_folders("node", "", False)["dev"]
     try:
         rmtree(Path(data_dirs_nodes / ctx.name))
-    except Exception as e:
+    except OSError as e:
         warning(f"Failed to delete data directory {data_dirs_nodes / ctx.name}: {e}")
 
     # remove the hub last - if anything goes wrong, the hub is still there so the

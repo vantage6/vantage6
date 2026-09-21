@@ -110,7 +110,7 @@ class TestResources(TestResourceBase):
 
         # try to view without permissions
         headers = self.get_user_auth_header(org)
-        results, json_data = self.paginated_list(
+        results, _json_data = self.paginated_list(
             f"/api/node?organization_id={org.id}", headers=headers
         )
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
@@ -118,14 +118,14 @@ class TestResources(TestResourceBase):
         # try to view with organization permissions
         rule = Rule.get_by_("node", Scope.ORGANIZATION, Operation.VIEW)
         headers = self.get_user_auth_header(org, rules=[rule])
-        results, json_data = self.paginated_list(
+        results, _json_data = self.paginated_list(
             f"/api/node?organization_id={org.id}", headers=headers
         )
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
         # try to view other organization
         headers = self.get_user_auth_header(rules=[rule])
-        results, json_data = self.paginated_list(
+        results, _json_data = self.paginated_list(
             f"/api/node?organization_id={org.id}", headers=headers
         )
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
@@ -133,21 +133,21 @@ class TestResources(TestResourceBase):
         # try to view with global permissions
         rule = Rule.get_by_("node", Scope.GLOBAL, Operation.VIEW)
         headers = self.get_user_auth_header(rules=[rule])
-        results, json_data = self.paginated_list(
+        results, _json_data = self.paginated_list(
             f"/api/node?organization_id={org.id}", headers=headers
         )
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
         # try to view as node
         headers = self.create_node_and_login(organization=org)
-        results, json_data = self.paginated_list(
+        results, _json_data = self.paginated_list(
             f"/api/node?organization_id={org.id}", headers=headers
         )
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
         # try to view as node from another organization
         headers = self.create_node_and_login()
-        results, json_data = self.paginated_list(
+        results, _json_data = self.paginated_list(
             f"/api/node?organization_id={org.id}", headers=headers
         )
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)

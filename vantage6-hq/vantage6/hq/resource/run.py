@@ -51,7 +51,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     services : dict
         Dictionary with services required for the resource endpoints
     """
-    path = "/".join([api_base, module_name])
+    path = f"{api_base}/{module_name}"
     log.info(f'Setting up "{path}" and subdirectories')
 
     api.add_resource(
@@ -171,9 +171,9 @@ class MultiRunBase(RunBase):
                 return {
                     "msg": f"Task id={args['task_id']} does not exist!"
                 }, HTTPStatus.BAD_REQUEST
-            elif not self.r.allowed_for_org(P.VIEW, task.init_org_id) and not (
-                self.r.v_own.can() and g.user.id == task.init_user_id
-            ):
+            elif not self.r.allowed_for_org_in_col(
+                P.VIEW, task.init_org_id, task.collaboration_id
+            ) and not (self.r.v_own.can() and g.user.id == task.init_user_id):
                 return {
                     "msg": "You lack the permission to view runs for "
                     f"task id={args['task_id']}!"
@@ -535,9 +535,9 @@ class SingleRunBase(RunBase):
         if not run:
             return {"msg": f"Run id={id} not found!"}, HTTPStatus.NOT_FOUND
 
-        if not self.r.allowed_for_org(P.VIEW, run.task.init_org_id) and not (
-            self.r.v_own.can() and run.task.init_user_id == g.user.id
-        ):
+        if not self.r.allowed_for_org_in_col(
+            P.VIEW, run.task.init_org_id, run.task.collaboration_id
+        ) and not (self.r.v_own.can() and run.task.init_user_id == g.user.id):
             return {
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
@@ -724,7 +724,7 @@ class Run(SingleRunBase):
                 .filter(db_Run.finished_at.is_(None))
             ).all()
             if siblings:
-                now = datetime.datetime.now(datetime.timezone.utc)
+                now = datetime.datetime.now(datetime.UTC)
                 reason = (
                     f"Marked as failed because sibling run id={run.id} "
                     f"failed with status '{run.status}'."

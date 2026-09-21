@@ -98,7 +98,7 @@ class BlobStorageMixin:
         uuid_obj = uuid.UUID(run_data_uuid)
         self.log.debug(f"Downloading run data with UUID: {uuid_obj}")
         base_path = self.generate_path_to("blobstream", False)
-        url = f"{base_path}/{str(uuid_obj)}"
+        url = f"{base_path}/{uuid_obj!s}"
         headers = self.headers
         headers["Content-Type"] = "application/octet-stream"
         self.log.debug(f"Streaming run data from {url}")

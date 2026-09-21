@@ -48,7 +48,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     services : dict
         Dictionary with services required for the resource endpoints
     """
-    path = "/".join([api_base, module_name])
+    path = f"{api_base}/{module_name}"
     log.info(f'Setting up "{path}" and subdirectories')
 
     api.add_resource(
@@ -145,7 +145,7 @@ class TaskBase(TaskPostBase):
         self.r: RuleCollection = getattr(self.permissions, module_name)
         # permissions for the run resource are also relevant for the task
         # resource as they are sometimes included
-        self.r_run: RuleCollection = getattr(self.permissions, "run")
+        self.r_run: RuleCollection = self.permissions.run
 
     def _select_schema(self) -> TaskSchema:
         """
@@ -642,16 +642,18 @@ class Task(TaskBase):
         schema = self._select_schema()
 
         # check permissions
-        if not self.r.allowed_for_org(P.VIEW, task.init_org_id) and not (
-            self.r.v_own.can() and g.user and task.init_user_id == g.user.id
-        ):
+        if not self.r.allowed_for_org_in_col(
+            P.VIEW, task.init_org_id, task.collaboration_id
+        ) and not (self.r.v_own.can() and g.user and task.init_user_id == g.user.id):
             return {
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
         # if results are included, check permissions for results
         if (
             self.is_included("results")
-            and not self.r_run.allowed_for_org(P.VIEW, task.init_org_id)
+            and not self.r_run.allowed_for_org_in_col(
+                P.VIEW, task.init_org_id, task.collaboration_id
+            )
             and not (self.r.v_own.can() and g.user and task.init_user_id == g.user.id)
         ):
             return {
@@ -708,9 +710,9 @@ class Task(TaskBase):
             return {"msg": f"Task id={id} not found"}, HTTPStatus.NOT_FOUND
 
         # validate permissions
-        if not self.r.allowed_for_org(P.DELETE, task.init_org_id) and not (
-            self.r.d_own.can() and task.init_user_id == g.user.id
-        ):
+        if not self.r.allowed_for_org_in_col(
+            P.DELETE, task.init_org_id, task.collaboration_id
+        ) and not (self.r.d_own.can() and task.init_user_id == g.user.id):
             return {
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
@@ -856,6 +858,6 @@ class TaskStatusEndpoint(TaskBase):
         bool
             True if the user has permission, False otherwise.
         """
-        return self.r.allowed_for_org(P.VIEW, task.init_org_id) or (
-            self.r.v_own.can() and g.user and task.init_user_id == g.user.id
-        )
+        return self.r.allowed_for_org_in_col(
+            P.VIEW, task.init_org_id, task.collaboration_id
+        ) or (self.r.v_own.can() and g.user and task.init_user_id == g.user.id)

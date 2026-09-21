@@ -1,3 +1,4 @@
+import sys
 from collections.abc import Callable
 from pathlib import Path
 from urllib.parse import urlparse
@@ -130,7 +131,7 @@ def get_external_database_url(instance_type: InstanceType) -> dict:
     parsed = urlparse(database_uri)
     if parsed.scheme not in ["postgresql", "postgres"]:
         error(f"Unsupported database scheme: {parsed.scheme}. Use postgresql://")
-        exit(1)
+        sys.exit(1)
 
     return database_uri
 
@@ -251,7 +252,7 @@ def select_configuration_questionnaire(
         )
 
     if not choices:
-        raise Exception("No configurations could be found!")
+        raise FileNotFoundError("No configurations could be found!")
 
     # pop the question
     try:
@@ -260,4 +261,4 @@ def select_configuration_questionnaire(
         ).unsafe_ask()
     except KeyboardInterrupt:
         error("Aborted by user!")
-        exit(1)
+        sys.exit(1)

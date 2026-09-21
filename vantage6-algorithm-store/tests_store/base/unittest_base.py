@@ -2,7 +2,9 @@ import os
 import unittest
 from http import HTTPStatus
 from unittest.mock import Mock, patch
+from uuid import uuid1
 
+import jwt
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -107,10 +109,10 @@ class TestResources(unittest.TestCase):
     def register_user(
         self,
         username: str = "test_user",
-        user_roles: list[Role] = None,
-        user_rules: list[Rule] = None,
+        user_roles: list[Role] | None = None,
+        user_rules: list[Rule] | None = None,
         organization_id: int = 1,
-        authenticate_mock: Mock = None,
+        authenticate_mock: Mock | None = None,
         auth: bool = True,
     ) -> User:
         user = User(username=username, organization_id=organization_id)
@@ -147,3 +149,23 @@ class TestResources(unittest.TestCase):
                 rules=role["rules"],
             )
             new_role.save()
+
+    def login_node(self) -> dict:
+        """
+        Build headers with a real node JWT (mirrors vantage6-hq's `login_node` test
+        helper), for testing endpoints that recognize nodes via the
+        `vantage6_client_type` claim rather than a registered store `User`.
+
+        Returns
+        -------
+        dict
+            Authorization header with a valid node bearer token.
+        """
+        mock_claims = {
+            "sub": str(uuid1()),
+            "vantage6_client_type": "node",
+            "exp": 9999999999,
+            "iat": 0,
+        }
+        mock_token = jwt.encode(mock_claims, MOCK_PRIVATE_KEY_PEM, algorithm="RS256")
+        return {"Authorization": f"Bearer {mock_token}"}

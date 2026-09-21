@@ -7,7 +7,7 @@ from sqlalchemy import create_engine
 
 from vantage6.common import error, info
 
-from vantage6.algorithm.tools.error_handling import handle_pandas_errors
+from vantage6.algorithm.tools.error_handling import handle_data_errors
 from vantage6.algorithm.tools.exceptions import DataReadError
 
 from vantage6.algorithm.decorator.action import data_extraction
@@ -15,7 +15,7 @@ from vantage6.algorithm.decorator.action import data_extraction
 _SPARQL_RETURN_FORMAT = CSV
 
 
-@handle_pandas_errors
+@handle_data_errors
 @data_extraction
 def read_csv(connection_details: dict) -> pd.DataFrame:
     """
@@ -48,14 +48,14 @@ def _read_csv(connection_details: dict) -> pd.DataFrame:
         error(f"File not found: {e}")
         # pylint: disable=raise-missing-from
         raise DataReadError(f"File not found: {e}")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         error(f"Error reading CSV file: {e}")
         # pylint: disable=raise-missing-from
         raise DataReadError(f"Error reading CSV file: {e}")
     return df
 
 
-@handle_pandas_errors
+@handle_data_errors
 @data_extraction
 def read_parquet(connection_details: dict) -> pd.DataFrame:
     """
@@ -87,14 +87,14 @@ def _read_parquet(connection_details: dict) -> pd.DataFrame:
         error(f"File not found: {e}")
         # pylint: disable=raise-missing-from
         raise DataReadError(f"File not found: {e}")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         error(f"Error reading Parquet file: {e}")
         # pylint: disable=raise-missing-from
         raise DataReadError(f"Error reading Parquet file: {e}")
     return df
 
 
-@handle_pandas_errors
+@handle_data_errors
 @data_extraction
 def read_excel(connection_details: dict, sheet_name: str | None = None) -> pd.DataFrame:
     """
@@ -137,14 +137,14 @@ def _read_excel(
         error(f"File not found: {e}")
         # pylint: disable=raise-missing-from
         raise DataReadError(f"File not found: {e}")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         error(f"Error reading Excel file: {e}")
         # pylint: disable=raise-missing-from
         raise DataReadError(f"Error reading Excel file: {e}")
     return df
 
 
-@handle_pandas_errors
+@handle_data_errors
 @data_extraction
 def read_sparql_database(connection_details: dict, query: str) -> pd.DataFrame:
     """
@@ -180,7 +180,7 @@ def _read_sparql_database(connection_details: dict, query: str) -> pd.DataFrame:
 
     try:
         df = pd.read_csv(io.StringIO(result))
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         error(f"Error reading SPARQL data: {e}")
         # pylint: disable=raise-missing-from
         raise DataReadError(f"Error reading SPARQL data: {e}")
@@ -230,7 +230,7 @@ def _sqldb_uri_preprocess(database_uri: str) -> str:
         return database_uri
 
 
-@handle_pandas_errors
+@handle_data_errors
 @data_extraction
 def read_sql_database(connection_details: dict, query: str) -> pd.DataFrame:
     """

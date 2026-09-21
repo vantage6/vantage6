@@ -8,7 +8,6 @@ import time
 import uuid
 from itertools import groupby
 from pathlib import Path
-from typing import Tuple
 
 from kubernetes import client as k8s_client, config, watch
 from kubernetes.client.rest import ApiException
@@ -36,6 +35,7 @@ from vantage6.common.kubernetes.utils import database_env_label
 
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.node.common.task_cleanup import delete_run_related_pods
+from vantage6.cli.utils_kubernetes import replace_localhost_for_k8s
 
 from vantage6.node.enum import KillInitiator
 from vantage6.node.globals import (
@@ -56,6 +56,7 @@ from vantage6.node.k8s.exceptions import (
 from vantage6.node.k8s.jobpod_state_to_run_status_mapper import (
     compute_run_pod_status,
 )
+from vantage6.node.k8s.network_isolation import validate_algorithm_isolation
 from vantage6.node.k8s.run_io import RunIO
 from vantage6.node.util import get_parent_id
 
@@ -83,9 +84,9 @@ class ContainerManager:
         # /var/run/secrets/kubernetes.io/serviceaccount/.
         try:
             config.load_incluster_config()
-        except Exception as e:
+        except Exception:
             self.log.exception("Error loading Kubernetes configuration")
-            raise e
+            raise
 
         # Get the location where the file is stored on the host system,
         self.host_data_dir = self.ctx.config["task_dir"]
@@ -190,6 +191,21 @@ class ContainerManager:
 
         return True
 
+    def validate_algorithm_isolation(self) -> tuple[bool, str]:
+        """
+        Verify that algorithm containers cannot reach the public internet.
+
+        Returns
+        -------
+        tuple[bool, str]
+            (is_isolated, message)
+        """
+        return validate_algorithm_isolation(
+            core_api=self.core_api,
+            task_namespace=self.task_namespace,
+            log=self.log,
+        )
+
     def _setup_policies(self, config: dict) -> dict:
         """
         Set up policies for the node.
@@ -216,6 +232,22 @@ class ContainerManager:
                 "This means that all algorithms are allowed to run on this node."
             )
         return policies
+
+    def _get_image_pull_policy(self) -> str:
+        """
+        Determine the Kubernetes image pull policy from the node's policies.
+
+        Returns
+        -------
+        str
+            "Always" if the algorithm image must always be pulled (the
+            default), otherwise "IfNotPresent" so a locally built image can
+            be used without a registry.
+        """
+        require_algorithm_pull = self._policies.get(
+            NodePolicy.REQUIRE_ALGORITHM_PULL.value, True
+        )
+        return "Always" if require_algorithm_pull else "IfNotPresent"
 
     def _get_database_metadata(self) -> dict:
         """
@@ -362,8 +394,7 @@ class ContainerManager:
         RunStatus
             Returns the status of the run
         """
-        init_org_ref = task_info.get("init_org", {})
-        init_org_id = init_org_ref.get("id") if init_org_ref else None
+        init_org_id = task_info["init_org"]["id"]
         self.log.debug(
             "[Algorithm run %s - requested by org %s] Setting up algorithm run",
             run_id,
@@ -418,8 +449,8 @@ class ContainerManager:
         except DataFrameNotFound as e:
             self.log.info(e)
             return RunStatus.DATAFRAME_NOT_FOUND
-        except Exception as e:
-            self.log.exception(e)
+        except Exception:
+            self.log.exception("Unknown error in creating volume mounts")
             return RunStatus.UNKNOWN_ERROR
 
         # Set environment variables for the algorithm client. This client is used
@@ -508,14 +539,10 @@ class ContainerManager:
                 priv_regs, image, run_io.run_id
             )
 
-        require_algorithm_pull = self.ctx.config.get("node", {}).get(
-            "require_algorithm_pull", True
-        )
-
         container = k8s_client.V1Container(
             name=run_io.container_name,
             image=image,
-            image_pull_policy="Always" if require_algorithm_pull else "IfNotPresent",
+            image_pull_policy=self._get_image_pull_policy(),
             tty=True,
             volume_mounts=_volume_mounts,
             env=io_env_vars,
@@ -537,7 +564,8 @@ class ContainerManager:
             annotations={
                 "run_id": str(run_io.run_id),
                 "task_id": str(task_id),
-                "task_parent_id": str(parent_task_id),
+                "task_parent_id": str(parent_task_id) if parent_task_id else "",
+                "init_org_id": str(init_org_id),
                 "action": action.value,
                 "session_id": str(session_id),
                 "df_name": df_details.get("name") if df_details else "",
@@ -649,7 +677,7 @@ class ContainerManager:
             self.core_api.create_namespaced_secret(
                 namespace=self.task_namespace, body=secret
             )
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             self.log.error(
                 f"Error creating Docker login secret for image {image}: {exc}"
             )
@@ -682,6 +710,14 @@ class ContainerManager:
         task_id: int
             Task ID
         """
+        if not self.share_algorithm_logs:
+            self.log.info(
+                "Algorithm logs will not be shared with HQ for run %s because "
+                "share_algorithm_logs is disabled.",
+                run_io.run_id,
+            )
+            return
+
         w = watch.Watch()
         try:
             pod_list = self.core_api.list_namespaced_pod(
@@ -708,7 +744,7 @@ class ContainerManager:
                     },
                     namespace="/tasks",
                 )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             self.log.error(f"Error while streaming logs for run {run_io.run_id}: {e}")
         finally:
             w.stop()
@@ -829,7 +865,7 @@ class ContainerManager:
         mount_path: str,
         type_: str | None = None,
         read_only: bool = False,
-    ) -> Tuple[k8s_client.V1Volume, k8s_client.V1VolumeMount]:
+    ) -> tuple[k8s_client.V1Volume, k8s_client.V1VolumeMount]:
         """
         Create a volume and its corresponding volume mount
 
@@ -871,7 +907,7 @@ class ContainerManager:
         run_io: RunIO,
         function_arguments: bytes,
         databases_to_use: list[dict],
-    ) -> Tuple[
+    ) -> tuple[
         list[k8s_client.V1Volume],
         list[k8s_client.V1VolumeMount],
         dict[str, str],
@@ -1122,7 +1158,7 @@ class ContainerManager:
             for file_ in Path(run_io.session_file_manager.local_session_folder).glob(
                 "*.parquet"
             )
-            if not file_.stem == SESSION_STATE_FILENAME
+            if file_.stem != SESSION_STATE_FILENAME
         }
         # check that requested dataframes are a subset of available dataframes
         if requested_dataframes and not requested_dataframes.issubset(
@@ -1175,7 +1211,7 @@ class ContainerManager:
             )
             ok = False
 
-        if source_database["label"] not in self.databases.keys():
+        if source_database["label"] not in self.databases:
             self.log.error(
                 "The database used in the data extraction step does not exist."
             )
@@ -1233,7 +1269,7 @@ class ContainerManager:
                 allowed_algorithms = [allowed_algorithms]
             try:
                 evaluated_img_wo_tag = get_image_name_wo_tag(evaluated_img)
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001
                 self.log.warning(
                     "Could not parse image with name %s: %s",
                     evaluated_img,
@@ -1244,7 +1280,7 @@ class ContainerManager:
                 if not self._is_regex_pattern(allowed_algo):
                     try:
                         allowed_wo_tag = get_image_name_wo_tag(allowed_algo)
-                    except Exception as exc:
+                    except Exception as exc:  # noqa: BLE001
                         self.log.warning(
                             "Could not parse allowed_algorithm policy with name %s: %s",
                             allowed_algo,
@@ -1297,23 +1333,54 @@ class ContainerManager:
             # get the store from the task_info
             try:
                 store_id = task_info["algorithm_store"]["id"]
-            except Exception:
+            except Exception:  # noqa: BLE001
                 store_id = None
             if store_id:
-                store = self.client.algorithm_store.get(store_id)
-                store_from_task = store["url"]
+                store_info = self.client.algorithm_store.get(store_id)
+                store_from_task = store_info["url"]
                 # check if the store matches any of the regex cases
                 if isinstance(allowed_stores, str):
                     allowed_stores = [allowed_stores]
-                for store in allowed_stores:
-                    if not self._is_regex_pattern(store):
+                store_url_whitelisted = False
+                for allowed_store in allowed_stores:
+                    if not self._is_regex_pattern(allowed_store):
                         # check if string matches exactly
-                        if store == store_from_task:
-                            store_whitelisted = True
+                        if allowed_store == store_from_task:
+                            store_url_whitelisted = True
                     else:
-                        expr_ = re.compile(store)
+                        expr_ = re.compile(allowed_store)
                         if expr_.match(store_from_task):
-                            store_whitelisted = True
+                            store_url_whitelisted = True
+
+                if store_url_whitelisted:
+                    # The store's URL is whitelisted, but that alone does not prove
+                    # that the evaluated image is actually a registered, approved
+                    # algorithm in that store - HQ is the one asserting that
+                    # association, and HQ is not fully trusted here. Re-verify
+                    # directly with the store itself instead of trusting HQ's claim.
+                    #
+                    # If the store is registered under a `localhost` URL (dev env)
+                    # translate it to an address reachable from inside this pod
+                    reachable_store_url = replace_localhost_for_k8s(
+                        store_info["url"], os.environ.get("V6_K8S_NODE_NAME") or None
+                    )
+                    self.client.algorithm_store.url = (
+                        f"{reachable_store_url}{store_info['api_path']}"
+                    )
+                    self.client.algorithm_store.store_id = store_id
+                    algorithm = self.client.algorithm_store.get_algorithm(evaluated_img)
+                    if algorithm:
+                        store_whitelisted = True
+                    else:
+                        self.log.warning(
+                            "Algorithm store %s did not confirm that image %s is a "
+                            "registered, approved algorithm there. Denying the "
+                            "allowed_algorithm_stores policy for this image. This "
+                            "can also happen if the algorithm store does not yet "
+                            "support node verification requests.",
+                            store_from_task,
+                            evaluated_img,
+                        )
 
         allowed_from_whitelist = not allowed_algorithms or algorithm_whitelisted
         allowed_from_store = not allowed_stores or store_whitelisted
@@ -1375,7 +1442,7 @@ class ContainerManager:
         ]
         # Use common characters used in regular expressions as a proxy
         # for if this string is in fact a regex.
-        return any((c in pattern for c in common_regex_chars))
+        return any(c in pattern for c in common_regex_chars)
 
     def is_running(self, label: str) -> bool:
         """
@@ -1395,7 +1462,7 @@ class ContainerManager:
             namespace=self.task_namespace,
             label_selector=f"app={label}",
         )
-        return True if pods.items else False
+        return bool(pods.items)
 
     def process_next_completed_run(self) -> Result:
         """
@@ -1434,9 +1501,10 @@ class ContainerManager:
 
             # Check if any of the jobs is completed
             for job in finished_jobs:
+                annotations = job.metadata.annotations
                 # Create helper object to process the output of the job
                 run_io = RunIO.from_dict(
-                    job.metadata.annotations,
+                    annotations,
                     self.client,
                     task_dir_extension=self.ctx.config.get("dev", {}).get(
                         "task_dir_extension"
@@ -1453,16 +1521,18 @@ class ContainerManager:
                 self.log.info(
                     "Sending results of run_id=%s and task_id=%s back to HQ",
                     run_io.run_id,
-                    job.metadata.annotations["task_id"],
+                    annotations["task_id"],
                 )
 
+                parent_id = annotations["task_parent_id"]
                 result = Result(
                     run_id=run_io.run_id,
-                    task_id=job.metadata.annotations["task_id"],
+                    task_id=int(annotations["task_id"]),
                     logs=logs,
                     data=results,
                     status=status,
-                    parent_id=job.metadata.annotations["task_parent_id"],
+                    parent_id=int(parent_id) if parent_id else None,
+                    init_org_id=int(annotations["init_org_id"]),
                 )
 
                 self.num_active_tasks -= 1
@@ -1484,7 +1554,7 @@ class ContainerManager:
         """
         try:
             logs = self.__get_job_pod_logs(run_io=run_io)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             self.log.warning(
                 f"Error while getting logs of job {run_io.container_name}: {e}"
             )
@@ -1588,7 +1658,7 @@ class ContainerManager:
         self._kill_algorithm_runs()
 
     def kill_algorithm_runs(
-        self, kill_list: list[ToBeKilled] = None
+        self, kill_list: list[ToBeKilled] | None = None
     ) -> list[KilledRun]:
         """
         Kill algorithm runs currently running on this node.
@@ -1624,7 +1694,7 @@ class ContainerManager:
 
     def _kill_algorithm_runs(
         self,
-        kill_list: list[ToBeKilled] = None,
+        kill_list: list[ToBeKilled] | None = None,
         initiator: KillInitiator = KillInitiator.USER,
     ) -> list[KilledRun]:
         """
@@ -1750,10 +1820,12 @@ class ContainerManager:
             core_api=self.core_api,
             batch_api=self.batch_api,
         )
+        annotations = job_to_kill.metadata.annotations
+        parent_id = annotations["task_parent_id"]
         return KilledRun(
-            run_id=job_to_kill.metadata.annotations["run_id"],
-            task_id=job_to_kill.metadata.annotations["task_id"],
-            parent_id=job_to_kill.metadata.annotations["task_parent_id"],
+            run_id=int(annotations["run_id"]),
+            task_id=int(annotations["task_id"]),
+            parent_id=int(parent_id) if parent_id else None,
             logs=logs,
         )
 

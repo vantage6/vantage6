@@ -1,3 +1,5 @@
+import sys
+
 import pandas as pd
 
 from vantage6.common import info
@@ -148,7 +150,7 @@ class MockNetwork:
                     "install your algorithm package in this environment?"
                 )
                 error("Exiting...")
-                exit(1)
+                sys.exit(1)
 
         # In the case the user provides a pandas DataFrame we need to create a dataframe
         # record in HQ.

@@ -1,4 +1,5 @@
 import pandas as pd
+import rich.errors
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
@@ -154,7 +155,7 @@ def rich_session_table(
                 session["last_used_at"],
                 str(session["ready"]),
             )
-        except Exception as e:
+        except rich.errors.NotRenderableError as e:
             table.add_row("Error", "-", "-", "-", "-", "-")
             console.print(
                 f"An error occurred while parsing a row in the session table: {e}"
@@ -225,7 +226,7 @@ def rich_dataframe_table(dataframes: dict, print_table: bool = True) -> None | T
                 str(len(dataframe["columns"])),
                 str(dataframe["ready"]),
             )
-        except Exception as e:
+        except rich.errors.NotRenderableError as e:
             table.add_row("Error", "-", "-", "-", "-", "-")
             console.print(
                 f"An error occurred while parsing a row in the dataframe table: {e}"
