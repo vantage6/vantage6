@@ -7,6 +7,7 @@ from vantage6.common.globals import NodePolicy
 
 from vantage6.node.k8s.container_manager import ContainerManager
 
+
 def _get_null_logger(name="null_logger_container_manager"):
     logger = logging.getLogger(name)
     logger.addHandler(logging.NullHandler())
@@ -195,7 +196,6 @@ class TestIsImageAllowed(unittest.TestCase):
         )
 
 
-
 class TestGetImagePullPolicy:
     def _manager_with_policies(self, policies: dict) -> ContainerManager:
         manager = ContainerManager.__new__(ContainerManager)
@@ -214,7 +214,6 @@ class TestGetImagePullPolicy:
         manager = self._manager_with_policies({})
         assert manager._get_image_pull_policy() == "Always"
 
-        
 
 if __name__ == "__main__":
     unittest.main()

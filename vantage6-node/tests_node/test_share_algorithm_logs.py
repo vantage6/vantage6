@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import Mock, patch
 
 from vantage6.common.enum import RunStatus
+
 from vantage6.node import Node
 from vantage6.node.k8s.container_manager import ContainerManager
 from vantage6.node.k8s.data_classes import KilledRun, Result
@@ -29,7 +30,9 @@ class TestContainerManagerLogSharing(unittest.TestCase):
         fake_watch = Mock()
         fake_watch.stream.return_value = ["hello from algorithm"]
 
-        with patch("vantage6.node.k8s.container_manager.watch.Watch", return_value=fake_watch):
+        with patch(
+            "vantage6.node.k8s.container_manager.watch.Watch", return_value=fake_watch
+        ):
             manager._ContainerManager__log_stream(run_io=run_io, task_id=99)
 
         manager.socket_io.emit.assert_not_called()
@@ -40,7 +43,9 @@ class TestContainerManagerLogSharing(unittest.TestCase):
         fake_watch = Mock()
         fake_watch.stream.return_value = ["hello from algorithm"]
 
-        with patch("vantage6.node.k8s.container_manager.watch.Watch", return_value=fake_watch):
+        with patch(
+            "vantage6.node.k8s.container_manager.watch.Watch", return_value=fake_watch
+        ):
             manager._ContainerManager__log_stream(run_io=run_io, task_id=99)
 
         manager.socket_io.emit.assert_called_once_with(
@@ -82,9 +87,11 @@ class TestFinishedTaskLogSharing(unittest.TestCase):
     def _run_one_iteration(self, node: Node) -> None:
         # __send_updates_finished_tasks loops forever with a trailing
         # time.sleep(1); make sleep raise so the loop stops after one pass.
-        with patch("vantage6.node.time.sleep", side_effect=InterruptedError):
-            with self.assertRaises(InterruptedError):
-                node._Node__send_updates_finished_tasks()
+        with (
+            patch("vantage6.node.time.sleep", side_effect=InterruptedError),
+            self.assertRaises(InterruptedError),
+        ):
+            node._Node__send_updates_finished_tasks()
 
     def test_logs_redacted_when_sharing_disabled(self):
         node = self._make_node(share_algorithm_logs=False)
@@ -101,9 +108,7 @@ class TestFinishedTaskLogSharing(unittest.TestCase):
         self._run_one_iteration(node)
 
         patch_call = node.client.run.patch.call_args
-        self.assertEqual(
-            patch_call.kwargs["data"]["log"], "sensitive algorithm logs"
-        )
+        self.assertEqual(patch_call.kwargs["data"]["log"], "sensitive algorithm logs")
 
 
 class TestKillContainersLogSharing(unittest.TestCase):
@@ -116,9 +121,7 @@ class TestKillContainersLogSharing(unittest.TestCase):
         node.client.whoami = Mock(id_=1)
         node.k8s_container_manager = Mock()
         node.k8s_container_manager.kill_algorithm_runs.return_value = [
-            KilledRun(
-                run_id=1, task_id=2, parent_id=None, logs="sensitive kill logs"
-            )
+            KilledRun(run_id=1, task_id=2, parent_id=None, logs="sensitive kill logs")
         ]
         return node
 
