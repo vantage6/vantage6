@@ -56,6 +56,10 @@ RUN python -m venv /opt/venv \
 # https://hub.docker.com/layers/library/python/3.10-slim-bookworm/images/sha256-9643927a6fc74bd81b0f1bbb5cce3cb4a491f46b4c5dbee770f28e575f180015
 FROM docker.io/library/python@sha256:9643927a6fc74bd81b0f1bbb5cce3cb4a491f46b4c5dbee770f28e575f180015
 
+ARG TAG=latest
+LABEL version=${TAG}
+LABEL maintainer="Frank Martin <f.martin@iknl.nl>"
+
 ENV PATH="/opt/venv/bin:${PATH}" \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1

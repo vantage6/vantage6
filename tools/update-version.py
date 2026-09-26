@@ -1,7 +1,7 @@
 import re
-import click
-
 from pathlib import Path
+
+import click
 
 
 # from vantage6.common import info
@@ -49,9 +49,7 @@ def update_version_spec(spec: str) -> None:
         info(f"Updating spec to: {spec}")
         with open(file, "r") as f:
             content = f.read()
-            new_content = re.sub(
-                pattern, r'\1\2\g<3>"{}"\5\6\7\8'.format(spec), content
-            )
+            new_content = re.sub(pattern, rf'\1\2\g<3>"{spec}"\5\6\7\8', content)
 
         info("Writing to file")
         with open(file, "w") as f:
@@ -87,7 +85,7 @@ def update_version(version: str) -> None:
             content = f.read()
             new_content = re.sub(
                 pattern,
-                r"\g<1>{}, {}, {},\3\4\5\6\7\8".format(major, minor, patch),
+                rf"\g<1>{major}, {minor}, {patch},\3\4\5\6\7\8",
                 content,
             )
 
@@ -128,7 +126,7 @@ def update_post(post: str) -> None:
         info(f"File: {file_}")
         with open(file_, "r") as f:
             content = f.read()
-            new_content = re.sub(pattern, r"\1\2\3\4\5\g<6>{}\8".format(post), content)
+            new_content = re.sub(pattern, rf"\1\2\3\4\5\g<6>{post}\8", content)
 
         info("Writing to file")
         with open(file_, "w") as f:
@@ -159,17 +157,16 @@ def update_version_docker_files(version: str) -> None:
     with open(file, "w") as f:
         f.write(new_content)
 
-    # update version label in node-and-server and algorithm store dockerfile
-    info("Updating version in Dockerfiles for node, server and algorithm store")
+    # node/server Dockerfiles pin a python base image directly; no ARG BASE= to update.
+    info("Updating version in Dockerfile for algorithm store")
     files = [
-        Path("../docker/node-and-server.Dockerfile"),
         Path("../docker/algorithm-store.Dockerfile"),
     ]
     for file in files:
         with open(file, "r") as f:
             content = f.read()
             new_content = re.sub(
-                r"(ARG BASE=)(\d+.\d+)", r"\g<1>{}".format(major_minor), content
+                r"(ARG BASE=)(\d+.\d+)", rf"\g<1>{major_minor}", content
             )
         with open(file, "w") as f:
             f.write(new_content)

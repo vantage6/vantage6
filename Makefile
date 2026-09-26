@@ -188,18 +188,27 @@ support-ssh-tunnel-image:
 		$(if ${_condition_push},--push .,.)
 
 image:
+	make node-image
+	make server-image
+
+node-image:
 	@echo "Building ${REGISTRY}/node:${TAG}"
-	@echo "Building ${REGISTRY}/server:${TAG}"
 	docker buildx build \
 		--tag ${REGISTRY}/node:${TAG} \
-		--tag ${REGISTRY}/server:${TAG} \
 		$(if ${_condition_tag_latest},--tag ${REGISTRY}/node:latest) \
+		--build-arg TAG=${TAG} \
+		--platform ${PLATFORMS} \
+		-f ./docker/node.Dockerfile \
+		$(if ${_condition_push},--push .,.)
+
+server-image:
+	@echo "Building ${REGISTRY}/server:${TAG}"
+	docker buildx build \
+		--tag ${REGISTRY}/server:${TAG} \
 		$(if ${_condition_tag_latest},--tag ${REGISTRY}/server:latest) \
 		--build-arg TAG=${TAG} \
-		--build-arg BASE=${BASE} \
-		--build-arg REGISTRY=${REGISTRY} \
 		--platform ${PLATFORMS} \
-		-f ./docker/node-and-server.Dockerfile \
+		-f ./docker/server.Dockerfile \
 		$(if ${_condition_push},--push .,.)
 
 algorithm-store-image:
