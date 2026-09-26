@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 from unittest import TestCase
 
@@ -50,6 +51,20 @@ class TestNodeDockerfile(TestCase):
         _builder_stage, final_stage = self.content.split("FROM ")[1:]
         self.assertIn("ARG TAG=", final_stage)
         self.assertIn("LABEL version=${TAG}", final_stage)
+
+    def test_copies_the_readme(self):
+        # setup.py reads ../README.md; pip install -e . fails without this COPY.
+        self.assertIn("COPY README.md", self.content)
+
+    def test_builder_and_final_stage_use_the_same_base_image(self):
+        # Pinned separately per FROM line rather than via a shared ARG.
+        images = re.findall(r"^FROM (\S+)", self.content, re.MULTILINE)
+        self.assertEqual(len(images), 2)
+        self.assertEqual(
+            images[0],
+            images[1],
+            "builder and final stage must pin the exact same base image",
+        )
 
 
 class TestMakefileBuildsThisDockerfile(TestCase):
