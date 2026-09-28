@@ -3,11 +3,14 @@ import logging
 from http import HTTPStatus
 
 from vantage6.common import logger_name
+from vantage6.common.enum import AlgorithmStepType, RunStatus
 
 from vantage6.hq.model import (
     Collaboration,
     Organization,
     Rule,
+    Run,
+    Task,
 )
 from vantage6.hq.model.rule import Operation, Scope
 
@@ -154,6 +157,40 @@ class TestResources(TestResourceBase):
 
         # cleanup
         node.delete()
+
+    def test_container_token_rejected_once_task_has_finished(self):
+        node = self.create_node()
+        task = Task(
+            image="some-image",
+            collaboration=node.collaboration,
+            init_org=node.organization,
+            runs=[
+                Run(
+                    status=RunStatus.PENDING.value,
+                    action=AlgorithmStepType.CENTRAL_COMPUTE.value,
+                    organization=node.organization,
+                )
+            ],
+        )
+        task.save()
+
+        headers = self.login_container(node=node, task=task)
+
+        # the container token is valid while the task is still active
+        result = self.app.get(
+            f"/api/organization/{node.organization.id}", headers=headers
+        )
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+
+        # once the task's run(s) complete, the same token must be rejected
+        for run in task.runs:
+            run.status = RunStatus.COMPLETED.value
+            run.save()
+
+        result = self.app.get(
+            f"/api/organization/{node.organization.id}", headers=headers
+        )
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
     def test_create_organization_permissions(self):
         # try creating an organization without permissions

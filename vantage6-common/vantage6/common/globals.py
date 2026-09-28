@@ -47,6 +47,10 @@ ENV_VAR_EQUALS_REPLACEMENT = "!"
 DEFAULT_API_PATH = "/api"
 DEFAULT_PROMETHEUS_EXPORTER_PORT = 7603
 
+# Default validity period (in hours) of a container token, before it expires
+# independent of the task's status.
+DEFAULT_CONTAINER_TOKEN_EXPIRES_HOURS = 168
+
 # Maximum interval to wait for requesting results from a task
 MAX_INTERVAL = 300
 

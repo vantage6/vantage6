@@ -102,12 +102,18 @@ hq:
       name: sqlalchemy.engine
     {% endif %}
 
-  {% if hq.jwt is defined and hq.jwt.secret is defined %}
-  # Setting constant secret for the JWT token. This is not recommended for production
-  # environments.
   jwt:
+    {% if hq.jwt is defined and hq.jwt.secret is defined %}
+    # Setting constant secret for the JWT token. This is not recommended for production
+    # environments.
     secret: {{ hq.jwt.secret }}
-  {% endif %}
+    {% endif %}
+    # How long a container token (used by an algorithm container to call back into
+    # HQ while its task runs) remains valid, in hours, before it expires. This is a
+    # backstop only: a container token also stops working as soon as its task
+    # finishes, regardless of this setting. Increase it if your algorithms can run
+    # longer than this. Defaults to 168 hours (one week).
+    container_token_expires_hours: {{ hq.jwt.container_token_expires_hours | default(168) }}
 
   # Whether to forward ports using kubernetes or not. If set to false, the ports will
   # not be forwarded. You are then responsible yourself for forwarding the ports.
