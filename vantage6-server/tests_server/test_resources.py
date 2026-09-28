@@ -190,7 +190,7 @@ class TestResources(unittest.TestCase):
             task = Task(
                 image="some-image",
                 collaboration=collaboration,
-                runs=[Run(status=TaskStatus.PENDING)],
+                runs=[Run(organization=organization, status=TaskStatus.PENDING)],
             )
             task.save()
 
@@ -3265,7 +3265,7 @@ class TestResources(unittest.TestCase):
         col.save()
         task = Task(collaboration=col, image="some-image", init_org=org)
         task.save()
-        res = Run(task=task, status=TaskStatus.PENDING)
+        res = Run(task=task, organization=org, status=TaskStatus.PENDING)
         res.save()
 
         headers = self.create_node_and_login(organization=org)
@@ -4760,6 +4760,75 @@ class TestResources(unittest.TestCase):
         self.assertEqual(child_run_1.status, TaskStatus.KILLED)
         self.assertEqual(child_run_2.status, TaskStatus.KILLED)
         self.assertEqual(child_run_done.status, TaskStatus.COMPLETED)
+
+    def test_container_token_denied_for_unassigned_node(self):
+        # a task assigned to org_a; a node from a different organization in the
+        # same collaboration must not be able to obtain a container token for it
+        org_a = Organization()
+        org_b = Organization()
+        col = Collaboration(organizations=[org_a, org_b])
+        task = Task(collaboration=col, image="some-image", init_org=org_a)
+        task.save()
+        Run(task=task, organization=org_a, status=TaskStatus.PENDING).save()
+
+        _, api_key_b = self.create_node(organization=org_b, collaboration=col)
+
+        result = self.app.post(
+            "/api/token/container",
+            headers=self.login_node(api_key_b),
+            json={"image": "some-image", "task_id": task.id},
+        )
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
+    def test_container_token_granted_for_assigned_node(self):
+        org_a = Organization()
+        org_b = Organization()
+        col = Collaboration(organizations=[org_a, org_b])
+        task = Task(collaboration=col, image="some-image", init_org=org_a)
+        task.save()
+        Run(task=task, organization=org_a, status=TaskStatus.PENDING).save()
+
+        _, api_key_a = self.create_node(organization=org_a, collaboration=col)
+
+        result = self.app.post(
+            "/api/token/container",
+            headers=self.login_node(api_key_a),
+            json={"image": "some-image", "task_id": task.id},
+        )
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+        self.assertIn("container_token", result.json)
+
+    def test_container_token_multi_run_assignment(self):
+        # a task can have multiple runs (one per assigned organization); the check
+        # must consider all of them, not just the first or last run
+        org_a = Organization()
+        org_b = Organization()
+        org_c = Organization()
+        col = Collaboration(organizations=[org_a, org_b, org_c])
+        task = Task(collaboration=col, image="some-image", init_org=org_a)
+        task.save()
+        Run(task=task, organization=org_a, status=TaskStatus.PENDING).save()
+        Run(task=task, organization=org_c, status=TaskStatus.PENDING).save()
+
+        _, api_key_a = self.create_node(organization=org_a, collaboration=col)
+        _, api_key_b = self.create_node(organization=org_b, collaboration=col)
+        _, api_key_c = self.create_node(organization=org_c, collaboration=col)
+
+        body = {"image": "some-image", "task_id": task.id}
+        result_a = self.app.post(
+            "/api/token/container", headers=self.login_node(api_key_a), json=body
+        )
+        self.assertEqual(result_a.status_code, HTTPStatus.OK)
+
+        result_c = self.app.post(
+            "/api/token/container", headers=self.login_node(api_key_c), json=body
+        )
+        self.assertEqual(result_c.status_code, HTTPStatus.OK)
+
+        result_b = self.app.post(
+            "/api/token/container", headers=self.login_node(api_key_b), json=body
+        )
+        self.assertEqual(result_b.status_code, HTTPStatus.UNAUTHORIZED)
 
 
 if __name__ == "__main__":
