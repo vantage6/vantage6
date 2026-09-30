@@ -266,41 +266,31 @@ class BlobStream(BlobStreamBase):
             else:
                 data = request.get_data()
                 self.storage_adapter.store_blob(result_uuid, data)
+        except ChunkedUploadError as e:
+            log.error("Chunked upload rejected for run data %s: %s", result_uuid, e)
+            return {
+                "msg": (
+                    "Could not receive a chunked-input part. Parts must stay "
+                    "below the server's per-part limit; the vantage6 client "
+                    f"uses {HTTP_UPLOAD_CHUNK_SIZE} bytes."
+                ),
+            }, HTTPStatus.BAD_REQUEST
         except Exception as e:
-            # "unable to receive chunked part" is the error uwsgi raises
-            # *most commonly* when a single chunked-input part exceeds
-            # ``--chunked-input-limit``, but the same error string can come
-            # from other transport-level issues (client disconnects mid-part,
-            # malformed chunk framing, …). Because we can't know which one
-            # we hit, the response is a generic 400 — a 413 would assert
-            # too much. The enforced limit lives in uwsgi's own
-            # configuration, so the message recommends the client-side part
-            # size rather than quoting a number this process cannot verify.
-            if "unable to receive chunked part" in str(e).lower():
-                log.error("Chunked upload rejected for run data %s: %s", result_uuid, e)
-                return {
-                    "msg": (
-                        "Upload rejected while receiving a chunked-input "
-                        "part — a part likely exceeded the server's "
-                        "per-part limit. The vantage6 client sends parts "
-                        f"of {HTTP_UPLOAD_CHUNK_SIZE} bytes; if you are "
-                        "calling the API directly, use a similar part "
-                        "size. Check the server logs to confirm the cause."
-                    ),
-                }, HTTPStatus.BAD_REQUEST
             log.error(f"Error uploading result: {e}")
             return {"msg": "Error uploading result!"}, HTTPStatus.INTERNAL_SERVER_ERROR
 
         return {"uuid": result_uuid}, HTTPStatus.CREATED
 
 
+class ChunkedUploadError(Exception):
+    """uwsgi could not receive a chunked-input part (oversized, timeout, disconnect)."""
+
+
 class UwsgiChunkedStream:
     """
     File-like reader over a uwsgi chunked HTTP request body.
 
-    Each call to ``uwsgi.chunked_read(timeout)`` returns the next HTTP
-    chunk delivered by the client; the argument is a per-call timeout in
-    seconds (uwsgi defaults to 4).
+    ``uwsgi.chunked_read`` takes a per-call timeout in seconds, not a size.
     """
 
     # TODO: Using uwsgi in python in combination with flask is not ideal.
@@ -309,6 +299,12 @@ class UwsgiChunkedStream:
         self.read_timeout_seconds = read_timeout_seconds
         self._buffer = b""
         self._eof = False
+
+    def _read_chunk(self) -> bytes:
+        try:
+            return uwsgi.chunked_read(self.read_timeout_seconds)
+        except OSError as e:
+            raise ChunkedUploadError(str(e)) from e
 
     def read(self, size=-1):
         """
@@ -319,7 +315,7 @@ class UwsgiChunkedStream:
             chunks = [self._buffer]
             self._buffer = b""
             while not self._eof:
-                chunk = uwsgi.chunked_read(self.read_timeout_seconds)
+                chunk = self._read_chunk()
                 if not chunk:
                     self._eof = True
                     break
@@ -327,7 +323,7 @@ class UwsgiChunkedStream:
             return b"".join(chunks)
 
         while len(self._buffer) < size and not self._eof:
-            chunk = uwsgi.chunked_read(self.read_timeout_seconds)
+            chunk = self._read_chunk()
             if not chunk:
                 self._eof = True
                 break

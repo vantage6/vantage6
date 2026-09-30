@@ -9,8 +9,7 @@ if [ -z "$VANTAGE6_CONFIG_LOCATION" ]; then
     VANTAGE6_CONFIG_LOCATION="/mnt/config.yaml"
 fi
 
-# chunked-input-limit: reject any single chunked part over 16 MiB;
-# well-behaved clients send 256 KiB parts (HTTP_UPLOAD_CHUNK_SIZE)
+# chunked-input-limit must match MAX_CHUNKED_INPUT_PART (16 MiB)
 uwsgi \
     --http :80 \
     --gevent 1000 \
