@@ -12,10 +12,22 @@ module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
 
+def _delete_blob_after_run_delete(mapper, connection, target) -> None:
+    """
+    Forward a ``Run`` deletion to the active storage service.
+    """
+    service = AzureStorageService._active
+    if service is not None:
+        service.delete_blob_after_run_delete(mapper, connection, target)
+
+
 class AzureStorageService:
     """
     A service for managing Azure Blob Storage.
     """
+
+    _active: "AzureStorageService | None" = None
+    _listener_registered: bool = False
 
     def __init__(self, config: dict):
         """
@@ -63,7 +75,16 @@ class AzureStorageService:
         self.container_client = self.blob_service_client.get_container_client(
             container_name
         )
-        event.listen(Run, "after_delete", self.delete_blob_after_run_delete)
+        self._become_active()
+
+    def _become_active(self) -> None:
+        """
+        Make this instance the target of the ``Run`` after_delete cascade.
+        """
+        AzureStorageService._active = self
+        if not AzureStorageService._listener_registered:
+            event.listen(Run, "after_delete", _delete_blob_after_run_delete)
+            AzureStorageService._listener_registered = True
 
     def get_blob(self, blob_name: str) -> bytes:
         """
