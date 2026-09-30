@@ -59,8 +59,23 @@ INTERVAL_MULTIPLIER = 1.5
 # Default timeout for requests to the server
 REQUEST_TIMEOUT = 300
 
-# Default chunk size for streaming inputs and results
+# In-memory buffer size when reading a stream (downloads, file reads).
 DEFAULT_CHUNK_SIZE = 1024 * 1024  # 1MB
+
+# Wire-level chunk size for HTTP Transfer-Encoding: chunked uploads of run data
+# and encrypted streams. Must stay well below the server-side per-part limit
+# (``MAX_CHUNKED_INPUT_PART`` here, ``--chunked-input-limit`` on uwsgi, whose
+# built-in default is 1 MiB): uwsgi counts each part plus its 2-byte CRLF
+# framing against that limit, so the largest usable part is limit - 2 and
+# anything bigger fails with ``IOError: unable to receive chunked part``.
+HTTP_UPLOAD_CHUNK_SIZE = 256 * 1024  # 256 KiB
+
+# Per-part cap (in bytes) that `v6 server start` passes to uwsgi as
+# ``--chunked-input-limit`` (server.sh sets the same value inline).
+# Deliberately much larger than ``HTTP_UPLOAD_CHUNK_SIZE`` so the friendly
+# client always has headroom, and small enough to reject obviously hostile
+# bodies before they consume server memory.
+MAX_CHUNKED_INPUT_PART = 16 * 1024 * 1024  # 16 MiB
 
 
 class InstanceType(str, Enum):
