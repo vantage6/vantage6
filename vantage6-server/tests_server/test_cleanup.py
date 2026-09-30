@@ -87,10 +87,7 @@ class TestCleanupRunsIsolated(unittest.TestCase):
         self.session.add(run)
         self.session.commit()
 
-        storage_adapter = AzureStorageService(config["large_result_store"])
-        cleanup.cleanup_runs_data(
-            config, storage_adapter=storage_adapter, include_input=True
-        )
+        cleanup.cleanup_runs_data(config, include_input=True)
         self.session.refresh(run)
 
         expected_calls = [call(self.uuid), call("input")]
