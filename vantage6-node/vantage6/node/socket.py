@@ -176,15 +176,7 @@ class NodeTaskNamespace(ClientNamespace):
         for killed in killed_ids:
             self.emit(
                 "algorithm_status_change",
-                {
-                    "run_id": killed.run_id,
-                    "task_id": killed.task_id,
-                    "collaboration_id": self.node_worker_ref.client.collaboration_id,
-                    "node_id": self.node_worker_ref.client.whoami.id_,
-                    "status": RunStatus.KILLED.value,
-                    "organization_id": self.node_worker_ref.client.whoami.organization_id,
-                    "parent_id": killed.parent_id,
-                },
+                {"run_id": killed.run_id, "status": RunStatus.KILLED.value},
                 namespace="/tasks",
             )
 

@@ -638,7 +638,7 @@ class ContainerManager:
         )
 
         # start streaming logs to HQ
-        self._stream_logs(run_io=run_io, task_id=task_id)
+        self._stream_logs(run_io=run_io)
 
         self.num_active_tasks += 1
 
@@ -684,7 +684,7 @@ class ContainerManager:
             return None
         return secret
 
-    def _stream_logs(self, run_io: RunIO, task_id: int) -> None:
+    def _stream_logs(self, run_io: RunIO) -> None:
         """
         Stream logs to HQ.
 
@@ -692,14 +692,12 @@ class ContainerManager:
         ----------
         run_io: RunIO
             RunIO object that contains information about the run
-        task_id: int
-            Task ID
         """
         self.log.info(f"Starting thread to stream logs for run {run_io.run_id}")
-        thread = threading.Thread(target=self.__log_stream, args=(run_io, task_id))
+        thread = threading.Thread(target=self.__log_stream, args=(run_io,))
         thread.start()
 
-    def __log_stream(self, run_io: RunIO, task_id: int) -> None:
+    def __log_stream(self, run_io: RunIO) -> None:
         """
         Stream logs to HQ.
 
@@ -707,8 +705,6 @@ class ContainerManager:
         ----------
         run_io: RunIO
             RunIO object that contains information about the run
-        task_id: int
-            Task ID
         """
         if not self.share_algorithm_logs:
             self.log.info(
@@ -736,12 +732,7 @@ class ContainerManager:
             ):
                 self.socket_io.emit(
                     "algorithm_log",
-                    {
-                        "collaboration_id": self.client.collaboration_id,
-                        "run_id": run_io.run_id,
-                        "task_id": task_id,
-                        "log": log_line,
-                    },
+                    {"run_id": run_io.run_id, "log": log_line},
                     namespace="/tasks",
                 )
         except Exception as e:  # noqa: BLE001

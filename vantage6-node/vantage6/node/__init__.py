@@ -62,7 +62,6 @@ from vantage6.node.globals import (
 from vantage6.node.k8s.container_manager import ContainerManager
 from vantage6.node.k8s.data_classes import Result, ToBeKilled
 from vantage6.node.socket import NodeTaskNamespace
-from vantage6.node.util import get_parent_id
 
 __version__ = importlib.metadata.version(__package__)
 
@@ -444,9 +443,7 @@ class Node:
                     "log": f"Unrecognized action {run_to_execute['action']}",
                 },
             )
-            self.__emit_algorithm_status_change(
-                task["id"], run_id, get_parent_id(task), RunStatus.FAILED
-            )
+            self.__emit_algorithm_status_change(run_id, RunStatus.FAILED)
             return
 
         # Only compute containers need a token as they are the only ones that should
@@ -496,24 +493,19 @@ class Node:
         # send socket event to alert everyone of task status change. In case the
         # namespace is not connected, the socket notification will not be sent to other
         # nodes, but the task will still be processed
-        self.__emit_algorithm_status_change(
-            task["id"], run_id, get_parent_id(task), run_status
-        )
+        self.__emit_algorithm_status_change(run_id, run_status)
 
-    def __emit_algorithm_status_change(
-        self, task_id: int, run_id: int, parent_id: int | None, status: RunStatus
-    ) -> None:
+    def __emit_algorithm_status_change(self, run_id: int, status: RunStatus) -> None:
         """
         Emit a socket event to alert everyone of task status change.
 
+        HQ derives the task, collaboration and node details from the run, so only
+        the run ID and the new status are sent.
+
         Parameters
         ----------
-        task_id : int
-            Task ID
         run_id : int
             Run ID
-        parent_id : int | None
-            ID of the parent task, if any
         status : RunStatus
             Status of the algorithm run
         """
@@ -529,15 +521,7 @@ class Node:
 
         self.socketIO.emit(
             "algorithm_status_change",
-            data={
-                "node_id": self.client.whoami.id_,
-                "status": status.value,
-                "run_id": run_id,
-                "task_id": task_id,
-                "collaboration_id": self.client.collaboration_id,
-                "organization_id": self.client.whoami.organization_id,
-                "parent_id": parent_id,
-            },
+            data={"run_id": run_id, "status": status.value},
             namespace="/tasks",
         )
 
@@ -584,9 +568,7 @@ class Node:
         )
 
         # notify HQ, other nodes, and clients about algorithm status change
-        self.__emit_algorithm_status_change(
-            results.task_id, results.run_id, results.parent_id, results.status
-        )
+        self.__emit_algorithm_status_change(results.run_id, results.status)
 
     def __print_connection_error_logs(self):
         """Print error message when node cannot find HQ"""
