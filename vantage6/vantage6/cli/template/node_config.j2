@@ -104,23 +104,15 @@ node:
   {% if node.encryption is defined %}
   encryption:
     # Whether encryption is enabled or not. This should be the same as the `encrypted`
-    # setting of the collaboration to which this node belongs.
+    # setting of the collaboration to which this node belongs. If enabled, create the
+    # private key with `v6 node create-private-key`.
     enabled: {{ node.encryption.enabled | default(false) }}
-
-    # Location to the private key file. Required if encryption is enabled.
-    {% if node.encryption.private_key is defined and node.encryption.private_key != '' %}
-    private_key: {{ node.encryption.private_key | default('/path/to/private_key.pem') }}
-    {% else %}
-    # private_key: /path/to/private_key.pem
-    {% endif %}
   {% else %}
   encryption:
     # Whether encryption is enabled or not. This should be the same as the `encrypted`
-    # setting of the collaboration to which this node belongs.
+    # setting of the collaboration to which this node belongs. If enabled, create the
+    # private key with `v6 node create-private-key`.
     enabled: false
-
-    # Location to the private key file. Required if encryption is enabled.
-    # private_key: /path/to/private_key.pem
   {% endif %}
 
   # Port for the node proxy to run on

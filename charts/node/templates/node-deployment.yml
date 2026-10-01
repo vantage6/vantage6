@@ -54,6 +54,12 @@ spec:
           readOnly: true
         - name: node-logs
           mountPath: /mnt/log
+        {{- if .Values.node.encryption.enabled }}
+        # path must match PRIVATE_KEY_MOUNT_PATH in vantage6-node/vantage6/node/globals.py
+        - name: private-key
+          mountPath: /app/encryption
+          readOnly: true
+        {{- end }}
         {{- range .Values.node.databases.fileBased }}
         - name: database-volume-{{ .name }}
           mountPath: /app/databases/{{ .name }}.{{ .type }}
@@ -72,6 +78,17 @@ spec:
       - name: node-logs
         persistentVolumeClaim:
           claimName: {{ .Release.Name }}-logs-pvc
+      {{- if .Values.node.encryption.enabled }}
+      # Created by `v6 node create-private-key` (not by this chart), so that it is
+      # kept when the node is stopped and only deleted by `v6 node remove`.
+      - name: private-key
+        secret:
+          secretName: {{ .Release.Name }}-private-key
+          defaultMode: 0400
+          items:
+          - key: private_key.pem
+            path: private_key.pem
+      {{- end }}
       {{- range .Values.node.databases.fileBased }}
       - name: database-volume-{{ .name }}
         persistentVolumeClaim:

@@ -465,32 +465,24 @@ class RSACryptor(CryptorBase):
         return Cipher(algorithms.AES(key), modes.CTR(iv), backend=default_backend())
 
     @staticmethod
-    def create_new_rsa_key(path: Path) -> rsa.RSAPrivateKey:
+    def create_new_rsa_key_pem() -> bytes:
         """
-        Creates a new RSA key for E2EE.
-
-        Parameters
-        ----------
-        path: Path
-            The path to the private key file.
+        Creates a new RSA key for E2EE and returns it PEM-encoded, without writing it
+        anywhere.
 
         Returns
         -------
-        RSAPrivateKey
-            The newly created private key.
+        bytes
+            The newly created private key in PEM format.
         """
         private_key = rsa.generate_private_key(
             backend=default_backend(), key_size=4096, public_exponent=65537
         )
-
-        path.write_bytes(
-            private_key.private_bytes(
-                encoding=serialization.Encoding.PEM,
-                format=serialization.PrivateFormat.TraditionalOpenSSL,
-                encryption_algorithm=serialization.NoEncryption(),
-            )
+        return private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.TraditionalOpenSSL,
+            encryption_algorithm=serialization.NoEncryption(),
         )
-        return private_key
 
     @property
     def public_key_bytes(self) -> bytes:

@@ -55,6 +55,7 @@ from vantage6.cli.context.node import NodeContext
 
 from vantage6.node import proxy_server
 from vantage6.node.globals import (
+    PRIVATE_KEY_MOUNT_PATH,
     SLEEP_BTWN_NODE_LOGIN_TRIES,
     TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET,
     TIME_LIMIT_RETRY_CONNECT_NODE,
@@ -638,30 +639,12 @@ class Node:
         # start thread to keep the connection alive by refreshing the token
         self.client.auto_renew_token()
 
-    def private_key_filename(self) -> Path:
-        """Get the path to the private key."""
-
-        # FIXME: Code duplication: vantage6/cli/node.py uses a lot of the same
-        #   logic. Suggest moving this to ctx.get_private_key()
-        filename = self.config["encryption"]["private_key"]
-
-        # filename may be set to an empty string
-        if not filename:
-            filename = "private_key.pem"
-
-        # If we're running dockerized, the location may have been overridden
-        filename = os.environ.get("PRIVATE_KEY", filename)
-
-        # If ctx.get_data_file() receives an absolute path, its returned as-is
-        fullpath = Path(self.ctx.get_data_file(filename))
-
-        return fullpath
-
     def setup_encryption(self) -> None:
         """
         Setup encryption for the node if it is part of an encrypted collaboration.
 
-        This uses the private key file that is specified in the node configuration.
+        This uses the private key that the Helm chart mounts into the node from the
+        node's private key secret.
         """
         encrypted_collaboration = self.client.is_encrypted_collaboration()
         encrypted_node = self.config["encryption"]["enabled"]
@@ -674,9 +657,13 @@ class Node:
 
         if encrypted_collaboration:
             self.log.warning("Enabling encryption!")
-            # TODO (HC) check that encryption works with k8s-based node
-            private_key_file = self.private_key_filename()
-            self.client.setup_encryption(private_key_file)
+            if not PRIVATE_KEY_MOUNT_PATH.is_file():
+                raise FileNotFoundError(
+                    f"Encryption is enabled, but no private key was found at "
+                    f"{PRIVATE_KEY_MOUNT_PATH}. The node's private key secret is "
+                    "probably missing: create it with 'v6 node create-private-key'."
+                )
+            self.client.setup_encryption(PRIVATE_KEY_MOUNT_PATH)
 
         else:
             self.log.warning("Disabling encryption!")

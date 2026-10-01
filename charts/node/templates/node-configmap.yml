@@ -16,9 +16,6 @@ data:
     share_algorithm_logs: {{ .Values.node.share_algorithm_logs }}
     encryption:
       enabled: {{ .Values.node.encryption.enabled }}
-      {{- if .Values.node.encryption.enabled }}
-      private_key: {{ .Values.node.encryption.private_key }}
-      {{- end }}
     logging:
       backup_count: {{ .Values.node.logging.backup_count }}
       datefmt: {{ .Values.node.logging.datefmt | quote }}

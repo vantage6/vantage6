@@ -28,21 +28,33 @@ messages to the other parties.
     and decryption of the payload.
 
 When the node starts, it checks that the public key stored at HQ
-is derived from the local private key. If this is not the case, the node
-will replace the public key at HQ.
+is derived from its private key. If HQ has no public key for the organization yet, the
+node uploads it. If HQ has a different public key, the node refuses to start rather than
+replacing it, as that would break decryption for the organization's other nodes and
+users.
 
 .. warning::
     If an organization has multiple nodes and/or users, they must use the same
     private key.
 
 To create a new keypair, you can use the command ``v6 node create-private-key``.
-This will create the keypair and share the public key with HQ. The private key
-is stored locally. If a private key already exists locally, the existing key is reused
-(unless you use the ``--force`` flag). This way, it is easy to configure multiple nodes
-to use the same key.
+This will create the keypair and share the public key with HQ. The private key is
+stored in a Kubernetes secret (``<node release name>-private-key``) in the namespace of
+the node, which is mounted into the node when it starts. No private key file is written
+to disk. If the secret already exists, the existing key is reused (unless you use the
+``--overwrite`` flag). ``v6 node new`` offers to create the key when you enable
+encryption.
 
-It is also possible to generate the keypair yourself and upload the public key yourself
-via UI, Python client, or REST API.
+If your organization already has a public key at HQ, a new key is not generated: store
+the organization's existing private key with ``--from-file`` instead (``v6 node new``
+asks for it). Replacing the organization's keypair requires
+``--replace-organization-key``.
+
+The secret is kept when the node is stopped or restarted, and is deleted when the node
+is removed with ``v6 node remove``.
+
+To use an existing private key, store it with
+``v6 node create-private-key --from-file <path to private key>``.
 
 .. warning::
 

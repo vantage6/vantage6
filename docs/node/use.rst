@@ -62,8 +62,8 @@ e.g. ``v6 node start --help`` .
 +---------------------+------------------------------------------------+
 | ``v6 node list``    | List all existing nodes                        |
 +---------------------+------------------------------------------------+
-| ``v6 node           | Create and upload a new public key for your    |
-| create-private-key``| organization                                   |
+| ``v6 node           | Create the node's private key (stored in a     |
+| create-private-key``| Kubernetes secret) and upload its public key   |
 +---------------------+------------------------------------------------+
 | ``v6 node           | Update the API key in your node configuration  |
 | set-api-key``       | file                                           |
