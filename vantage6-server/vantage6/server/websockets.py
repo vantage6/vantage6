@@ -8,7 +8,7 @@ from flask_socketio import Namespace, emit, join_room, leave_room
 
 from vantage6.common import logger_name
 from vantage6.common.globals import AuthStatus
-from vantage6.common.task_status import has_task_failed
+from vantage6.common.task_status import TaskStatus, has_task_failed
 from vantage6.backend.common.metrics import Metrics
 from vantage6.server import db
 from vantage6.server.model.authenticatable import Authenticatable
@@ -42,6 +42,41 @@ class DefaultSocketNamespace(Namespace):
                 f"{session.type} {session.auth_id} is not allowed."
             )
         return session.type == "node"
+
+    def _get_own_run(self, node: db.Node, run_id: int | None) -> db.Run | None:
+        """
+        Get a run that the given node is allowed to report on.
+
+        The run must exist, be assigned to the node's organization and belong to a
+        task in the node's collaboration. Anything else in the event data should be
+        derived from the returned run rather than taken from the event.
+
+        Parameters
+        ----------
+        node: db.Node
+            Node that sent the socket event
+        run_id: int | None
+            ID of the run as reported by the node
+
+        Returns
+        -------
+        db.Run | None
+            The run, or None if it does not exist or does not belong to the node
+        """
+        run = db.Run.get(run_id) if run_id is not None else None
+        if (
+            run is None
+            or run.organization_id != node.organization_id
+            or run.task.collaboration_id != node.collaboration_id
+        ):
+            self.log.warning(
+                "Node %s sent a socket event for run %s, which does not exist or is "
+                "not assigned to this node. Ignoring event.",
+                node.id,
+                run_id,
+            )
+            return None
+        return run
 
     def on_connect(self) -> None:
         """
@@ -232,33 +267,45 @@ class DefaultSocketNamespace(Namespace):
         ----------
         data: Dict
             Dictionary containing parameters on the updated algorithm status.
-            It should look as follows:
+            Only ``run_id`` and ``status`` are used; all other properties are
+            derived from the run and the node that sent the event:
 
             .. code:: python
 
                 {
-                    # node_id where algorithm container was running
-                    "node_id": 1,
+                    # run for which the algorithm was running
+                    "run_id": 1,
                     # new status of algorithm container
                     "status": "active",
-                    # result_id for which the algorithm was running
-                    "result_id": 1,
-                    # collaboration_id for which the algorithm was running
-                    "collaboration_id": 1
                 }
         """
         if not self._is_node():
             return
 
-        run_id = data.get("run_id")
-        task_id = data.get("task_id")
-        collaboration_id = data.get("collaboration_id")
-        status = data.get("status")
-        node_id = data.get("node_id")
-        organization_id = data.get("organization_id")
-        parent_id = data.get("parent_id")
+        node = db.Node.get(session.auth_id)
+        run = self._get_own_run(node, data.get("run_id"))
+        if run is None:
+            self.__cleanup()
+            return
 
-        job_id = db.Run.get(run_id).task.job_id
+        status = data.get("status")
+        if status not in [s.value for s in TaskStatus]:
+            self.log.warning(
+                "Node %s sent an invalid status '%s' for run %s. Ignoring event.",
+                node.id,
+                status,
+                run.id,
+            )
+            self.__cleanup()
+            return
+
+        run_id = run.id
+        task_id = run.task_id
+        job_id = run.task.job_id
+        parent_id = run.task.parent_id
+        collaboration_id = run.task.collaboration_id
+        node_id = node.id
+        organization_id = node.organization_id
 
         # log event in server logs
         msg = (
@@ -419,34 +466,33 @@ class DefaultSocketNamespace(Namespace):
         Parameters
         ----------
         data: Dict
-            Dictionary containing log message details.
-            It should look as follows:
+            Dictionary containing log message details. Only ``run_id`` and ``log``
+            are used; the task and collaboration are derived from the run:
 
             .. code:: python
 
                 {
-                    "collaboration_id": 1,
                     "run_id": 1,
-                    "task_id": 1,
                     "log": "Log message"
                 }
         """
         if not self._is_node():
             return
 
-        collaboration_id = data.get("collaboration_id")
-        run_id = data.get("run_id")
-        task_id = data.get("task_id")
-        log_message = data.get("log")
+        node = db.Node.get(session.auth_id)
+        run = self._get_own_run(node, data.get("run_id"))
+        if run is None:
+            self.__cleanup()
+            return
 
-        run = db.Run.get(run_id)
+        log_message = data.get("log")
         self._append_log(log_message, run)
         run.save()
 
         emit(
             "algorithm_log",
-            {"run_id": run_id, "task_id": task_id, "log": log_message},
-            room=f"collaboration_{collaboration_id}",
+            {"run_id": run.id, "task_id": run.task_id, "log": log_message},
+            room=f"collaboration_{run.task.collaboration_id}",
         )
 
         self.__cleanup()
