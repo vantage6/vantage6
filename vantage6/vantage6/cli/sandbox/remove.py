@@ -4,6 +4,8 @@ from pathlib import Path
 from shutil import rmtree
 
 import click
+from kubernetes.client.exceptions import ApiException
+from urllib3.exceptions import HTTPError
 
 from vantage6.common import error, warning
 from vantage6.common.globals import InstanceType
@@ -14,6 +16,11 @@ from vantage6.cli.context import get_context
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import InfraComponentName
 from vantage6.cli.hub.remove import cli_hub_remove
+from vantage6.cli.k8s_config import select_k8s_config
+from vantage6.cli.node.common.private_key import (
+    delete_private_key_secret,
+    private_key_secret_name,
+)
 
 
 @click.command()
@@ -52,6 +59,7 @@ def cli_sandbox_remove(
 
     # remove the nodes
     NodeContext.LOGGING_ENABLED = False
+    k8s_config = select_k8s_config()
     configs, _ = NodeContext.available_configurations(system_folders=False)
     node_names = [
         config.name for config in configs if config.name.startswith(f"{ctx.name}-node-")
@@ -83,6 +91,14 @@ def cli_sandbox_remove(
             system_folders=False,
             force=True,
         )
+        # remove the node's private key secret (only present in encrypted sandboxes)
+        try:
+            delete_private_key_secret(node_ctx, k8s_config)
+        except (RuntimeError, ApiException, HTTPError) as exc:
+            warning(
+                f"Failed to delete private key secret "
+                f"'{private_key_secret_name(node_ctx)}': {exc}"
+            )
 
     # remove data files attached to the network
     data_dirs_nodes = NodeContext.instance_folders("node", "", False)["dev"]

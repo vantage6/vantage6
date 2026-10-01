@@ -83,6 +83,7 @@ def populate_hub_sandbox(
     hq_url: str,
     auth_url: str,
     number_of_nodes: int,
+    encrypted: bool = False,
 ) -> dict:
     """
     Populate sandbox hub with basic resources.
@@ -95,6 +96,8 @@ def populate_hub_sandbox(
         The URL of the auth service to connect to.
     number_of_nodes : int
         The number of nodes to create.
+    encrypted : bool
+        Whether to create an encrypted collaboration.
 
     Returns
     -------
@@ -115,6 +118,7 @@ def populate_hub_sandbox(
             number_of_nodes,
             clear_dev_folders=False,
             return_as_dict=True,
+            encrypted=encrypted,
         )
         connect_store(client, store_port=Ports.SANDBOX_ALGO_STORE.value)
     except Exception:  # noqa: BLE001
