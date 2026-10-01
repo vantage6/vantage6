@@ -22,7 +22,7 @@
     "@angular/material-date-fns-adapter": "^22.1.7",
     "@angular/platform-browser": "^22.1.7",
     "@angular/platform-browser-dynamic": "^22.1.7",
-    "@angular/router": "^22.1.7",
+    "@angular/router": "^22.2.0",
     "@ngx-translate/core": "^16.0.4",
     "@ngx-translate/http-loader": "^16.0.1",
     "@observablehq/plot": "^0.6.17",
