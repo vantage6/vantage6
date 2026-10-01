@@ -2,11 +2,12 @@
 Resources below '/<api_base>/token'
 """
 
+import datetime as dt
 import logging
 import pyotp
 import json
 
-from flask import request, g
+from flask import current_app, request, g
 from flask_jwt_extended import (
     jwt_required,
     create_access_token,
@@ -348,7 +349,12 @@ class ContainerToken(ServicesResources):
                 for db_entry in db_task.databases
             ],
         }
-        token = create_access_token(container, expires_delta=False)
+        token = create_access_token(
+            container,
+            expires_delta=dt.timedelta(
+                seconds=current_app.config["CONTAINER_TOKEN_EXPIRES"]
+            ),
+        )
 
         return {"container_token": token}, HTTPStatus.OK
 
