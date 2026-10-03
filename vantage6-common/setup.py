@@ -44,6 +44,7 @@ setup(
         "requests>=2.32.3",
         "schema==0.7.5",
         "setuptools>=67.8.0",
+        "SQLAlchemy==1.4.46",
     ],
     extras_require={
         "dev": [
