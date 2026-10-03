@@ -2,7 +2,7 @@ from __future__ import annotations
 from vantage6.common.globals import APPNAME, InstanceType
 
 from vantage6.common.context import AppContext
-from vantage6.cli.configuration_manager import TestingConfigurationManager
+from vantage6.common.configuration_manager import TestingConfigurationManager
 
 
 class TestContext(AppContext):

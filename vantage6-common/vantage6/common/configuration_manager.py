@@ -321,3 +321,16 @@ class ServerConfigurationManager(ConfigurationManager):
             A new instance of the ServerConfigurationManager.
         """
         return super().from_file(path, conf_class=ServerConfiguration)
+
+
+class TestConfiguration(Configuration):
+    VALIDATORS = {}
+
+
+class TestingConfigurationManager(ConfigurationManager):
+    def __init__(self, name, *args, **kwargs):
+        super().__init__(conf_class=TestConfiguration, name=name)
+
+    @classmethod
+    def from_file(cls, path):
+        return super().from_file(path, conf_class=TestConfiguration)
