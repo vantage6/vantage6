@@ -24,6 +24,7 @@ export enum TaskDatabaseType {
 export enum TaskStatus {
   Pending = 'pending',
   Initializing = 'initializing',
+  PullingImage = 'pulling image',
   Active = 'active',
   Completed = 'completed',
   Failed = 'failed',
