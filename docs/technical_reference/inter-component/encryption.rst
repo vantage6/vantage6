@@ -55,6 +55,8 @@ is removed with ``v6 node remove``.
 
 To use an existing private key, store it with
 ``v6 node create-private-key --from-file <path to private key>``.
+To get the key out of the secret, e.g. for the Python client, UI or another node, use
+``v6 node get-private-key --to-file <path>``.
 
 .. warning::
 

@@ -15,6 +15,7 @@ from vantage6.cli.node.common import create_client_and_authenticate
 from vantage6.cli.node.common.private_key import public_key_base64_from_pem
 from vantage6.cli.node.create_private_key import cli_node_create_private_key
 from vantage6.cli.node.files import cli_node_files
+from vantage6.cli.node.get_private_key import cli_node_get_private_key
 from vantage6.cli.node.list import cli_node_list
 from vantage6.cli.node.new import cli_node_new_configuration
 from vantage6.cli.node.remove import cli_node_remove
@@ -548,6 +549,50 @@ class NodeCLITest(unittest.TestCase):
 
         self.assertEqual(result.exit_code, 1)
         write.assert_not_called()
+
+    def _run_get_private_key(self, args, pem):
+        mod = "vantage6.cli.node.get_private_key"
+        ctx = MagicMock(helm_release_name="vantage6-test-node", is_sandbox=False)
+        ctx.config_exists.return_value = True
+        with (
+            patch("vantage6.cli.common.decorator.get_context", return_value=ctx),
+            patch(f"{mod}.select_k8s_config") as k8s_cfg,
+            patch(f"{mod}.read_private_key_secret", return_value=pem),
+        ):
+            k8s_cfg.return_value = KubernetesConfig(context="ctx", namespace="ns")
+            return CliRunner().invoke(
+                cli_node_get_private_key, ["--name", "test-node", *args]
+            )
+
+    def test_get_private_key_to_file(self):
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            result = self._run_get_private_key(
+                ["--to-file", "key.pem"], TEST_PRIVATE_KEY_PEM
+            )
+            self.assertEqual(result.exit_code, 0, result.output)
+            self.assertEqual(Path("key.pem").read_bytes(), TEST_PRIVATE_KEY_PEM)
+            self.assertEqual(Path("key.pem").stat().st_mode & 0o777, 0o600)
+
+            # existing file is only replaced with --overwrite
+            result = self._run_get_private_key(
+                ["--to-file", "key.pem"], TEST_PRIVATE_KEY_PEM
+            )
+            self.assertEqual(result.exit_code, 1)
+            result = self._run_get_private_key(
+                ["--to-file", "key.pem", "--overwrite"], OTHER_PRIVATE_KEY_PEM
+            )
+            self.assertEqual(result.exit_code, 0, result.output)
+            self.assertEqual(Path("key.pem").read_bytes(), OTHER_PRIVATE_KEY_PEM)
+
+    def test_get_private_key_to_stdout(self):
+        result = self._run_get_private_key([], TEST_PRIVATE_KEY_PEM)
+        self.assertEqual(result.exit_code, 0, result.output)
+        self.assertEqual(result.output, TEST_PRIVATE_KEY_PEM.decode())
+
+    def test_get_private_key_secret_missing(self):
+        result = self._run_get_private_key([], None)
+        self.assertEqual(result.exit_code, 1)
 
     @patch("vantage6.cli.node.common.NodeContext")
     def test_create_private_key_config_not_found(self, context):

@@ -42,6 +42,7 @@ from vantage6.cli.hub.stop import cli_hub_stop
 from vantage6.cli.node.attach import cli_node_attach
 from vantage6.cli.node.create_private_key import cli_node_create_private_key
 from vantage6.cli.node.files import cli_node_files
+from vantage6.cli.node.get_private_key import cli_node_get_private_key
 from vantage6.cli.node.list import cli_node_list
 from vantage6.cli.node.new import cli_node_new_configuration
 from vantage6.cli.node.remove import cli_node_remove
@@ -112,6 +113,7 @@ def cli_node() -> None:
 # Define the commands for the node group
 cli_node.add_command(cli_node_attach, name="attach")
 cli_node.add_command(cli_node_create_private_key, name="create-private-key")
+cli_node.add_command(cli_node_get_private_key, name="get-private-key")
 cli_node.add_command(cli_node_files, name="files")
 cli_node.add_command(cli_node_list, name="list")
 cli_node.add_command(cli_node_new_configuration, name="new")

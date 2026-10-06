@@ -237,6 +237,10 @@ use encryption by running
    client.setup_encryption('/path/to/private/key')
 
 after they authenticate.
+A node administrator of your organization can export the key with
+``v6 node get-private-key --to-file <path>``.
+Make sure the key file is only readable by you, or at most by the other users that
+need it.
 
 Creating a collaboration
 """"""""""""""""""""""""
