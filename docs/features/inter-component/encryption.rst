@@ -39,8 +39,11 @@ will replace the public key at the server.
 To create a new keypair, you can use the command ``v6 node create-private-key``.
 This will create the keypair and share the public key with the server. The private key
 is stored locally. If a private key already exists locally, the existing key is reused
-(unless you use the ``--force`` flag). This way, it is easy to configure multiple nodes
-to use the same key.
+(unless you use the ``--overwrite`` flag). This way, it is easy to configure multiple
+nodes to use the same key.
+
+The private key file is created so that only your user can read it. Keep it that way
+when you copy it, e.g. to other nodes or users (``chmod 600 <file>``).
 
 It is also possible to generate the keypair yourself and upload the public key yourself
 via UI, Python client, or REST API.
