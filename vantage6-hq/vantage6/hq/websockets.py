@@ -5,7 +5,7 @@ from socket import SocketIO
 import jwt
 from flask import request, session
 from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
-from flask_socketio import Namespace, emit, join_room, leave_room
+from flask_socketio import Namespace, disconnect, emit, join_room, leave_room
 
 from vantage6.common import logger_name
 from vantage6.common.enum import RunStatus
@@ -68,32 +68,44 @@ class DefaultSocketNamespace(Namespace):
 
         Note
         ----
-        Note that reconnecting clients are treated the same as new clients.
+        Note that reconnecting clients are treated the same as new clients. Clients
+        that fail to authenticate are disconnected.
 
         """
         self.log.info(f'Client connected: "{request.sid}"')
 
         # try to catch jwt authorization token.
+        # Clients that fail to authenticate are disconnected, so that they cannot
+        # trigger any other socket events. The token events are still sent before
+        # disconnecting, so that nodes know to renew their token and reconnect.
         try:
             verify_jwt_in_request()
 
         except jwt.exceptions.ExpiredSignatureError:
             self.log.error("JWT has expired")
             emit("expired_token", room=request.sid)
+            disconnect()
             return
 
         except jwt.exceptions.InvalidSignatureError:
             self.log.error("Invalid JWT signature")
             emit("invalid_token", room=request.sid)
+            disconnect()
             return
 
         except Exception:
             self.log.exception("Couldn't connect client! No or Invalid JWT token?")
+            disconnect()
             return
 
         # get identity from token.
-        session.auth_id = get_jwt_identity()
-        auth = db.Authenticatable.get_by_keycloak_id(session.auth_id)
+        auth_id = get_jwt_identity()
+        auth = db.Authenticatable.get_by_keycloak_id(auth_id)
+        if auth is None:
+            self.log.warning("No user or node found for keycloak id %s", auth_id)
+            disconnect()
+            return
+        session.auth_id = auth_id
         auth.status = AuthStatus.ONLINE.value
         auth.save()
 

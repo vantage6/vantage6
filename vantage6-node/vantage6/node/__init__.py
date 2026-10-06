@@ -708,8 +708,9 @@ class Node:
         while not self.socketIO.connected:
             if i > TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET:
                 self.log.critical(
-                    "Could not connect to the websocket channels, do you have a "
-                    "slow connection?"
+                    "Could not connect to the websocket channels. Either the "
+                    "connection is slow, or HQ refused the connection because the "
+                    "node could not be authenticated (check the HQ logs)."
                 )
                 sys.exit(1)
             self.log.debug("Waiting for socket connection...")
