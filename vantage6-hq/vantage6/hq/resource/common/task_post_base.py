@@ -4,7 +4,7 @@ import logging
 import uuid
 from http import HTTPStatus
 
-from flask import g, request, url_for
+from flask import g, url_for
 from marshmallow import ValidationError
 from sqlalchemy import select
 
@@ -26,7 +26,10 @@ from vantage6.backend.common.resource.error_handling import (
 )
 
 from vantage6.hq import db
-from vantage6.hq.algo_store_communication import request_algo_store
+from vantage6.hq.algo_store_communication import (
+    get_hq_token_for_stores,
+    request_algo_store,
+)
 from vantage6.hq.dataclass import CreateTaskDB
 from vantage6.hq.permission import (
     Operation as P,
@@ -887,7 +890,9 @@ class TaskPostBase(ServicesResources):
             endpoint="algorithm",
             method="GET",
             params={"image": image},
-            headers={"Authorization": request.headers["Authorization"]},
+            # HQ's own token, never the user's: the store must not receive a token
+            # it could use at HQ, and HQ must not be able to act as the user there
+            headers={"Authorization": f"Bearer {get_hq_token_for_stores()}"},
         )
         if status_code != HTTPStatus.OK:
             raise AlgorithmRetrievalError(

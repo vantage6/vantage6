@@ -1,17 +1,54 @@
 import logging
 import os
+import time
 from http import HTTPStatus
 from urllib.parse import urlparse
 
 import requests
 from flask import Response
+from keycloak import KeycloakOpenID
 
 from vantage6.common.globals import DEFAULT_API_PATH, HTTP_LOCALHOST, LINUX_LOCALHOST
+
+from vantage6.backend.common.auth import get_service_account_in_keycloak
+from vantage6.backend.common.globals import HQ_KEYCLOAK_CLIENT, RequiredBackendEnvVars
 
 from vantage6.hq import db
 
 module_name = __name__.split(".")[-1]
 log = logging.getLogger(module_name)
+
+_hq_store_token: dict = {}
+
+
+def get_hq_token_for_stores() -> str:
+    """
+    Get the token HQ uses to call algorithm stores.
+
+    The token is issued to HQ itself (not to a user) and is only valid at algorithm
+    stores, where it only allows reading approved algorithms.
+
+    Returns
+    -------
+    str
+        Access token
+    """
+    if _hq_store_token.get("expires_at", 0) > time.time():
+        return _hq_store_token["access_token"]
+
+    keycloak_openid = KeycloakOpenID(
+        server_url=os.environ.get(RequiredBackendEnvVars.KEYCLOAK_URL.value),
+        realm_name=os.environ.get(RequiredBackendEnvVars.KEYCLOAK_REALM.value),
+        client_id=HQ_KEYCLOAK_CLIENT,
+        client_secret_key=get_service_account_in_keycloak(
+            HQ_KEYCLOAK_CLIENT
+        ).client_secret,
+    )
+    token = keycloak_openid.token(grant_type="client_credentials")
+    _hq_store_token["access_token"] = token["access_token"]
+    # renew a little before it expires
+    _hq_store_token["expires_at"] = time.time() + token["expires_in"] - 30
+    return token["access_token"]
 
 
 def _check_algorithm_store_online(algorithm_store_url: str) -> bool:

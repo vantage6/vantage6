@@ -4,6 +4,7 @@ One-shot database initialization for HQ
 This script can be run before uWSGI starts to ensure that:
 - default roles exist and are up to date
 - the root organization and root user exist
+- Keycloak issues separate tokens for HQ and for algorithm stores
 
 By doing this in a separate script, we can avoid that multiple processes try to
 create the same database objects concurrently.
@@ -33,6 +34,8 @@ def main() -> None:
     app = HQApp(ctx)
     app.ensure_db_initialized()
     print("HQ database initialized")
+    app.ensure_keycloak_token_setup()
+    print("Keycloak token setup verified")
 
 
 if __name__ == "__main__":

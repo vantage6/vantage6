@@ -1,6 +1,7 @@
 {{- if and .Values.keycloak.realmImport (ne .Values.keycloak.realmImport.enabled false) }}
 {{- $global := .Values.global | default (dict) }}
 {{- $globalKeycloak := $global.keycloak | default (dict) }}
+{{- $storeAdminClientSecret := default $globalKeycloak.storeAdminClientSecret .Values.keycloak.realmImport.store_admin_client_secret }}
 apiVersion: k8s.keycloak.org/v2beta1
 kind: KeycloakRealmImport
 metadata:
@@ -160,6 +161,17 @@ spec:
             - view-clients
             - manage-clients
             - create-client
+      {{- if $storeAdminClientSecret }}
+      - username: service-account-store-admin-client
+        enabled: true
+        serviceAccountClientId: store-admin-client
+        clientRoles:
+          realm-management:
+            - view-users
+      {{- end }}
+    # The audience client scopes and HQ's own client (hq-client) are created by HQ at
+    # startup, also for existing realms. Defining clientScopes here would replace
+    # Keycloak's built-in scopes.
     clients:
       - clientId: {{ default $globalKeycloak.publicClient .Values.keycloak.realmImport.publicClient.name }}
         publicClient: true
@@ -183,6 +195,27 @@ spec:
               claim.name: vantage6_client_type
               claim.value: user
               access.token.claim: "true"
+      # Users log in with this client to get tokens for algorithm stores, which are
+      # not valid at HQ.
+      - clientId: {{ default "public_store_client" $globalKeycloak.publicStoreClient }}
+        publicClient: true
+        attributes:
+          oauth2.device.authorization.grant.enabled: "true"
+        redirectUris:
+        {{- range .Values.keycloak.realmImport.publicClient.redirectUris }}
+          - {{ . | quote }}
+        {{- end }}
+        webOrigins:
+        - "+"
+        protocolMappers:
+          - name: vantage6_client_type
+            protocol: openid-connect
+            protocolMapper: oidc-hardcoded-claim-mapper
+            consentRequired: false
+            config:
+              claim.name: vantage6_client_type
+              claim.value: user
+              access.token.claim: "true"
       # create a client that will allow the backend to manage users and clients in
       # keycloak.
       - clientId: backend-admin-client
@@ -190,6 +223,14 @@ spec:
         secret: {{ default $globalKeycloak.adminClientSecret .Values.keycloak.realmImport.backend_client_secret | quote }}
         serviceAccountsEnabled: true
         standardFlowEnabled: false
+      {{- if $storeAdminClientSecret }}
+      # algorithm stores only need to look up users
+      - clientId: store-admin-client
+        publicClient: false
+        secret: {{ $storeAdminClientSecret | quote }}
+        serviceAccountsEnabled: true
+        standardFlowEnabled: false
+      {{- end }}
     # Define organization_id as a user profile attribute using components (UserProfileProvider)
     # Unfortunately, this also requires redefining default user profile attributes: username, email, firstName, lastName.
     components:

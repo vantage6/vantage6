@@ -70,10 +70,16 @@ global:
     # Name of the public client used by users (e.g. the portal).
     publicClient: {{ keycloak.publicClient | default('public_client') }}
 
+    # Name of the public client users log in with to get tokens for algorithm stores.
+    publicStoreClient: {{ keycloak.publicStoreClient | default('public_store_client') }}
+
     # Credentials for the Vantage6 admin user. For production deployments you
     # should override these with secure values, preferably from a secret.
     adminUsername: {{ keycloak.adminUsername | default('admin') }}
     adminPassword: {{ yaml_sq(keycloak.adminPassword | default('admin')) }}
 
-    # Secret for the admin client that is used by backend services.
+    # Secret for the admin client that is used by HQ.
     adminClientSecret: {{ yaml_sq(keycloak.adminClientSecret | default('myadminclientsecret')) }}
+
+    # Secret for the client algorithm stores use to look up users.
+    storeAdminClientSecret: {{ yaml_sq(keycloak.storeAdminClientSecret | default('mystoreadminclientsecret')) }}

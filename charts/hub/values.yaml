@@ -35,6 +35,8 @@ global:
     realm: "vantage6"
     adminClient: "backend-admin-client"
     publicClient: "public_client"
+    # client users log in with to get tokens for algorithm stores
+    publicStoreClient: "public_store_client"
   urls:
     external:
       auth: ""

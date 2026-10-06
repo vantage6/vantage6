@@ -50,6 +50,10 @@ data:
       host_uri: {{ .Values.hq.dev.host_uri }}
       store_address: {{ .Values.hq.dev.store_address | default $internal.store }}
     {{- end }}
+    {{- $hqKeycloak := default ($global.keycloak | default (dict)) .Values.hq.keycloak }}
+    keycloak:
+      public_client: {{ $hqKeycloak.publicClient | default "public_client" }}
+      public_store_client: {{ $hqKeycloak.publicStoreClient | default "public_store_client" }}
     {{- if .Values.hq.algorithm_stores }}
     algorithm_stores:
       {{- range .Values.hq.algorithm_stores }}

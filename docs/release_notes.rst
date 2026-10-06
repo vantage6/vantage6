@@ -1,6 +1,35 @@
 Release notes
 =============
 
+5.0.4
+-----
+
+*Unreleased*
+
+- **Security**
+
+  - Algorithm stores no longer receive tokens that are valid at HQ. HQ and algorithm
+    stores now each only accept Keycloak tokens issued for them, HQ looks up
+    algorithms at a store with its own read-only token instead of the user's token,
+    and algorithm stores get their own Keycloak client that can only look up users
+    (`GHSA-v995-8jhw-349w
+    <https://github.com/vantage6/vantage6/security/advisories/GHSA-v995-8jhw-349w>`_).
+
+- **Upgrade notes**
+
+  - Upgrade HQ, algorithm stores, the UI, nodes and Python clients together: older
+    versions are refused once HQ and stores check the token audience.
+  - Set ``storeAdminClientSecret`` in the Keycloak settings of the hub (or of a
+    standalone store), and delete the existing ``<release>-hq-secrets`` and
+    ``<release>-store-secrets`` Kubernetes secrets so they are recreated. HQ then
+    creates the new Keycloak clients at startup. For a standalone store, create the
+    ``store-admin-client`` client in Keycloak yourself, with only the
+    ``realm-management`` role ``view-users``.
+  - Rotate the secret of ``backend-admin-client``, which algorithm stores received
+    before.
+  - When a store restricts who may view algorithms, HQ no longer checks at task
+    creation whether the user may view the algorithm, only whether it is approved.
+
 5.0.3
 -----
 

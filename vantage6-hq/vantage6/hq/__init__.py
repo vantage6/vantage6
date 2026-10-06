@@ -36,7 +36,10 @@ from vantage6.common.exceptions import (
     SuperUserAlreadyExistsError,
 )
 from vantage6.common.globals import (
+    DEFAULT_KEYCLOAK_PUBLIC_CLIENT,
+    DEFAULT_KEYCLOAK_PUBLIC_STORE_CLIENT,
     DEFAULT_PROMETHEUS_EXPORTER_PORT,
+    HQ_TOKEN_AUDIENCE,
     PING_INTERVAL_SECONDS,
     AuthStatus,
 )
@@ -44,6 +47,7 @@ from vantage6.common.globals import (
 from vantage6.cli.context.hq import HQContext
 
 from vantage6.backend.common import Vantage6App
+from vantage6.backend.common.auth import ensure_keycloak_token_setup
 from vantage6.backend.common.globals import RequiredBackendEnvVars
 from vantage6.backend.common.metrics import Metrics, start_prometheus_exporter
 from vantage6.backend.common.permission import RuleNeed
@@ -56,6 +60,7 @@ from vantage6.hq.globals import (
     HQ_MODULE_NAME,
     RESOURCES,
     RESOURCES_PATH,
+    STORE_ADMIN_CLIENT_SECRET_ENV_VAR,
 )
 from vantage6.hq.model.base import Database, DatabaseSessionManager
 from vantage6.hq.permission import PermissionManager
@@ -219,6 +224,10 @@ class HQApp(Vantage6App):
 
         self._configure_flask_base(DatabaseSessionManager)
 
+        # only accept Keycloak tokens issued for HQ, so that tokens for algorithm
+        # stores cannot be replayed here
+        self.app.config["JWT_DECODE_AUDIENCE"] = HQ_TOKEN_AUDIENCE
+
         # set JWT secret key to generate container tokens
         # ensure that jwt_secret_key is set in the config if it didn't exist yet - that
         # allows it to be used in the container token generation
@@ -348,6 +357,22 @@ class HQApp(Vantage6App):
         # couple any algoritm stores to HQ if defined in config. This should be
         # done after the resources are loaded to ensure that rules are set up
         self._couple_algorithm_stores()
+
+    def ensure_keycloak_token_setup(self) -> None:
+        """
+        Ensure Keycloak issues separate tokens for HQ and for algorithm stores, so that
+        a store cannot use a token it receives at HQ.
+        """
+        keycloak_config = self.ctx.config.get("keycloak", {})
+        ensure_keycloak_token_setup(
+            public_client=keycloak_config.get(
+                "public_client", DEFAULT_KEYCLOAK_PUBLIC_CLIENT
+            ),
+            public_store_client=keycloak_config.get(
+                "public_store_client", DEFAULT_KEYCLOAK_PUBLIC_STORE_CLIENT
+            ),
+            store_admin_client_secret=os.environ.get(STORE_ADMIN_CLIENT_SECRET_ENV_VAR),
+        )
 
     def _create_super_user(self) -> None:
         """

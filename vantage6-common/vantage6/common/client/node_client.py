@@ -91,10 +91,9 @@ class NodeClient(ClientBase):
         )
 
     def obtain_new_token(self) -> None:
-        """Get a new token."""
+        """Get new tokens: one for HQ and one for algorithm stores."""
         self.log.debug("Obtaining new token")
-        token = self.kc_openid.token(grant_type="client_credentials")
-        self._access_token = token["access_token"]
+        self._obtain_client_credentials_tokens(self.kc_openid)
         decoded_token = self.kc_openid.decode_token(self._access_token)
         self.token_validity_period = decoded_token["exp"] - decoded_token["iat"]
 

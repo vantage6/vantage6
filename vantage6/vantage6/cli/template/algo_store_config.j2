@@ -27,10 +27,8 @@ store:
   keycloak:
     url: {{ store.keycloak.url }}
     realm: {{ store.keycloak.realm | default('vantage6') }}
-    adminUsername: {{ store.keycloak.adminUsername | default('admin') }}
-    adminPassword: {{ yaml_sq(store.keycloak.adminPassword | default('admin')) }}
-    adminClient: {{ store.keycloak.adminClient | default('backend-admin-client') }}
-    adminClientSecret: {{ yaml_sq(store.keycloak.adminClientSecret | default('myadminclientsecret')) }}
+    # secret of the Keycloak client 'store-admin-client', which can only look up users
+    storeAdminClientSecret: {{ yaml_sq(store.keycloak.storeAdminClientSecret | default('mystoreadminclientsecret')) }}
   {% endif %}
 
   {% if store.standalone is defined and store.standalone %}

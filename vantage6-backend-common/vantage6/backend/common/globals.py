@@ -17,6 +17,11 @@ DEFAULT_SUPPORT_EMAIL_ADDRESS = "support@vantage6.ai"
 # default email address used in 'from' header
 DEFAULT_EMAIL_FROM_ADDRESS = "noreply@vantage6.ai"
 
+# Keycloak client HQ uses to call algorithm stores as itself
+HQ_KEYCLOAK_CLIENT = "hq-client"
+# Keycloak client algorithm stores use to look up users
+STORE_ADMIN_KEYCLOAK_CLIENT = "store-admin-client"
+
 
 class RequiredBackendEnvVars(StrEnumBase):
     """Enum containing the required backend environment variables"""

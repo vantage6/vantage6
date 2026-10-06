@@ -77,6 +77,8 @@ def global_auth_settings_questionaire() -> dict[str, Any]:
     """
     return {
         "adminClientSecret": _get_admin_client_secret(),
+        # secret for the Keycloak client algorithm stores use to look up users
+        "storeAdminClientSecret": generate_password(password_length=32),
         "adminPassword": _get_admin_password(),
     }
 

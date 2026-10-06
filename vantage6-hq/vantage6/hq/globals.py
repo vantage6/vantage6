@@ -15,6 +15,10 @@ HQ_MODULE_NAME = APPNAME + "-hq"
 #   RUNTIME SETTINGS
 #
 
+# Optional: secret of the Keycloak client algorithm stores use. When set, HQ creates
+# that client in Keycloak if it does not exist yet.
+STORE_ADMIN_CLIENT_SECRET_ENV_VAR = "KEYCLOAK_STORE_ADMIN_CLIENT_SECRET"
+
 # Where the resources modules have to be loaded from
 RESOURCES_PATH = "vantage6.hq.resource"
 

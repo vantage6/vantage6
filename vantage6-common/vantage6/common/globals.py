@@ -47,6 +47,17 @@ ENV_VAR_EQUALS_REPLACEMENT = "!"
 DEFAULT_API_PATH = "/api"
 DEFAULT_PROMETHEUS_EXPORTER_PORT = 7603
 
+# Keycloak token audiences. HQ only accepts tokens for HQ and algorithm stores only
+# tokens for stores, so a store cannot replay a token it receives at HQ.
+HQ_TOKEN_AUDIENCE = "vantage6-hq"
+STORE_TOKEN_AUDIENCE = "vantage6-store"
+# Keycloak client scopes that add the audiences above
+HQ_AUDIENCE_SCOPE = "vantage6-hq-audience"
+STORE_AUDIENCE_SCOPE = "vantage6-store-audience"
+# Keycloak clients users log in with: one for HQ tokens, one for store tokens
+DEFAULT_KEYCLOAK_PUBLIC_CLIENT = "public_client"
+DEFAULT_KEYCLOAK_PUBLIC_STORE_CLIENT = "public_store_client"
+
 # Maximum interval to wait for requesting results from a task
 MAX_INTERVAL = 300
 

@@ -1,8 +1,54 @@
 import logging
 from unittest import TestCase, main
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from vantage6.common.client.node_client import NodeClient
+from vantage6.common.globals import HQ_AUDIENCE_SCOPE, STORE_AUDIENCE_SCOPE
+
+
+class TestTokens(TestCase):
+    """HQ and algorithm stores each get their own token"""
+
+    def setUp(self):
+        self.client = object.__new__(NodeClient)
+        self.client.log = logging.getLogger(__name__)
+
+    def test_obtain_new_token_gets_token_per_audience(self):
+        self.client.kc_openid = MagicMock()
+        self.client.kc_openid.token.side_effect = lambda grant_type, scope: {
+            "access_token": f"token-for-{scope}"
+        }
+        self.client.kc_openid.decode_token.return_value = {"exp": 300, "iat": 0}
+
+        self.client.obtain_new_token()
+
+        self.assertEqual(self.client._access_token, f"token-for-{HQ_AUDIENCE_SCOPE}")
+        self.assertEqual(
+            self.client._store_access_token, f"token-for-{STORE_AUDIENCE_SCOPE}"
+        )
+
+    @patch("vantage6.common.client.client_base.requests.get")
+    def test_request_sends_matching_token(self, mock_get):
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json.return_value = {}
+        self.client._access_token = "hq-token"
+        self.client._store_access_token = "store-token"
+
+        with (
+            patch.object(NodeClient, "generate_path_to", return_value="http://x"),
+            patch.object(
+                NodeClient,
+                "_ClientBase__check_algorithm_store_valid",
+                return_value=True,
+            ),
+        ):
+            self.client.request("node/me")
+            hq_headers = mock_get.call_args.kwargs["headers"]
+            self.client.request("algorithm", is_for_algorithm_store=True)
+            store_headers = mock_get.call_args.kwargs["headers"]
+
+        self.assertEqual(hq_headers, {"Authorization": "Bearer hq-token"})
+        self.assertEqual(store_headers, {"Authorization": "Bearer store-token"})
 
 
 class TestCheckUserAllowedToSendTask(TestCase):
