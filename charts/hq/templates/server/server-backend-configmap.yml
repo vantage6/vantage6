@@ -60,6 +60,7 @@ data:
       - name: {{ .name }}
         url: {{ .url }}
         api_path: {{ .api_path }}
+        uses_hq_keycloak: {{ .uses_hq_keycloak | default false }}
       {{- end }}
     {{- end }}
     {{- if .Values.hq.runs_data_cleanup_days }}

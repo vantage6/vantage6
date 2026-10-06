@@ -141,14 +141,15 @@ class ClientBase(BlobStorageMixin):
     def store_headers(self) -> dict:
         """
         Headers that are sent with each request to an algorithm store. This includes
-        the token for algorithm stores.
+        the token for algorithm stores, but only if the selected store authenticates
+        with the same Keycloak as HQ.
 
         Returns
         -------
         dict
             Headers
         """
-        if self._store_access_token:
+        if self._store_access_token and self.store.uses_hq_keycloak:
             return {"Authorization": "Bearer " + self._store_access_token}
         else:
             return {}
@@ -696,6 +697,8 @@ class ClientBase(BlobStorageMixin):
             super().__init__(parent)
             self.url = None
             self.store_id = None
+            # only stores that authenticate with the same Keycloak as HQ get a token
+            self.uses_hq_keycloak = False
 
         def get(self, id_: int) -> dict:
             """
@@ -723,6 +726,7 @@ class ClientBase(BlobStorageMixin):
             try:
                 self.url = f"{store['url']}{store['api_path']}"
                 self.store_id = id_
+                self.uses_hq_keycloak = bool(store.get("uses_hq_keycloak"))
             except KeyError:
                 self.parent.log.error("Algorithm store URL could not be set.")
             return store

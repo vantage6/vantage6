@@ -1368,6 +1368,9 @@ class ContainerManager:
                         f"{reachable_store_url}{store_info['api_path']}"
                     )
                     self.client.algorithm_store.store_id = store_id
+                    self.client.algorithm_store.uses_hq_keycloak = bool(
+                        store_info.get("uses_hq_keycloak")
+                    )
                     algorithm = self.client.algorithm_store.get_algorithm(evaluated_img)
                     if algorithm:
                         store_whitelisted = True

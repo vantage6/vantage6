@@ -33,6 +33,7 @@ class TestTokens(TestCase):
         mock_get.return_value.json.return_value = {}
         self.client._access_token = "hq-token"
         self.client._store_access_token = "store-token"
+        self.client.store = MagicMock(uses_hq_keycloak=True)
 
         with (
             patch.object(NodeClient, "generate_path_to", return_value="http://x"),
@@ -46,9 +47,14 @@ class TestTokens(TestCase):
             hq_headers = mock_get.call_args.kwargs["headers"]
             self.client.request("algorithm", is_for_algorithm_store=True)
             store_headers = mock_get.call_args.kwargs["headers"]
+            # a store with its own Keycloak gets no token
+            self.client.store.uses_hq_keycloak = False
+            self.client.request("algorithm", is_for_algorithm_store=True)
+            other_store_headers = mock_get.call_args.kwargs["headers"]
 
         self.assertEqual(hq_headers, {"Authorization": "Bearer hq-token"})
         self.assertEqual(store_headers, {"Authorization": "Bearer store-token"})
+        self.assertEqual(other_store_headers, {})
 
 
 class TestCheckUserAllowedToSendTask(TestCase):

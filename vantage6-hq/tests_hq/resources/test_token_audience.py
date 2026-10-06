@@ -43,19 +43,28 @@ class TestTokenAudience(TestResourceBase):
     @patch("vantage6.hq.resource.common.task_post_base.get_hq_token_for_stores")
     @patch("vantage6.hq.resource.common.task_post_base.request_algo_store")
     def test_store_lookup_uses_hq_token(self, request_algo_store, get_token):
-        """The algorithm lookup at the store uses HQ's token, not the user's"""
+        """
+        The algorithm lookup at the store uses HQ's token, never the user's, and only
+        for stores that use HQ's Keycloak
+        """
         get_token.return_value = "hq-token"
         response = type("R", (), {"json": lambda self: {"data": [{"id": 1}]}})()
         request_algo_store.return_value = (response, HTTPStatus.OK)
-        store = AlgorithmStore(url="http://store", api_path="/api")
 
-        with self.server.app.test_request_context(
-            headers={"Authorization": "Bearer user-token"}
-        ):
-            algorithm = TaskPostBase._get_algorithm_from_store(
-                store=store, image="some-image"
+        for uses_hq_keycloak, expected_headers in [
+            (True, {"Authorization": "Bearer hq-token"}),
+            (False, {}),
+        ]:
+            store = AlgorithmStore(
+                url="http://store", api_path="/api", uses_hq_keycloak=uses_hq_keycloak
             )
+            with self.server.app.test_request_context(
+                headers={"Authorization": "Bearer user-token"}
+            ):
+                algorithm = TaskPostBase._get_algorithm_from_store(
+                    store=store, image="some-image"
+                )
 
-        self.assertEqual(algorithm, {"id": 1})
-        headers = request_algo_store.call_args.kwargs["headers"]
-        self.assertEqual(headers, {"Authorization": "Bearer hq-token"})
+            self.assertEqual(algorithm, {"id": 1})
+            headers = request_algo_store.call_args.kwargs["headers"]
+            self.assertEqual(headers, expected_headers)

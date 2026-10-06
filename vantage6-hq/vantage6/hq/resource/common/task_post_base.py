@@ -884,15 +884,21 @@ class TaskPostBase(ServicesResources):
         Exception
             If the algorithm cannot be retrieved from the store.
         """
+        # HQ's own token, never the user's: the store must not receive a token it
+        # could use at HQ, and HQ must not be able to act as the user there. Stores
+        # that use another Keycloak get no token at all.
+        headers = (
+            {"Authorization": f"Bearer {get_hq_token_for_stores()}"}
+            if store.uses_hq_keycloak
+            else {}
+        )
         # get the algorithm from the store
         response, status_code = request_algo_store(
             algo_store_url=f"{store.url}{store.api_path}",
             endpoint="algorithm",
             method="GET",
             params={"image": image},
-            # HQ's own token, never the user's: the store must not receive a token
-            # it could use at HQ, and HQ must not be able to act as the user there
-            headers={"Authorization": f"Bearer {get_hq_token_for_stores()}"},
+            headers=headers,
         )
         if status_code != HTTPStatus.OK:
             raise AlgorithmRetrievalError(

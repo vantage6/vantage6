@@ -481,6 +481,7 @@ class HQApp(Vantage6App):
                         "Algorithm store %s has no api_path, skipping coupling", name
                     )
                     continue
+                uses_hq_keycloak = bool(store.get("uses_hq_keycloak", False))
                 store = db.AlgorithmStore.get_by_url(url, api_path)
                 if not store:
                     response, status = add_algorithm_store_to_database(
@@ -488,6 +489,7 @@ class HQApp(Vantage6App):
                             "name": name,
                             "algorithm_store_url": url,
                             "api_path": api_path,
+                            "uses_hq_keycloak": uses_hq_keycloak,
                         },
                     )
                     if status == HTTPStatus.CREATED:
@@ -508,6 +510,9 @@ class HQApp(Vantage6App):
                         "Algorithm store '%s' at %s is already coupled to HQ",
                         name,
                         url,
+                    )
+                    db.AlgorithmStore.set_uses_hq_keycloak(
+                        url, api_path, uses_hq_keycloak
                     )
 
 

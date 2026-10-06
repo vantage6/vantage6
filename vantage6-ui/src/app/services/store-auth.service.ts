@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import Keycloak from 'keycloak-js';
 import { environment } from 'src/environments/environment';
-import { getUrlPattern } from 'src/app/helpers/regex.helper';
 
 /*
  * Provides the token for algorithm stores.
@@ -19,12 +18,8 @@ export class StoreAuthService {
     clientId: environment.keycloak_store_client
   });
   private initialized: Promise<boolean> | null = null;
-  private readonly allowedStorePattern = getAllowedStorePattern();
 
-  async getToken(storeUrl: string): Promise<string | undefined> {
-    if (!this.allowedStorePattern.test(storeUrl)) {
-      return undefined;
-    }
+  async getToken(): Promise<string | undefined> {
     if (!this.initialized) {
       this.initialized = this.keycloak
         .init({
@@ -43,15 +38,4 @@ export class StoreAuthService {
     }
     return this.keycloak.token;
   }
-}
-
-/*
- * Pattern of the algorithm store URLs that may receive the store token. If the allowed
- * algorithm stores is '*', all stores may receive it.
- */
-function getAllowedStorePattern(): RegExp {
-  if (environment.allowed_algorithm_stores === '*') {
-    return new RegExp(`.*`, 'i');
-  }
-  return getUrlPattern(environment.allowed_algorithm_stores.split(' '));
 }

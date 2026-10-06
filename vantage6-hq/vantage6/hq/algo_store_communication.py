@@ -130,12 +130,17 @@ def add_algorithm_store_to_database(
     for record in records_to_delete:
         record.delete()
 
-    # Create new record
+    # Create new record. If not given, whether the store uses HQ's Keycloak is copied
+    # from other records of the same store.
     algorithm_store = db.AlgorithmStore(
         name=data["name"],
         url=algorithm_store_url,
         api_path=api_path,
         collaboration_id=collaboration_id,
+        uses_hq_keycloak=data.get(
+            "uses_hq_keycloak",
+            any(store.uses_hq_keycloak for store in existing_algorithm_stores),
+        ),
     )
     algorithm_store.save()
 

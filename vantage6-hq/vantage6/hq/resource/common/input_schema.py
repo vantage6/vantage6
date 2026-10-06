@@ -383,6 +383,7 @@ class AlgorithmStoreInputSchema(Schema):
     algorithm_store_url = fields.Url(required=True)
     api_path = fields.String(required=False, load_default=DEFAULT_API_PATH)
     collaboration_id = fields.Integer(validate=Range(min=1))
+    uses_hq_keycloak = fields.Boolean()
 
 
 class StudyInputSchema(_NameValidationSchema):

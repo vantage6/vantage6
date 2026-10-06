@@ -120,8 +120,9 @@ export class ApiService {
     );
   }
 
+  // Only stores that authenticate with the same Keycloak as HQ get a token
   private async getStoreHeaders(algoStore: AlgorithmStore): Promise<HttpHeaders> {
-    const token = await this.storeAuthService.getToken(this.fixAlgorithmStoreUrl(algoStore.url));
+    const token = algoStore.uses_hq_keycloak ? await this.storeAuthService.getToken() : undefined;
     return token ? new HttpHeaders({ Authorization: `Bearer ${token}` }) : new HttpHeaders();
   }
 

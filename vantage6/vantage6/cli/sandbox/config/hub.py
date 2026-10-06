@@ -204,6 +204,7 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
                         "name": "Local store",
                         "url": store_address,
                         "api_path": "/store",
+                        "uses_hq_keycloak": True,
                     }
                 ],
                 "logging": {

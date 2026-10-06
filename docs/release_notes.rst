@@ -11,7 +11,8 @@ Release notes
   - Algorithm stores no longer receive tokens that are valid at HQ. HQ and algorithm
     stores now each only accept Keycloak tokens issued for them, HQ looks up
     algorithms at a store with its own read-only token instead of the user's token,
-    and algorithm stores get their own Keycloak client that can only look up users
+    tokens are only sent to algorithm stores that use the same Keycloak as HQ, and
+    algorithm stores get their own Keycloak client that can only look up users
     (`GHSA-v995-8jhw-349w
     <https://github.com/vantage6/vantage6/security/advisories/GHSA-v995-8jhw-349w>`_).
 
@@ -27,6 +28,10 @@ Release notes
     ``realm-management`` role ``view-users``.
   - Rotate the secret of ``backend-admin-client``, which algorithm stores received
     before.
+  - Mark the algorithm stores that use the same Keycloak as HQ with
+    ``uses_hq_keycloak: true`` in ``hq.algorithm_stores``, or with a ``PATCH`` to
+    ``/algorithmstore/<id>`` as a user with global collaboration edit permission.
+    Other stores receive no tokens, so only their public algorithms can be used.
   - When a store restricts who may view algorithms, HQ no longer checks at task
     creation whether the user may view the algorithm, only whether it is approved.
 

@@ -65,6 +65,13 @@ class AlgorithmStoreBase(ServicesResources):
         super().__init__(socketio, storage_adapter, mail, api, permissions, config)
         self.r_col: RuleCollection = self.permissions.collaboration
 
+    def _may_set_uses_hq_keycloak(self, data: dict) -> bool:
+        """
+        Only users that may edit all collaborations may mark whether a store uses HQ's
+        Keycloak, as tokens are sent to stores that do.
+        """
+        return "uses_hq_keycloak" not in data or self.r_col.e_glo.can()
+
     @staticmethod
     def _convert_k8s_url_to_localhost(store: db.AlgorithmStore) -> None:
         """
@@ -261,6 +268,12 @@ class AlgorithmStores(AlgorithmStoreBase):
                     description: Collaboration id to which the algorithm store
                       will be added. If not given, the algorithm store will be
                       available to all collaborations.
+                  uses_hq_keycloak:
+                    type: boolean
+                    description: Whether the algorithm store authenticates with
+                      the same Keycloak as HQ. Only then are tokens sent to it.
+                      Requires global edit permission. If not given, it is copied
+                      from other records of the same algorithm store.
 
         responses:
           200:
@@ -305,6 +318,11 @@ class AlgorithmStores(AlgorithmStoreBase):
         elif not self.r_col.can_for_col(P.EDIT, collaboration_id):
             return {
                 "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
+        if not self._may_set_uses_hq_keycloak(data):
+            return {
+                "msg": "You lack the permission to set whether the algorithm store "
+                "uses the same Keycloak as HQ!"
             }, HTTPStatus.UNAUTHORIZED
 
         response, status = add_algorithm_store_to_database(data)
@@ -435,6 +453,11 @@ class AlgorithmStore(AlgorithmStoreBase):
                     description: Collaboration id to which the algorithm store
                       will be added. If set to None, the algorithm store will
                       be available to all collaborations.
+                  uses_hq_keycloak:
+                    type: boolean
+                    description: Whether the algorithm store authenticates with
+                      the same Keycloak as HQ. Only then are tokens sent to it.
+                      Requires global edit permission.
 
         responses:
           200:
@@ -474,6 +497,12 @@ class AlgorithmStore(AlgorithmStoreBase):
             return {
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
+        if not self._may_set_uses_hq_keycloak(data):
+            return {
+                "msg": "You lack the permission to set whether the algorithm store "
+                "uses the same Keycloak as HQ!"
+            }, HTTPStatus.UNAUTHORIZED
+        uses_hq_keycloak = data.get("uses_hq_keycloak")
 
         # verify permissions - check permission for new collaboration (if
         # specified) AND the old one
@@ -498,6 +527,12 @@ class AlgorithmStore(AlgorithmStoreBase):
             algorithm_store.collaboration_id = data["collaboration_id"]
 
         algorithm_store.save()
+
+        # applies to all records of this store, so they stay consistent
+        if uses_hq_keycloak is not None:
+            db.AlgorithmStore.set_uses_hq_keycloak(
+                algorithm_store.url, algorithm_store.api_path, uses_hq_keycloak
+            )
 
         return (
             algorithm_store_schema.dump(algorithm_store, many=False),
