@@ -475,6 +475,15 @@ class Organization(OrganizationBase):
                 }, HTTPStatus.BAD_REQUEST
             organization.name = name
 
+        if (
+            "public_key" in data
+            and data["public_key"] is not None
+            and self.obtain_organization_id() != id
+        ):
+            return {
+                "msg": "Only members of an organization can update its public key!"
+            }, HTTPStatus.UNAUTHORIZED
+
         fields = ["address1", "address2", "zipcode", "country", "public_key", "domain"]
         for field in fields:
             if field in data and data[field] is not None:

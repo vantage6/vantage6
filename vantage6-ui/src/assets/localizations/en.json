@@ -907,6 +907,7 @@
     "Killed": "Killed by user",
     "NoDockerImage": "Non-existing Docker image",
     "Pending": "Pending",
+    "PullingImage": "Downloading algorithm",
     "StartFailed": "Start failed",
     "NotAllowed": "Algorithm not allowed by node"
   },

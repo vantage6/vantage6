@@ -29,11 +29,12 @@ spec:
       labels:
 {{ include "auth.labels" . | indent 8 }}
     spec:
+      {{- include "common.imagePullSecrets" (dict "Values" .Values "indent" 6) }}
       restartPolicy: Never
       serviceAccountName: {{ .Release.Name }}-realm-import-waiter
       containers:
       - name: wait-for-keycloak
-        image: {{ $waitForKeycloak.image | default "rancher/kubectl:v1.31.0" }}
+        image: {{ include "common.supportImage" (dict "Chart" .Chart "name" "kubectl" "override" $waitForKeycloak.image) }}
         command:
         - kubectl
         - wait

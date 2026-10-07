@@ -42,6 +42,7 @@ class MockBaseClient:
             "_multi_page_request",
             "_refresh_token",
             "_upload_run_data_to_hq",
+            "AlgorithmStoreSubClientBase",
             "auth_url",
             "authenticate",
             "check_if_blob_store_enabled",

@@ -24,6 +24,7 @@ export enum TaskDatabaseType {
 export enum TaskStatus {
   Pending = 'pending',
   Initializing = 'initializing',
+  PullingImage = 'pulling image',
   Active = 'active',
   Completed = 'completed',
   Failed = 'failed',
@@ -130,7 +131,7 @@ export interface RunNode {
 
 export interface TaskParameter {
   label: string;
-  value: string;
+  value: unknown;
 }
 
 export interface TaskResult {

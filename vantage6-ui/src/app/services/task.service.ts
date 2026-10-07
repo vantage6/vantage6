@@ -46,7 +46,7 @@ export class TaskService {
           ? Object.keys(arguments_).map((key: string) => {
               return {
                 label: key,
-                value: arguments_[key] || ''
+                value: arguments_[key] ?? ''
               };
             })
           : [];

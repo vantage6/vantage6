@@ -637,3 +637,52 @@ class ClientBase(BlobStorageMixin):
                 Input `data` but with the key-value pair where value is `None` removed
             """
             return {k: v for k, v in data.items() if v is not None}
+
+    class AlgorithmStoreSubClientBase(SubClient):
+        """
+        Base subclient for pointing a client at a specific algorithm store, so that
+        subsequent requests made with `is_for_algorithm_store=True` (see `request`)
+        are routed to it.
+
+        Shared by `UserClient`'s
+        `vantage6.client.subclients.store.algorithm_store.AlgorithmStoreSubClient` and
+        `NodeClient.AlgorithmStore` - both need to fetch the store's own record (e.g.
+        from HQ) via `get()`, but each does so differently (e.g. the `UserClient`
+        version applies field-filtering), so `get()` is left to subclasses. This base
+        only holds what both share: remembering which store is selected.
+        """
+
+        def __init__(self, parent) -> None:
+            super().__init__(parent)
+            self.url = None
+            self.store_id = None
+
+        def get(self, id_: int) -> dict:
+            """
+            Fetch the algorithm store's own record. Must be implemented by
+            subclasses.
+            """
+            raise NotImplementedError
+
+        def set(self, id_: int) -> dict:
+            """
+            Select the algorithm store used for `is_for_algorithm_store=True`
+            requests.
+
+            Parameters
+            ----------
+            id_ : int
+                The id of the algorithm store.
+
+            Returns
+            -------
+            dict
+                The algorithm store record, as returned by `get`.
+            """
+            store = self.get(id_)
+            try:
+                self.url = f"{store['url']}{store['api_path']}"
+                self.store_id = id_
+            except KeyError:
+                self.parent.log.error("Algorithm store URL could not be set.")
+            return store

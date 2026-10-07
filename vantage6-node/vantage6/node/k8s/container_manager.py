@@ -6,6 +6,7 @@ import re
 import threading
 import time
 import uuid
+from collections.abc import Callable
 from itertools import groupby
 from pathlib import Path
 
@@ -35,6 +36,7 @@ from vantage6.common.kubernetes.utils import database_env_label
 
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.node.common.task_cleanup import delete_run_related_pods
+from vantage6.cli.utils_kubernetes import replace_localhost_for_k8s
 
 from vantage6.node.enum import KillInitiator
 from vantage6.node.globals import (
@@ -232,6 +234,22 @@ class ContainerManager:
             )
         return policies
 
+    def _get_image_pull_policy(self) -> str:
+        """
+        Determine the Kubernetes image pull policy from the node's policies.
+
+        Returns
+        -------
+        str
+            "Always" if the algorithm image must always be pulled (the
+            default), otherwise "IfNotPresent" so a locally built image can
+            be used without a registry.
+        """
+        require_algorithm_pull = self._policies.get(
+            NodePolicy.REQUIRE_ALGORITHM_PULL.value, True
+        )
+        return "Always" if require_algorithm_pull else "IfNotPresent"
+
     def _get_database_metadata(self) -> dict:
         """
         Collect information about the databases.
@@ -349,6 +367,7 @@ class ContainerManager:
         token: str,
         databases_to_use: list[dict],
         action: AlgorithmStepType,
+        on_status_change: Callable[[RunStatus], None],
     ) -> RunStatus:
         """
         Run a vantage6 algorithm on the Kubernetes cluster.
@@ -371,6 +390,9 @@ class ContainerManager:
             Metadata of the databases to use.
         action: AlgorithmStepType
             The action to perform
+        on_status_change: Callable[[RunStatus], None]
+            Called whenever the run changes status while the algorithm is being
+            started. Not called with the final status that is returned here.
 
         Returns
         -------
@@ -522,14 +544,10 @@ class ContainerManager:
                 priv_regs, image, run_io.run_id
             )
 
-        require_algorithm_pull = self.ctx.config.get("node", {}).get(
-            "require_algorithm_pull", True
-        )
-
         container = k8s_client.V1Container(
             name=run_io.container_name,
             image=image,
-            image_pull_policy="Always" if require_algorithm_pull else "IfNotPresent",
+            image_pull_policy=self._get_image_pull_policy(),
             tty=True,
             volume_mounts=_volume_mounts,
             env=io_env_vars,
@@ -622,6 +640,7 @@ class ContainerManager:
         status = self.__wait_until_pod_running(
             run_io=run_io,
             label=f"app={run_io.container_name}",
+            on_status_change=on_status_change,
         )
 
         # start streaming logs to HQ
@@ -697,6 +716,14 @@ class ContainerManager:
         task_id: int
             Task ID
         """
+        if not self.share_algorithm_logs:
+            self.log.info(
+                "Algorithm logs will not be shared with HQ for run %s because "
+                "share_algorithm_logs is disabled.",
+                run_io.run_id,
+            )
+            return
+
         w = watch.Watch()
         try:
             pod_list = self.core_api.list_namespaced_pod(
@@ -728,7 +755,12 @@ class ContainerManager:
         finally:
             w.stop()
 
-    def __wait_until_pod_running(self, run_io: RunIO, label: str) -> RunStatus:
+    def __wait_until_pod_running(
+        self,
+        run_io: RunIO,
+        label: str,
+        on_status_change: Callable[[RunStatus], None],
+    ) -> RunStatus:
         """"
         This method monitors the status of a Kubernetes POD created by a task job and
         waits until it transitions to a 'Running' state or another terminal state
@@ -749,6 +781,9 @@ class ContainerManager:
             RunIO object that contains information about the run
         label : str
             Label selector to identify the POD associated with the task job.
+        on_status_change: Callable[[RunStatus], None]
+            Called whenever the pod changes to a status that is not final yet, such as
+            RunStatus.PULLING_IMAGE.
 
         Returns
         -------
@@ -767,6 +802,17 @@ class ContainerManager:
 
         # Wait until the POD is created
         w = watch.Watch()
+
+        last_reported_status: RunStatus | None = None
+
+        def report_intermediate_status(status: RunStatus) -> None:
+            """Report a non-final status, skipping repeats: the pod event stream
+            fires on every pod update, and each report is a request to HQ."""
+            nonlocal last_reported_status
+            if status == last_reported_status:
+                return
+            last_reported_status = status
+            on_status_change(status)
 
         try:
             while True:
@@ -794,8 +840,12 @@ class ContainerManager:
                         task_namespace=self.task_namespace,
                     )
 
-                    if pod_phase != RunStatus.INITIALIZING:
+                    if pod_phase == RunStatus.ACTIVE or RunStatus.has_finished(
+                        pod_phase
+                    ):
                         return pod_phase
+
+                    report_intermediate_status(pod_phase)
 
                 # POD event-watch TIMEOUT (timeout_seconds) was reached.
                 self.log.debug(
@@ -821,11 +871,12 @@ class ContainerManager:
                     task_namespace=self.task_namespace,
                 )
 
-                # Another iteration on the outer loop is performed if the pod is
-                # pending for reasons other than missing/invalid Docker image (which is
-                # reported as INITIALIZING).
-                if pod_phase != RunStatus.INITIALIZING:
+                # Keep watching if the pod has not started yet, e.g. because a
+                # large image is still being pulled.
+                if pod_phase == RunStatus.ACTIVE or RunStatus.has_finished(pod_phase):
                     return pod_phase
+
+                report_intermediate_status(pod_phase)
 
                 self.log.debug(
                     "Task run (label %s, namespace %s) still pulling the algorithm "
@@ -1315,20 +1366,51 @@ class ContainerManager:
             except Exception:  # noqa: BLE001
                 store_id = None
             if store_id:
-                store = self.client.algorithm_store.get(store_id)
-                store_from_task = store["url"]
+                store_info = self.client.algorithm_store.get(store_id)
+                store_from_task = store_info["url"]
                 # check if the store matches any of the regex cases
                 if isinstance(allowed_stores, str):
                     allowed_stores = [allowed_stores]
-                for store in allowed_stores:
-                    if not self._is_regex_pattern(store):
+                store_url_whitelisted = False
+                for allowed_store in allowed_stores:
+                    if not self._is_regex_pattern(allowed_store):
                         # check if string matches exactly
-                        if store == store_from_task:
-                            store_whitelisted = True
+                        if allowed_store == store_from_task:
+                            store_url_whitelisted = True
                     else:
-                        expr_ = re.compile(store)
+                        expr_ = re.compile(allowed_store)
                         if expr_.match(store_from_task):
-                            store_whitelisted = True
+                            store_url_whitelisted = True
+
+                if store_url_whitelisted:
+                    # The store's URL is whitelisted, but that alone does not prove
+                    # that the evaluated image is actually a registered, approved
+                    # algorithm in that store - HQ is the one asserting that
+                    # association, and HQ is not fully trusted here. Re-verify
+                    # directly with the store itself instead of trusting HQ's claim.
+                    #
+                    # If the store is registered under a `localhost` URL (dev env)
+                    # translate it to an address reachable from inside this pod
+                    reachable_store_url = replace_localhost_for_k8s(
+                        store_info["url"], os.environ.get("V6_K8S_NODE_NAME") or None
+                    )
+                    self.client.algorithm_store.url = (
+                        f"{reachable_store_url}{store_info['api_path']}"
+                    )
+                    self.client.algorithm_store.store_id = store_id
+                    algorithm = self.client.algorithm_store.get_algorithm(evaluated_img)
+                    if algorithm:
+                        store_whitelisted = True
+                    else:
+                        self.log.warning(
+                            "Algorithm store %s did not confirm that image %s is a "
+                            "registered, approved algorithm there. Denying the "
+                            "allowed_algorithm_stores policy for this image. This "
+                            "can also happen if the algorithm store does not yet "
+                            "support node verification requests.",
+                            store_from_task,
+                            evaluated_img,
+                        )
 
         allowed_from_whitelist = not allowed_algorithms or algorithm_whitelisted
         allowed_from_store = not allowed_stores or store_whitelisted

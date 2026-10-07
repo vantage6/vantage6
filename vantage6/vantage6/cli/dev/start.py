@@ -12,9 +12,6 @@ from vantage6.cli.k8s_config import select_k8s_config
 
 @click.command()
 @click.option(
-    "--with-prometheus", is_flag=True, default=False, help="Enable Prometheus"
-)
-@click.option(
     "--no-local-auth",
     is_flag=True,
     default=False,
@@ -46,15 +43,9 @@ from vantage6.cli.k8s_config import select_k8s_config
     "This has a similar effect to running `v6 dev clean` and then "
     "`v6 dev start --populate`.",
 )
-def cli_start_dev_env(
-    with_prometheus: bool, no_local_auth: bool, populate: bool, repopulate: bool
-):
+def cli_start_dev_env(no_local_auth: bool, populate: bool, repopulate: bool):
     """Start the development environment using devspace."""
     check_devspace_installed()
-
-    if no_local_auth and with_prometheus:
-        error("❌ Cannot use --no-local-auth and --with-prometheus together.")
-        sys.exit(1)
 
     # Check if Keycloak operator is installed (only if local auth is enabled)
     k8s_config = select_k8s_config(context=None, namespace=None)
@@ -67,8 +58,6 @@ def cli_start_dev_env(
         # Build the devspace command
         cmd = ["devspace", "run", "start-dev"]
 
-        if with_prometheus:
-            cmd.extend(["--profile", "with-prometheus"])
         if no_local_auth:
             cmd.extend(["--profile", "no-local-auth"])
 

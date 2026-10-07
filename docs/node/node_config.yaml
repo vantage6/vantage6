@@ -11,9 +11,10 @@ node:
   apiKey: abcdefghijklmnopqrstuvwxyz1234567890
 
   # When true, the node verifies at startup that algorithm network isolation is
-  # enforced by Kubernetes. If the check fails, the node refuses to start. Set to
-  # false for development and sandbox environments only; failures are then logged as
-  # warnings.
+  # enforced by Kubernetes. If the check fails, the node refuses to start. Also, if
+  # true, ensures this node does not share its task namespace, so that data is not shared
+  # with other nodes in the cluster. Set to false for development and sandbox
+  # environments only; failures are then logged as warnings.
   production: true
 
   # The image to use for the node.
@@ -31,6 +32,11 @@ node:
   # Namespace in which the task kubernetes resources are created. This must be a
   # namespace where the node has access to create pods.
   taskNamespace: vantage6-tasks
+
+  # Whether this chart creates and owns the task namespace above. Disable if your cluster
+  # centrally governs namespace creation (e.g. a platform team's GitOps pipeline) and the
+  # task namespace is provisioned outside Helm instead. Default true.
+  manageTaskNamespace: true
 
   # Kubernetes node name, used for local persistent volumes
   k8sNodeName: docker-desktop

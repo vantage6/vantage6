@@ -1,6 +1,143 @@
 Release notes
 =============
 
+5.0.3
+-----
+
+*31 August 2026*
+
+- **Security**
+
+  - Prevent that data values leak into the algorithm logs. The ``handle_pandas_errors``
+    decorator only caught exceptions from ``pandas.errors``, while pandas operations
+    often raise plain Python errors that contain data values. Those errors were passed
+    on untouched and ended up in the algorithm logs, which are sent to HQ and can be
+    read by the researcher
+    (`Issue#2499 <https://github.com/vantage6/vantage6/issues/2499>`_).
+  - Enforce the ``share_algorithm_logs`` setting on every path that sends algorithm
+    logs to the server. The setting was read at node startup but not always honored,
+    so disabling it did not actually stop logs from reaching HQ
+    (`GHSA-rm37-7322-qvgg
+    <https://github.com/vantage6/vantage6/security/advisories/GHSA-rm37-7322-qvgg>`_).
+  - Only the developer that submitted an algorithm to an algorithm store may edit it
+    while it is pending review. Before, any user with algorithm edit permission could
+    edit another developer's submission
+    (`PR#2720 <https://github.com/vantage6/vantage6/pull/2720>`_).
+  - Only members of an organization may now update its public key. Before, any user
+    with organization-edit permission -- including a collaboration admin -- could
+    overwrite the public key of another organization
+    (`GHSA-82cm-vgqg-chcw
+    <https://github.com/vantage6/vantage6/security/advisories/GHSA-82cm-vgqg-chcw>`_).
+  - Prevent a user with collaboration-scoped permissions from accessing another
+    collaboration's tasks and runs. The collaboration-scope permission check failed
+    in certain cases, e.g. if collaborations with organizations A+B and B+C were
+    present, A could read task from second collaboration that B initiated
+    (`GHSA-3q9m-83r4-x32j
+    <https://github.com/vantage6/vantage6/security/advisories/GHSA-3q9m-83r4-x32j>`_).
+  - Nodes now check on startup that algorithm containers are properly isolated from the
+    internet, and refuse to start if they are not
+    (`PR#2641 <https://github.com/vantage6/vantage6/pull/2641>`_).
+  - Reduce the Kubernetes permissions of the node's service account. The node's
+    ClusterRole could create Jobs cluster-wide; task namespaces are now created by the
+    node Helm chart itself, and a new check prevents production nodes from sharing a
+    task namespace
+    (`GHSA-2rch-7f67-gqmx
+    <https://github.com/vantage6/vantage6/security/advisories/GHSA-2rch-7f67-gqmx>`_).
+  - Nodes now verify with the algorithm store that an algorithm image is actually
+    approved there before running it. Before, the ``allowed_algorithm_stores`` policy
+    was not enforced on the node side, so a node could run an image that was never
+    approved by its configured store(s) - the check was only done by HQ
+    (`GHSA-j43v-wwjr-9grj
+    <https://github.com/vantage6/vantage6/security/advisories/GHSA-j43v-wwjr-9grj>`_).
+  - Update UI and Python dependencies to fix security vulnerabilities
+    (`PR#2701 <https://github.com/vantage6/vantage6/pull/2701>`_,
+    `PR#2698 <https://github.com/vantage6/vantage6/pull/2698>`_,
+    `PR#2696 <https://github.com/vantage6/vantage6/pull/2696>`_,
+    `PR#2643 <https://github.com/vantage6/vantage6/pull/2643>`_,
+    `PR#2642 <https://github.com/vantage6/vantage6/pull/2642>`_,
+    `PR#2639 <https://github.com/vantage6/vantage6/pull/2639>`_,
+    `PR#2718 <https://github.com/vantage6/vantage6/pull/2718>`_,
+    `PR#2750 <https://github.com/vantage6/vantage6/pull/2750>`_).
+
+- **Change**
+
+  - The test datasets of the node are now copied to the development mount path
+    automatically, so that the development environment also works on WSL
+    (`PR#2693 <https://github.com/vantage6/vantage6/pull/2693>`_).
+  - Nodes in development and sandbox networks are explicitly configured as
+    non-production nodes
+    (`PR#2706 <https://github.com/vantage6/vantage6/pull/2706>`_).
+  - Added missing configuration options to the example configuration YAMLs, and include
+    the full URLs of the algorithm preset links
+    (`PR#2659 <https://github.com/vantage6/vantage6/pull/2659>`_).
+  - Renamed mentions of ``example.com`` in the configuration templates and
+    documentation, as it is a real domain
+    (`PR#2641 <https://github.com/vantage6/vantage6/pull/2641>`_).
+  - Applied the checks of the latest ``ruff`` version to improve the code style
+    (`PR#2682 <https://github.com/vantage6/vantage6/pull/2682>`_).
+  - Made the ``init_org_id`` field mandatory in the data model, as it was already
+    always provided
+    (`PR#2663 <https://github.com/vantage6/vantage6/pull/2663>`_).
+  - ``v6 auth install-keycloak`` now installs the compatibility-tested Keycloak
+    Operator version ``26.6.2`` by default, instead of looking up the latest release
+    on GitHub at install time. Another release can be selected with
+    ``--operator-version``, which opts into a version that has not been tested with
+    vantage6 (`Issue#2661 <https://github.com/vantage6/vantage6/issues/2661>`_).
+
+- **Bugfix**
+
+  - Guarantee that the database session of a WebSocket event is always cleaned up.
+    Before, a handler that raised an exception permanently leaked a pooled database
+    connection (`Issue#2654 <https://github.com/vantage6/vantage6/issues/2654>`_).
+  - Fix intermittent ``DetachedInstanceError`` errors by scoping the database session
+    per request context
+    (`Issue#2656 <https://github.com/vantage6/vantage6/issues/2656>`_).
+  - Fix the import order of the gevent monkey-patch in HQ. Modules that were imported
+    before patching performed blocking SSL I/O, which stalled the event loop
+    (`PR#2669 <https://github.com/vantage6/vantage6/pull/2669>`_).
+  - Fix that the worker that polls for task results in the node stopped silently when
+    the task metadata could not be retrieved from HQ
+    (`Issue#2649 <https://github.com/vantage6/vantage6/issues/2649>`_).
+  - Add the ``reason`` argument to the WebSocket ``on_disconnect`` handlers of the node
+    and HQ, to match the signature of the SocketIO version in use
+    (`Issue#2655 <https://github.com/vantage6/vantage6/issues/2655>`_).
+  - Fix that the node Helm chart's ConfigMap rendered ``algorithm_env`` as a list
+    instead of a map, which dropped the keys
+    (`Issue#2645 <https://github.com/vantage6/vantage6/issues/2645>`_).
+  - Quote the entries of the node policies ``allowed_users``, ``allowed_organizations``,
+    ``allowed_algorithms`` and ``allowed_algorithm_stores`` in the node Helm chart's
+    ConfigMap, so that numeric IDs are no longer re-parsed as integers and therefore
+    never matched (`Issue#2644 <https://github.com/vantage6/vantage6/issues/2644>`_).
+  - Only create the ``local-storage`` storage class once when the hub chart installs the
+    HQ, auth and store subcharts together, which otherwise made the deployment fail
+    (`PR#2660 <https://github.com/vantage6/vantage6/pull/2660>`_).
+  - Prevent double periods in log messages
+    (`PR#2641 <https://github.com/vantage6/vantage6/pull/2641>`_).
+  - Fix the Keycloak Operator installation: the operator manifest is now applied only
+    after all custom resource definitions it requires are present, the client CRDs are
+    installed for operator versions that ship them, and the command now exits with an
+    error when the operator does not become ready in time instead of reporting success
+    (`Issue#2661 <https://github.com/vantage6/vantage6/issues/2661>`_).
+  - Fix an intermittent race where the Keycloak realm import never ran on a fresh
+    install, because the ``KeycloakRealmImport`` custom resource could be reconciled
+    before the Keycloak deployment was ready. The import now waits for Keycloak to
+    report ready before running
+    (`PR#2692 <https://github.com/vantage6/vantage6/pull/2692>`_).
+  - Fix Prometheus failing to start in the sandbox environment because of a missing
+    volume mount path
+    (`PR#2729 <https://github.com/vantage6/vantage6/pull/2729>`_).
+  - Fix the ``allowed_organizations`` node policy crashing on every incoming task,
+    because the paginated organizations API response was iterated directly instead of
+    via its ``data`` key
+    (`PR#2710 <https://github.com/vantage6/vantage6/pull/2710>`_).
+  - Fix the UI task page crashing, and hiding the algorithm status, when a task
+    argument was a list of more than 500 elements
+    (`PR#2711 <https://github.com/vantage6/vantage6/pull/2711>`_).
+  - Fix the node ignoring the ``require_algorithm_pull`` policy: algorithm images were
+    always pulled regardless of the setting, which broke testing locally built
+    algorithm images
+    (`PR#2748 <https://github.com/vantage6/vantage6/pull/2748>`_).
+
 5.0.2
 -----
 
@@ -146,6 +283,46 @@ more details regarding the lower-level changes required to accomplish it.*
   - Prevent issues in database initialization due to racing conditions when there
     are multiple concurrent services start at the same time
     (`PR#2510 <https://github.com/vantage6/vantage6/pull/2510>`_).
+
+4.15.2
+------
+
+*21 September 2026*
+
+- **Security**
+
+  - Nodes can now authenticate directly with their own algorithm store, so that
+    endpoints which opt in can let a node independently verify that an algorithm
+    image is a registered, approved algorithm. Before, the ``allowed_algorithm_stores``
+    policy was not enforced node-side, only server-side
+    (`GHSA-j43v-wwjr-9grj
+    <https://github.com/vantage6/vantage6/security/advisories/GHSA-j43v-wwjr-9grj>`_).
+  - Only members of an organization may now update its public key. Before, any user
+    with organization-edit permission could overwrite the public key of another
+    organization, which is used to encrypt task input intended for that organization
+    (`GHSA-82cm-vgqg-chcw
+    <https://github.com/vantage6/vantage6/security/advisories/GHSA-82cm-vgqg-chcw>`_).
+  - Prevent a user with collaboration-scoped permissions from accessing another
+    collaboration's tasks and runs. The collaboration-scope permission check compared
+    a resource's organization against any collaboration the user's own organization
+    belongs to, rather than the collaboration the resource itself belongs to, so
+    access leaked across collaborations that shared an organization
+    (`GHSA-3q9m-83r4-x32j
+    <https://github.com/vantage6/vantage6/security/advisories/GHSA-3q9m-83r4-x32j>`_).
+  - Only the developer that submitted an algorithm to an algorithm store may edit it
+    while it is pending review. Before, any user with algorithm edit permission could
+    edit another developer's submission
+    (`PR#2721 <https://github.com/vantage6/vantage6/pull/2721>`_).
+
+- **Bugfix**
+
+  - Fix the server URL the UI sent when creating a task: it was missing the API path,
+    so it did not point at a usable endpoint
+    (`PR#2680 <https://github.com/vantage6/vantage6/pull/2680>`_).
+  - Only move the floating ``latest`` Docker tag for the current major version. Before,
+    any release moved ``latest`` regardless of its major version, so a 4.15.x patch
+    release published after 5.0.0 pulled ``latest`` back to a v4 image
+    (`PR#2747 <https://github.com/vantage6/vantage6/pull/2747>`_).
 
 4.15.1
 ------
