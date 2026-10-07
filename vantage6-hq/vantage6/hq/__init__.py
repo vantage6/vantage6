@@ -95,11 +95,13 @@ class HQApp(Vantage6App):
         self.socketio = self.setup_socket_connection()
 
         self.setup_large_result_store()
-        # setup the permission manager for the API endpoints
-        self.permissions = PermissionManager(RESOURCES_PATH, RESOURCES, DefaultRole)
 
-        # Load API resources
-        self.load_resources()
+        with DatabaseSessionManager.session_scope():
+            # setup the permission manager for the API endpoints
+            self.permissions = PermissionManager(RESOURCES_PATH, RESOURCES, DefaultRole)
+
+            # Load API resources
+            self.load_resources()
 
         if self.ctx.config.get("runs_data_cleanup_days"):
             log.info(
@@ -406,12 +408,16 @@ class HQApp(Vantage6App):
                 time.sleep(PING_INTERVAL_SECONDS + 5)
 
                 # Check for each node that is online if they have responded.
-                # Otherwise set them to offline.
-                online_status_nodes = db.Node.get_online_nodes()
-                for node in online_status_nodes:
-                    if node.last_seen.replace(tzinfo=dt.UTC) < before_wait:
-                        node.status = AuthStatus.OFFLINE.value
-                        node.save()
+                # Otherwise set them to offline. This runs outside a Flask
+                # request, so wrap it in a session scope to make sure the DB
+                # session (and its pooled connection) is always released, even
+                # if a query below raises.
+                with DatabaseSessionManager.session_scope():
+                    online_status_nodes = db.Node.get_online_nodes()
+                    for node in online_status_nodes:
+                        if node.last_seen.replace(tzinfo=dt.UTC) < before_wait:
+                            node.status = AuthStatus.OFFLINE.value
+                            node.save()
             except Exception:
                 log.exception("Node-status thread encountered an exception")
                 time.sleep(PING_INTERVAL_SECONDS)
@@ -424,10 +430,14 @@ class HQApp(Vantage6App):
         include_args = self.ctx.config.get("runs_data_cleanup_include_args", False)
         while True:
             try:
-                cleanup.cleanup_runs_data(
-                    self.ctx.config,
-                    include_args=include_args,
-                )
+                # This runs outside a Flask request, so wrap the cleanup in a
+                # session scope to make sure the DB session (and its pooled
+                # connection) is always released, even if the cleanup raises.
+                with DatabaseSessionManager.session_scope():
+                    cleanup.cleanup_runs_data(
+                        self.ctx.config,
+                        include_args=include_args,
+                    )
             except Exception:
                 log.exception("Results cleanup failed. Will try again in one hour.")
             # simple for now: check every hour
@@ -503,5 +513,10 @@ def run_hq(config: str, system_folders: bool = True) -> HQApp:
         A running instance of the vantage6 HQ
     """
     ctx = HQContext.from_external_config_file(config, system_folders, in_container=True)
-    Database().connect(uri=ctx.get_database_uri(), allow_drop_all=False)
+    Database().connect(
+        uri=ctx.get_database_uri(),
+        allow_drop_all=False,
+        pool_size=ctx.config.get("database_pool_size"),
+        max_overflow=ctx.config.get("database_max_overflow"),
+    )
     return HQApp(ctx)

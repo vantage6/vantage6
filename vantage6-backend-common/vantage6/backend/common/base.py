@@ -1,6 +1,8 @@
 import inspect as class_inspect
 import logging
 import os
+from collections.abc import Generator
+from contextlib import contextmanager
 from time import sleep
 from typing import Any, ClassVar
 
@@ -128,7 +130,12 @@ class BaseDatabase:
         self.URI = None
 
     def _connect(
-        self, base: DeclarativeMeta, uri="sqlite:////tmp/test.db", allow_drop_all=False
+        self,
+        base: DeclarativeMeta,
+        uri="sqlite:////tmp/test.db",
+        allow_drop_all=False,
+        pool_size: int | None = None,
+        max_overflow: int | None = None,
     ):
         """
         Connect to the database.
@@ -139,6 +146,14 @@ class BaseDatabase:
             URI of the database. Defaults to a sqlite database in /tmp.
         allow_drop_all : bool, optional
             If True, the database can be dropped. Defaults to False.
+        pool_size : int, optional
+            Number of persistent connections kept open in the SQLAlchemy
+            connection pool. When None (default), SQLAlchemy's own default is
+            used. Ignored for SQLite databases.
+        max_overflow : int, optional
+            Number of extra connections that may be opened on top of
+            ``pool_size`` when demand spikes. When None (default), SQLAlchemy's
+            own default is used. Ignored for SQLite databases.
         """
         self.allow_drop_all = allow_drop_all
         self.URI = uri
@@ -159,9 +174,10 @@ class BaseDatabase:
         if URL.host is None and URL.database:
             os.makedirs(os.path.dirname(URL.database), exist_ok=True)
         # Try connecting to the Db MAX_ATTEMPT times if not error occur
+        engine_kwargs = self._build_engine_kwargs(URL, pool_size, max_overflow)
         for attempt in range(MAX_NUMBER_OF_ATTEMPTS):
             try:
-                self.engine = create_engine(uri, pool_pre_ping=True)
+                self.engine = create_engine(uri, **engine_kwargs)
 
                 # Create a session for flask requests. If a session already
                 # exists it will return the same session (!).
@@ -209,6 +225,45 @@ class BaseDatabase:
         # add columns that are not yet in the database (they may have been
         # added in a newer minor version)
         self._add_missing_columns(base)
+
+    @staticmethod
+    def _build_engine_kwargs(
+        url, pool_size: int | None, max_overflow: int | None
+    ) -> dict:
+        """
+        Build the keyword arguments for ``create_engine``.
+
+        The connection pool settings (``pool_size``, ``max_overflow``) are only
+        included when they are explicitly configured *and* the database is not
+        SQLite. SQLite uses a pool implementation (e.g. ``SingletonThreadPool``)
+        that does not accept ``max_overflow``, and pool sizing is meaningless
+        for it - passing these would raise a ``TypeError``. When they are not
+        included, SQLAlchemy falls back to its own defaults (``pool_size=5``,
+        ``max_overflow=10`` for ``QueuePool``), so behaviour is unchanged unless
+        the operator opts in.
+
+        Parameters
+        ----------
+        url : sqlalchemy.engine.url.URL
+            The parsed database URL.
+        pool_size : int | None
+            Configured pool size, or None to use SQLAlchemy's default.
+        max_overflow : int | None
+            Configured max overflow, or None to use SQLAlchemy's default.
+
+        Returns
+        -------
+        dict
+            Keyword arguments for ``create_engine``.
+        """
+        kwargs = {"pool_pre_ping": True}
+        if url.get_backend_name() == "sqlite":
+            return kwargs
+        if pool_size is not None:
+            kwargs["pool_size"] = pool_size
+        if max_overflow is not None:
+            kwargs["max_overflow"] = max_overflow
+        return kwargs
 
     def _add_missing_columns(self, base: DeclarativeMeta) -> None:
         """
@@ -417,6 +472,37 @@ class BaseDatabaseSessionManager:
                 session.session = None
             else:
                 print("No DB session found to clear!")
+
+    @staticmethod
+    @contextmanager
+    def _session_scope(
+        db_session_mgr: type["BaseDatabaseSessionManager"],
+    ) -> Generator[Session]:
+        """
+        Context manager that yields a session and guarantees it is released.
+
+        This is meant for code that runs *outside* the Flask request lifecycle
+        (e.g. background worker threads, the iPython shell), where the
+        ``after_request``/``teardown_request`` hooks do not fire. Without it, an
+        exception raised while a session is in use would leave that session -
+        and its pooled database connection - dangling, eventually exhausting the
+        connection pool. The ``finally`` clears the session on every exit path.
+
+        Parameters
+        ----------
+        db_session_mgr: type["BaseDatabaseSessionManager"]
+            The database session manager - a derived class type of
+            BaseDatabaseSessionManager
+
+        Yields
+        ------
+        Session
+            A database session
+        """
+        try:
+            yield db_session_mgr.get_session()
+        finally:
+            db_session_mgr.clear_session()
 
 
 class BaseModelBase:
