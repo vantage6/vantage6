@@ -407,7 +407,7 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
             "keycloak": {
                 "production": False,
                 "passwordUpdateRequired": False,
-                "hqPublicClient": {
+                "publicClient": {
                     "redirectUris": [
                         f"{HTTP_LOCALHOST}:{Ports.SANDBOX_UI.value}",
                     ],

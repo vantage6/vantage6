@@ -40,34 +40,21 @@ import { OverlayModule } from '@angular/cdk/overlay';
 import { provideRouter } from '@angular/router';
 import { routes } from './app-routing.module';
 
-import {
-  provideKeycloak,
-  createInterceptorCondition,
-  IncludeBearerTokenCondition,
-  INCLUDE_BEARER_TOKEN_INTERCEPTOR_CONFIG,
-  withAutoRefreshToken,
-  AutoRefreshTokenService,
-  UserActivityService,
-  includeBearerTokenInterceptor
-} from 'keycloak-angular';
+import { provideKeycloak, withAutoRefreshToken, AutoRefreshTokenService, UserActivityService } from 'keycloak-angular';
 import { environment } from 'src/environments/environment';
-import { getUrlPattern } from './helpers/regex.helper';
-
-// Send the Keycloak token along with requests to HQ when the user is authenticated.
-// Algorithm stores get a separate token (see StoreAuthService).
-const UrlCondition = createInterceptorCondition<IncludeBearerTokenCondition>({
-  urlPattern: getUrlPattern([environment.hq_url]),
-  bearerPrefix: 'Bearer'
-});
+import { HQ_AUDIENCE_SCOPE, STORE_AUDIENCE_SCOPE, hqTokenInterceptor } from './services/token.service';
 
 export const provideKeycloakAngular = () =>
   provideKeycloak({
     config: {
       realm: environment.keycloak_realm,
       url: environment.auth_url,
-      clientId: environment.keycloak_hq_client
+      clientId: environment.keycloak_client
     },
     initOptions: {
+      // log in for both HQ and algorithm stores; TokenService gets a separate token
+      // for each from this login
+      scope: `${HQ_AUDIENCE_SCOPE} ${STORE_AUDIENCE_SCOPE}`,
       onLoad: 'check-sso',
       // checkLoginIframe: true
       silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
@@ -79,14 +66,7 @@ export const provideKeycloakAngular = () =>
         sessionTimeout: Number(environment.refresh_token_validity_seconds) * 1000
       })
     ],
-    providers: [
-      AutoRefreshTokenService,
-      UserActivityService,
-      {
-        provide: INCLUDE_BEARER_TOKEN_INTERCEPTOR_CONFIG,
-        useValue: [UrlCondition]
-      }
-    ]
+    providers: [AutoRefreshTokenService, UserActivityService]
   });
 
 export function HttpLoaderFactory(http: HttpClient) {
@@ -134,7 +114,7 @@ export const appConfig: ApplicationConfig = {
       OverlayModule
     ),
     { provide: MAT_DATE_LOCALE, useValue: enCA },
-    provideHttpClient(withInterceptorsFromDi(), withInterceptors([includeBearerTokenInterceptor])),
+    provideHttpClient(withInterceptorsFromDi(), withInterceptors([hqTokenInterceptor])),
     DatePipe,
     provideAnimations(),
     provideKeycloakAngular(),

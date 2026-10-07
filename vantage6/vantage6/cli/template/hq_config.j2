@@ -28,6 +28,10 @@ hq:
     hqAdminClientSecret: {{ yaml_sq(hq.keycloak.hqAdminClientSecret | default('myadminclientsecret')) }}
     hqStoreReaderClient: {{ hq.keycloak.hqStoreReaderClient | default('hq-store-reader-client') }}
     storeAdminClient: {{ hq.keycloak.storeAdminClient | default('store-admin-client') }}
+    {% if hq.keycloak.storeAdminClientSecret is defined %}
+    # if set, HQ creates the store admin client with this secret
+    storeAdminClientSecret: {{ yaml_sq(hq.keycloak.storeAdminClientSecret) }}
+    {% endif %}
   {% endif %}
 
   internal:
@@ -263,13 +267,12 @@ ui:
   # keycloak connection settings
   keycloak:
       realm: {{ ui.keycloak.realm | default('vantage6') }}
-      hqPublicClient: {{ ui.keycloak.hqPublicClient | default('hq-public-client') }}
-      storePublicClient: {{ ui.keycloak.storePublicClient | default('store-public-client') }}
+      publicClient: {{ ui.keycloak.publicClient | default('public_client') }}
       publicUrl: {{ ui.keycloak.publicUrl | default('http://localhost:7680') }}
   {% endif %}
 
-  # Allowed algorithm stores for Bearer token inclusion (comma-separated URLs)
-  # Use "*" to allow all stores (less secure) or specify specific URLs, e.g.
+  # Algorithm stores the UI may connect to, for its Content-Security-Policy
+  # (space-separated URLs). Use "*" to allow all stores or specify specific URLs, e.g.
   # allowedAlgorithmStores: "http://localhost:7602 https://store.uluru.vantage6.ai"
   allowedAlgorithmStores: "{{ ui.allowedAlgorithmStores | default('*') }}"
   # Community algorithm store URL.

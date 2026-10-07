@@ -152,7 +152,9 @@ class TestResourceBase(unittest.TestCase):
         for task in Task.get():
             task.delete()
 
-    def login(self, user: User | None = None, audience: str = HQ_TOKEN_AUDIENCE):
+    def login(
+        self, user: User | None = None, audience: str | list[str] = HQ_TOKEN_AUDIENCE
+    ):
         if user is None:
             user = self.create_user()
 

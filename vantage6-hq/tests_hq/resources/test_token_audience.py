@@ -4,7 +4,7 @@ from uuid import uuid1
 
 import jwt
 
-from vantage6.common.globals import STORE_TOKEN_AUDIENCE
+from vantage6.common.globals import HQ_TOKEN_AUDIENCE, STORE_TOKEN_AUDIENCE
 
 from vantage6.hq.model import AlgorithmStore, Rule, User
 from vantage6.hq.resource.common.task_post_base import TaskPostBase
@@ -38,6 +38,22 @@ class TestTokenAudience(TestResourceBase):
             algorithm="RS256",
         )
         rv = self.app.get("/api/user", headers={"Authorization": f"Bearer {hq_token}"})
+        self.assertNotEqual(rv.status_code, HTTPStatus.OK)
+
+    def test_tokens_for_hq_and_stores_refused(self):
+        """
+        HQ refuses tokens that are also valid at algorithm stores, such as the token
+        of a login that asks for both audiences
+        """
+        user = User(username=str(uuid1()), rules=Rule.get(), keycloak_id=str(uuid1()))
+        user.save()
+
+        rv = self.app.get(
+            "/api/user",
+            headers=self.login(
+                user, audience=[HQ_TOKEN_AUDIENCE, STORE_TOKEN_AUDIENCE]
+            ),
+        )
         self.assertNotEqual(rv.status_code, HTTPStatus.OK)
 
     @patch("vantage6.hq.resource.common.task_post_base.get_hq_token_for_stores")

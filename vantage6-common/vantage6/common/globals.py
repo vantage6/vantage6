@@ -55,8 +55,7 @@ STORE_TOKEN_AUDIENCE = "vantage6-store"
 HQ_AUDIENCE_SCOPE = "vantage6-hq-audience"
 STORE_AUDIENCE_SCOPE = "vantage6-store-audience"
 # Keycloak clients users log in with: one for HQ tokens, one for store tokens
-DEFAULT_KEYCLOAK_HQ_PUBLIC_CLIENT = "hq-public-client"
-DEFAULT_KEYCLOAK_STORE_PUBLIC_CLIENT = "store-public-client"
+DEFAULT_KEYCLOAK_PUBLIC_CLIENT = "public_client"
 
 # Maximum interval to wait for requesting results from a task
 MAX_INTERVAL = 300

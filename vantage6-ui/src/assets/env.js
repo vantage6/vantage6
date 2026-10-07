@@ -8,8 +8,7 @@
     window["env"]["allowed_algorithm_stores"] = "*";
     window["env"]["auth_url"] = "https://auth.uluru.vantage6.ai";
     window["env"]["keycloak_realm"] = "vantage6";
-    window["env"]["keycloak_hq_client"] = "hq-public-client";
-    window["env"]["keycloak_store_client"] = "store-public-client";
+    window["env"]["keycloak_client"] = "public_client";
     window["env"]["refresh_token_validity_seconds"] = "1800";
     window["env"]["community_store_url"] = "https://store.uluru.vantage6.ai";
     window["env"]["community_store_api_path"] = "/api";

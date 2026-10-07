@@ -52,8 +52,7 @@ data:
     {{- end }}
     {{- $hqKeycloak := default ($global.keycloak | default (dict)) .Values.hq.keycloak }}
     keycloak:
-      hq_public_client: {{ $hqKeycloak.hqPublicClient | default "hq-public-client" }}
-      store_public_client: {{ $hqKeycloak.storePublicClient | default "store-public-client" }}
+      public_client: {{ $hqKeycloak.publicClient | default "public_client" }}
     {{- if .Values.hq.algorithm_stores }}
     algorithm_stores:
       {{- range .Values.hq.algorithm_stores }}

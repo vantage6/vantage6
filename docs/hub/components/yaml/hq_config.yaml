@@ -40,10 +40,13 @@ hq:
   # If you want to couple algorithm stores to the server on startup, you can add them
   # here. The name is used to identify the algorithm store in the server's database.
   # The url is the URL of the algorithm store's API.
+  # Set uses_hq_keycloak to true only if the store authenticates with the same
+  # Keycloak as HQ: only those stores are sent tokens.
   algorithm_stores:
     - name: Local store
       url: http://localhost:7602/api
       api_path: /api
+      uses_hq_keycloak: true
 
   # Keycloak configuration. Values here override the global Keycloak settings
   # in the hub configuration (`global.keycloak`) for HQ.
@@ -56,6 +59,8 @@ hq:
     hqAdminClientSecret: myadminclientsecret
     hqStoreReaderClient: hq-store-reader-client
     storeAdminClient: store-admin-client
+    # Optional: if set, HQ creates the store admin client with this secret
+    storeAdminClientSecret: mystoreadminclientsecret
 
   # The secret key used to generate JWT authorization tokens. This should
   # be kept secret as others are able to generate access tokens if they
@@ -195,12 +200,11 @@ ui:
   # keycloak settings
   keycloak:
     realm: vantage6
-    hqPublicClient: hq-public-client
-    storePublicClient: store-public-client
+    publicClient: public_client
     publicUrl: http://localhost:7680
 
-  # Allowed algorithm stores for Bearer token inclusion (comma-separated URLs)
-  # Use "*" to allow all stores (less secure) or specify specific URLs, e.g.
+  # Algorithm stores the UI may connect to, for its Content-Security-Policy
+  # (space-separated URLs). Use "*" to allow all stores or specify specific URLs, e.g.
   # allowedAlgorithmStores: "http://localhost:7602 https://store.uluru.vantage6.ai".
   # If you don't want to run tasks via the UI, you can also set this to an empty string
   # for the strictest CSP policy.

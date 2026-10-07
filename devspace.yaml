@@ -57,9 +57,9 @@ vars:
   KEYCLOAK_REALM:
     source: env
     default: vantage6
-  KEYCLOAK_HQ_PUBLIC_CLIENT:
+  KEYCLOAK_FRONTEND_CLIENT:
     source: env
-    default: hq-public-client
+    default: public_client
   KEYCLOAK_HQ_ADMIN_CLIENT:
     source: env
     default: hq-admin-client
@@ -288,7 +288,7 @@ deployments:
               password: admin
             hq_admin_client_secret: ${KEYCLOAK_HQ_ADMIN_CLIENT_SECRET}
             store_admin_client_secret: ${KEYCLOAK_STORE_ADMIN_CLIENT_SECRET}
-            hqPublicClient:
+            publicClient:
               redirectUris:
                 - "http://localhost:7600/*"
 
@@ -348,7 +348,7 @@ deployments:
           keycloak:
             publicUrl: ${KEYCLOAK_PUBLIC_URL}
             realm: ${KEYCLOAK_REALM}
-            hqPublicClient: ${KEYCLOAK_HQ_PUBLIC_CLIENT}
+            publicClient: ${KEYCLOAK_FRONTEND_CLIENT}
 
         database:
           external: false

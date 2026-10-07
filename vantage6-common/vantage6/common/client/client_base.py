@@ -104,7 +104,6 @@ class ClientBase(BlobStorageMixin):
         self._access_token = None
         self._refresh_token = None
         self._store_access_token = None
-        self._store_refresh_token = None
 
         self.cryptor = None
         self.whoami = None

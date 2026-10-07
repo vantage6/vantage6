@@ -34,10 +34,9 @@ global:
     url: ""
     realm: "vantage6"
     hqAdminClient: "hq-admin-client"
-    hqPublicClient: "hq-public-client"
+    publicClient: "public_client"
     hqStoreReaderClient: "hq-store-reader-client"
     storeAdminClient: "store-admin-client"
-    storePublicClient: "store-public-client"
   urls:
     external:
       auth: ""

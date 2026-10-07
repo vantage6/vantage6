@@ -28,7 +28,7 @@ get_env_hash() {
     env_api_path=$(get_env_var_value "API_PATH")
     env_hq_url=$(get_env_var_value "HQ_URL")
     env_keycloak_realm=$(get_env_var_value "KEYCLOAK_REALM")
-    env_keycloak_client=$(get_env_var_value "KEYCLOAK_HQ_CLIENT")
+    env_keycloak_client=$(get_env_var_value "KEYCLOAK_CLIENT")
     env_auth_url=$(get_env_var_value "AUTH_URL")
     echo "$env_api_path$env_hq_url$env_keycloak_realm$env_keycloak_client$env_auth_url" | md5sum | cut -d' ' -f1
 }
@@ -38,7 +38,7 @@ get_env_hash_from_env_js() {
     envjs_api_path=$(get_env_var_value_from_env_js "api_path")
     envjs_hq_url=$(get_env_var_value_from_env_js "hq_url")
     envjs_keycloak_realm=$(get_env_var_value_from_env_js "keycloak_realm")
-    envjs_keycloak_client=$(get_env_var_value_from_env_js "keycloak_hq_client")
+    envjs_keycloak_client=$(get_env_var_value_from_env_js "keycloak_client")
     envjs_auth_url=$(get_env_var_value_from_env_js "auth_url")
     echo "$envjs_api_path$envjs_hq_url$envjs_keycloak_realm$envjs_keycloak_client$envjs_auth_url" | md5sum | cut -d' ' -f1
 }

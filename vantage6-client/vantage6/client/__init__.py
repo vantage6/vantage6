@@ -21,8 +21,9 @@ from vantage6.common.encryption import DummyCryptor, RSACryptor
 from vantage6.common.enum import TaskDatabaseType
 from vantage6.common.globals import (
     APPNAME,
-    DEFAULT_KEYCLOAK_HQ_PUBLIC_CLIENT,
-    DEFAULT_KEYCLOAK_STORE_PUBLIC_CLIENT,
+    DEFAULT_KEYCLOAK_PUBLIC_CLIENT,
+    HQ_AUDIENCE_SCOPE,
+    STORE_AUDIENCE_SCOPE,
     AuthStatus,
 )
 from vantage6.common.kubernetes.utils import running_in_wsl
@@ -48,9 +49,8 @@ class UserClient(ClientBase):
         hq_url: str,
         auth_url: str,
         auth_realm: str = "vantage6",
-        auth_hq_client: str = DEFAULT_KEYCLOAK_HQ_PUBLIC_CLIENT,
+        auth_client: str = DEFAULT_KEYCLOAK_PUBLIC_CLIENT,
         log_level=LogLevel.INFO,
-        auth_store_client: str = DEFAULT_KEYCLOAK_STORE_PUBLIC_CLIENT,
     ) -> None:
         """Create user client
 
@@ -64,14 +64,10 @@ class UserClient(ClientBase):
             The url of the authentication service.
         auth_realm : str, optional
             The Keycloak realm to use for authentication, by default 'vantage6'
-        auth_hq_client : str, optional
-            The Keycloak client to use for authentication with HQ, by default
-            'hq-public-client'
+        auth_client : str, optional
+            The Keycloak client to use for authentication, by default 'public_client'
         log_level : str, optional
             The log level to use, by default 'info'
-        auth_store_client : str, optional
-            The Keycloak client to use for authentication with algorithm stores, by
-            default 'store-public-client'
         """
         super().__init__(hq_url=hq_url, auth_url=auth_url)
 
@@ -79,8 +75,7 @@ class UserClient(ClientBase):
         self.log = self._get_logger(log_level)
 
         self.auth_realm = auth_realm
-        self.auth_hq_client = auth_hq_client
-        self.auth_store_client = auth_store_client
+        self.auth_client = auth_client
 
         # service account settings
         self.is_service_account = False
@@ -109,12 +104,7 @@ class UserClient(ClientBase):
 
         self.kc_openid = KeycloakOpenID(
             server_url=self.auth_url,
-            client_id=self.auth_hq_client,
-            realm_name=self.auth_realm,
-        )
-        self.kc_openid_store = KeycloakOpenID(
-            server_url=self.auth_url,
-            client_id=self.auth_store_client,
+            client_id=self.auth_client,
             realm_name=self.auth_realm,
         )
 
@@ -177,37 +167,59 @@ class UserClient(ClientBase):
         if not device_endpoint:
             return
 
-        token = self._device_login(device_endpoint, token_endpoint, self.auth_hq_client)
-        if not token:
-            return
-
-        # Algorithm stores get a separate token that is not valid at HQ. As you are
-        # already logged in, this only asks you to confirm.
-        self.log.info("Please confirm once more to also log in to algorithm stores")
-        store_token = self._device_login(
-            device_endpoint, token_endpoint, self.auth_store_client
-        )
-        if not store_token:
-            self.log.warning(
-                "Login for algorithm stores failed: requests to algorithm stores will "
-                "be refused until you authenticate again."
-            )
-
-        self._finalize_successful_authentication(token, store_token)
-
-    def _device_login(
-        self, device_endpoint: str, token_endpoint: str, client_id: str
-    ) -> dict | None:
-        """Log in with the device flow on one Keycloak client."""
-        device_data = self._start_device_authorization(device_endpoint, client_id)
+        device_data = self._start_device_authorization(device_endpoint)
         if not device_data:
-            return None
+            return
 
         # check if browser can be opened to directly authenticate, otherwise fallback to
         # console output
         self._try_open_browser_for_device_flow(device_data)
 
-        return self._poll_device_token(token_endpoint, device_data, client_id)
+        token = self._poll_device_token(token_endpoint, device_data)
+        if not token:
+            return
+
+        # The login covers both HQ and algorithm stores, so its access token is never
+        # used: HQ and the stores each get a token for their own audience only.
+        self._refresh_token = token.get("refresh_token")
+        if not self._obtain_tokens_per_audience():
+            return
+
+        self._finalize_successful_authentication()
+
+    def _obtain_tokens_per_audience(self) -> bool:
+        """
+        Use the refresh token to get a token that is only valid at HQ and one that is
+        only valid at algorithm stores. The refresh token covers both audiences, so the
+        scope must be given on every refresh.
+
+        Returns
+        -------
+        bool
+            Whether both tokens were obtained
+        """
+        try:
+            hq_token = self.kc_openid.token(
+                grant_type="refresh_token",
+                refresh_token=self._refresh_token,
+                scope=f"openid {HQ_AUDIENCE_SCOPE}",
+            )
+            store_token = self.kc_openid.token(
+                grant_type="refresh_token",
+                refresh_token=hq_token["refresh_token"],
+                scope=f"openid {STORE_AUDIENCE_SCOPE}",
+            )
+        except KeycloakAuthenticationError:
+            self.log.exception("Could not authenticate token. Please re-authenticate!")
+            return False
+        except KeycloakError:
+            self.log.exception("Error in refreshing token. Please re-authenticate!")
+            return False
+
+        self._access_token = hq_token["access_token"]
+        self._store_access_token = store_token["access_token"]
+        self._refresh_token = store_token["refresh_token"]
+        return True
 
     def _get_device_flow_endpoints(self) -> tuple[str | None, str | None]:
         """Retrieve device authorization and token endpoints from Keycloak."""
@@ -233,16 +245,14 @@ class UserClient(ClientBase):
 
         return device_endpoint, token_endpoint
 
-    def _start_device_authorization(
-        self, device_endpoint: str, client_id: str
-    ) -> dict | None:
+    def _start_device_authorization(self, device_endpoint: str) -> dict | None:
         """Request device and user codes from Keycloak."""
         try:
             resp = requests.post(
                 device_endpoint,
                 data={
-                    "client_id": client_id,
-                    "scope": "openid",
+                    "client_id": self.auth_client,
+                    "scope": f"openid {HQ_AUDIENCE_SCOPE} {STORE_AUDIENCE_SCOPE}",
                 },
                 timeout=30,
             )
@@ -304,9 +314,7 @@ class UserClient(ClientBase):
             print()
             print("--------------------------------")
 
-    def _poll_device_token(
-        self, token_endpoint: str, device_data: dict, client_id: str
-    ) -> dict | None:
+    def _poll_device_token(self, token_endpoint: str, device_data: dict) -> dict | None:
         """Poll the token endpoint until the user has authenticated."""
         device_code = device_data["device_code"]
         expires_in = device_data.get("expires_in", 600)
@@ -328,7 +336,7 @@ class UserClient(ClientBase):
                     data={
                         "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
                         "device_code": device_code,
-                        "client_id": client_id,
+                        "client_id": self.auth_client,
                     },
                     timeout=30,
                 )
@@ -371,20 +379,8 @@ class UserClient(ClientBase):
             )
             return None
 
-    def _finalize_successful_authentication(
-        self, token: dict, store_token: dict | None
-    ) -> None:
-        """Store tokens, load user info and set up encryption."""
-        self._access_token = token.get("access_token")
-        self._refresh_token = token.get("refresh_token")
-        if store_token:
-            self._store_access_token = store_token.get("access_token")
-            self._store_refresh_token = store_token.get("refresh_token")
-
-        if not self._access_token:
-            self.log.error("No access token received from Keycloak")
-            return
-
+    def _finalize_successful_authentication(self) -> None:
+        """Load user info and set up encryption."""
         user = self.request("user/me")
         user_id = user.get("id")
         user_name = user.get("username")
@@ -479,31 +475,7 @@ class UserClient(ClientBase):
         """Obtain a new token for a non-service account user"""
         self.log.info("Refreshing token")
         assert self._refresh_token, "Refresh token not found, did you authenticate?"
-
-        try:
-            new_token = self.kc_openid.refresh_token(self._refresh_token)
-        except KeycloakAuthenticationError:
-            self.log.exception("Could not authenticate token. Please re-authenticate!")
-            return
-        except KeycloakError:
-            self.log.exception("Error in refreshing token. Please re-authenticate!")
-            return
-
-        self._access_token = new_token["access_token"]
-        self._refresh_token = new_token["refresh_token"]
-
-        if self._store_refresh_token:
-            try:
-                new_store_token = self.kc_openid_store.refresh_token(
-                    self._store_refresh_token
-                )
-            except KeycloakError:
-                self.log.exception(
-                    "Error in refreshing algorithm store token. Please re-authenticate!"
-                )
-                return
-            self._store_access_token = new_store_token["access_token"]
-            self._store_refresh_token = new_store_token["refresh_token"]
+        self._obtain_tokens_per_audience()
 
     def setup_collaboration(self, collaboration_id: int) -> None:
         """Setup the collaboration.

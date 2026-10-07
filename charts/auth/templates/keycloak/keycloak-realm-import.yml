@@ -4,7 +4,7 @@
 {{- $storeAdminClientSecret := default $globalKeycloak.storeAdminClientSecret .Values.keycloak.realmImport.store_admin_client_secret }}
 {{- $hqAdminClient := default "hq-admin-client" $globalKeycloak.hqAdminClient }}
 {{- $storeAdminClient := default "store-admin-client" $globalKeycloak.storeAdminClient }}
-{{- $hqPublicClient := .Values.keycloak.realmImport.hqPublicClient | default (dict) }}
+{{- $publicClient := .Values.keycloak.realmImport.publicClient | default (dict) }}
 apiVersion: k8s.keycloak.org/v2beta1
 kind: KeycloakRealmImport
 metadata:
@@ -176,13 +176,12 @@ spec:
     # (hqStoreReaderClient) are created by HQ at startup, also for existing realms.
     # Defining clientScopes here would replace Keycloak's built-in scopes.
     clients:
-      # Users log in with this client to get tokens for HQ
-      - clientId: {{ $hqPublicClient.name | default $globalKeycloak.hqPublicClient | default "hq-public-client" }}
+      - clientId: {{ $publicClient.name | default $globalKeycloak.publicClient | default "public_client" }}
         publicClient: true
         attributes:
           oauth2.device.authorization.grant.enabled: "true"
         redirectUris:
-        {{- range $hqPublicClient.redirectUris }}
+        {{- range $publicClient.redirectUris }}
           - {{ . | quote }}
         {{- end }}
         # By setting webOrigins to "+", we allow the same origins as redirectUris.
@@ -190,27 +189,6 @@ spec:
         - "+"
         # The public client is only for users, not for nodes. Therefore, map a
         # constant claim to indicate the that the client is a user.
-        protocolMappers:
-          - name: vantage6_client_type
-            protocol: openid-connect
-            protocolMapper: oidc-hardcoded-claim-mapper
-            consentRequired: false
-            config:
-              claim.name: vantage6_client_type
-              claim.value: user
-              access.token.claim: "true"
-      # Users log in with this client to get tokens for algorithm stores, which are
-      # not valid at HQ.
-      - clientId: {{ default "store-public-client" $globalKeycloak.storePublicClient }}
-        publicClient: true
-        attributes:
-          oauth2.device.authorization.grant.enabled: "true"
-        redirectUris:
-        {{- range $hqPublicClient.redirectUris }}
-          - {{ . | quote }}
-        {{- end }}
-        webOrigins:
-        - "+"
         protocolMappers:
           - name: vantage6_client_type
             protocol: openid-connect

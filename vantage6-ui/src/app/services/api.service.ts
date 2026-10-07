@@ -4,7 +4,7 @@ import { Observable, first } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { Pagination } from 'src/app/models/api/pagination.model';
 import { SnackbarService } from './snackbar.service';
-import { StoreAuthService } from './store-auth.service';
+import { TokenService } from './token.service';
 import { isNested } from 'src/app/helpers/utils.helper';
 import { AlgorithmStore } from '../models/api/algorithmStore.model';
 
@@ -15,7 +15,7 @@ export class ApiService {
   constructor(
     private http: HttpClient,
     private snackBarService: SnackbarService,
-    private storeAuthService: StoreAuthService
+    private tokenService: TokenService
   ) {}
 
   async getForApi<T = null>(path: string, params: object | null = null): Promise<T> {
@@ -122,7 +122,7 @@ export class ApiService {
 
   // Only stores that authenticate with the same Keycloak as HQ get a token
   private async getStoreHeaders(algoStore: AlgorithmStore): Promise<HttpHeaders> {
-    const token = algoStore.uses_hq_keycloak ? await this.storeAuthService.getToken() : undefined;
+    const token = algoStore.uses_hq_keycloak ? await this.tokenService.getStoreToken() : undefined;
     return token ? new HttpHeaders({ Authorization: `Bearer ${token}` }) : new HttpHeaders();
   }
 

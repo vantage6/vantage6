@@ -54,10 +54,9 @@ global:
     url: https://auth.vantage6.org
     realm: vantage6
     hqAdminClient: hq-admin-client
-    hqPublicClient: hq-public-client
+    publicClient: public_client
     hqStoreReaderClient: hq-store-reader-client
     storeAdminClient: store-admin-client
-    storePublicClient: store-public-client
     adminUsername: admin
     adminPassword: change-me
     hqAdminClientSecret: change-me-too

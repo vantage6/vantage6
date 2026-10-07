@@ -38,10 +38,8 @@ spec:
           value: {{ default $external.auth $uiKeycloak.publicUrl | quote }}
         - name: KEYCLOAK_REALM
           value: {{ $uiKeycloak.realm | quote }}
-        - name: KEYCLOAK_HQ_CLIENT
-          value: {{ $uiKeycloak.hqPublicClient | default "hq-public-client" | quote }}
-        - name: KEYCLOAK_STORE_CLIENT
-          value: {{ $uiKeycloak.storePublicClient | default "store-public-client" | quote }}
+        - name: KEYCLOAK_CLIENT
+          value: {{ $uiKeycloak.publicClient | default "public_client" | quote }}
         # set the length of the refresh token. This is the time before keycloak-angular
         # automatically logs out the user.
         - name: REFRESH_TOKEN_VALIDITY_SECONDS

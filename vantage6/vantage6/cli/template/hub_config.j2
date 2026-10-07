@@ -67,18 +67,14 @@ global:
     # Name of the client HQ uses to manage users/clients in the realm.
     hqAdminClient: {{ keycloak.hqAdminClient | default('hq-admin-client') }}
 
-    # Name of the public client users log in with to get tokens for HQ (e.g. the
-    # portal).
-    hqPublicClient: {{ keycloak.hqPublicClient | default('hq-public-client') }}
+    # Name of the public client used by users (e.g. the portal).
+    publicClient: {{ keycloak.publicClient | default('public_client') }}
 
     # Name of the client HQ uses to read approved algorithms from algorithm stores.
     hqStoreReaderClient: {{ keycloak.hqStoreReaderClient | default('hq-store-reader-client') }}
 
     # Name of the client algorithm stores use to look up users.
     storeAdminClient: {{ keycloak.storeAdminClient | default('store-admin-client') }}
-
-    # Name of the public client users log in with to get tokens for algorithm stores.
-    storePublicClient: {{ keycloak.storePublicClient | default('store-public-client') }}
 
     # Credentials for the Vantage6 admin user. For production deployments you
     # should override these with secure values, preferably from a secret.

@@ -24,7 +24,12 @@ from requests import Response as RequestsResponse
 from werkzeug.exceptions import HTTPException
 
 from vantage6.common import logger_name, validate_required_env_vars
-from vantage6.common.globals import DEFAULT_API_PATH, LOCALHOST
+from vantage6.common.globals import (
+    DEFAULT_API_PATH,
+    HQ_TOKEN_AUDIENCE,
+    LOCALHOST,
+    STORE_TOKEN_AUDIENCE,
+)
 
 from vantage6.cli.context.base_backend import BaseBackendContext
 
@@ -94,6 +99,7 @@ class Vantage6App:
 
         # Setup the Flask-JWT-Extended extension (JWT: JSON Web Token)
         self.jwt = JWTManager(self.app)
+        self._reject_tokens_for_other_audiences()
         self.configure_jwt()
 
         # Setup Principal, granular API access manegement
@@ -122,6 +128,23 @@ class Vantage6App:
 
         # set the backend's version
         self.__version__ = __version__
+
+    def _reject_tokens_for_other_audiences(self) -> None:
+        """
+        Refuse Keycloak tokens that are also valid at another vantage6 service. A user
+        logs in for several audiences at once, and that token must never be accepted
+        directly, so that no service receives a token it could use at another.
+        """
+        own_audience = self.app.config.get("JWT_DECODE_AUDIENCE")
+        other_audiences = {HQ_TOKEN_AUDIENCE, STORE_TOKEN_AUDIENCE} - {own_audience}
+
+        @self.jwt.token_verification_loader
+        # pylint: disable=unused-argument
+        def only_own_audience(jwt_header: dict, jwt_data: dict) -> bool:
+            audience = jwt_data.get("aud", [])
+            if isinstance(audience, str):
+                audience = [audience]
+            return not other_audiences.intersection(audience)
 
     @abstractmethod
     def configure_flask(self) -> None:

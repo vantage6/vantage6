@@ -121,12 +121,11 @@ keycloak:
     # Whether to require users to update their password on first login.
     passwordUpdateRequired: true
 
-    # HQ public client configuration. Users authenticate with this client to get
-    # tokens for HQ, e.g. in the browser. The client users log in with to get tokens
-    # for algorithm stores uses the same redirect URIs.
-    hqPublicClient:
-      # Defaults to global.keycloak.hqPublicClient, or else "hq-public-client"
-      name: hq-public-client
+    # Public client configuration. The public client is used by users to authenticate
+    # in the browser.
+    publicClient:
+      # Defaults to global.keycloak.publicClient, or else "public_client"
+      name: public_client
       # Redirect URIs are the URIs that Keycloak is allowed to redirect to after
       # authentication. This should normally be set to the UI URL. If you have
       # other applications that can use the vantage6 Keycloak instance, those should be
@@ -134,9 +133,10 @@ keycloak:
       redirectUris:
         - "http://localhost:7600/*"
 
-    # Secret used for the HQ admin client. Note that if this is defined, it will
-    # override the hub's global HQ admin client secret.
+    # Secrets used for the HQ and store admin clients. If defined, these override the
+    # hub's global secrets.
     hq_admin_client_secret: myadminclientsecret
+    store_admin_client_secret: mystoreadminclientsecret
 
     # SMTP server configuration. This is used to send emails to users.
     smtpServer:

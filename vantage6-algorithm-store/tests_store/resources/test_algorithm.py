@@ -223,6 +223,19 @@ class TestAlgorithmResources(TestResources):
         # cleanup
         policy.delete()
 
+    def test_tokens_for_hq_and_stores_refused(self):
+        """
+        Test that the store refuses tokens that are also valid at HQ, such as the
+        token of a login that asks for both audiences.
+        """
+        headers = self.login_node(audience="vantage6-store")
+        rv = self.app.get("/api/algorithm", headers=headers)
+        self.assertEqual(rv.status_code, HTTPStatus.OK)
+
+        headers = self.login_node(audience=["vantage6-store", "vantage6-hq"])
+        rv = self.app.get("/api/algorithm", headers=headers)
+        self.assertNotEqual(rv.status_code, HTTPStatus.OK)
+
     def test_view_algorithm_single_not_affected_by_node_bypass(self):
         """
         Test that the node bypass on the algorithm list endpoint does not extend to

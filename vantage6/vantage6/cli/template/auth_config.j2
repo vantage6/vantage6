@@ -164,20 +164,19 @@ keycloak:
     # whether to require users to update their password on first login.
     passwordUpdateRequired: {{ keycloak.passwordUpdateRequired | default(true) }}
 
-    # HQ public client configuration. Users authenticate with this client to get
-    # tokens for HQ, e.g. in the browser. The client users log in with to get tokens
-    # for algorithm stores uses the same redirect URIs.
-    hqPublicClient:
-      {% if keycloak.hqPublicClient is defined %}
-      name: {{ keycloak.hqPublicClient.name | default('hq-public-client') }}
+    # public client configuration. The public client is used by users to authenticate
+    # in the browser.
+    publicClient:
+      {% if keycloak.publicClient is defined %}
+      name: {{ keycloak.publicClient.name | default('public_client') }}
       {% endif %}
       # redirect URIs are the URIs that keycloak is allowed to redirect to after
       # authentication. This should normally be set to the UI URL. If you have
       # other applications that can use the vantage6 Keycloak instance, those should be
       # added as well.
       redirectUris:
-        {% if keycloak.hqPublicClient.redirectUris %}
-        {% for uri in keycloak.hqPublicClient.redirectUris %}
+        {% if keycloak.publicClient.redirectUris %}
+        {% for uri in keycloak.publicClient.redirectUris %}
         - "{{ uri }}/*"
         {% endfor %}
         {% else %}
