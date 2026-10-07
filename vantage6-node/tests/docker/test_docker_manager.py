@@ -31,9 +31,7 @@ class TestIsDockerImageAllowed(unittest.TestCase):
 
     def test_allowed_algorithms_exact_match(self):
         """Baseline regression check for the (unchanged) allowed_algorithms policy."""
-        self.manager._policies = {
-            NodePolicy.ALLOWED_ALGORITHMS: ["some/image:tag"]
-        }
+        self.manager._policies = {NodePolicy.ALLOWED_ALGORITHMS: ["some/image:tag"]}
 
         self.assertTrue(
             self.manager.is_docker_image_allowed("some/image:tag", self._task_info())
