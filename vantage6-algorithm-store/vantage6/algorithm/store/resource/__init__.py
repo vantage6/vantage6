@@ -1,25 +1,26 @@
-import os
 import logging
-import requests
+import os
+from collections.abc import Callable
 from functools import wraps
 from http import HTTPStatus
-from flask import Response, request, current_app, g
+
+import requests
+from flask import Response, current_app, g, request
 from flask_mail import Mail
 from flask_principal import Identity, identity_changed
 from flask_restful import Api
-
 from vantage6.algorithm.store import PermissionManager
-from vantage6.algorithm.store.model.rule import Operation
-from vantage6.common import logger_name
-from vantage6.common.enum import AlgorithmViewPolicies, StorePolicies
-from vantage6.algorithm.store.model.vantage6_server import Vantage6Server
-from vantage6.algorithm.store.model.user import User
-from vantage6.backend.common.permission import RuleNeed
-from vantage6.backend.common.services_resources import BaseServicesResources
 from vantage6.algorithm.store.model.common.enums import (
     DefaultStorePolicies,
 )
 from vantage6.algorithm.store.model.policy import Policy
+from vantage6.algorithm.store.model.rule import Operation
+from vantage6.algorithm.store.model.user import User
+from vantage6.algorithm.store.model.vantage6_server import Vantage6Server
+from vantage6.backend.common.permission import RuleNeed
+from vantage6.backend.common.services_resources import BaseServicesResources
+from vantage6.common import logger_name
+from vantage6.common.enum import AlgorithmViewPolicies, StorePolicies
 
 log = logging.getLogger(logger_name(__name__))
 
@@ -124,9 +125,68 @@ def request_validate_server_token(
         return None, None
 
 
-def _authenticate_with_server(*args, **kwargs):
+def request_validate_node_token(
+    server_url: str,
+) -> tuple[Response, int] | tuple[None, None]:
     """
-    Authenticate with a vantage6 server.
+    Validate the token of a node.
+
+    Parameters
+    ----------
+    server_url : str
+        URL of the server to validate the token of.
+
+    Returns
+    -------
+    tuple[Response, int] | tuple[None, None]
+        Response object from the request, or None if the server could not be reached
+    """
+    url = f"{server_url}/token/node/validate"
+    try:
+        return request_from_store_to_v6_server(url, method="post")
+    except requests.exceptions.ConnectionError:
+        return None, None
+
+
+def _is_node_client_request() -> bool:
+    """
+    Check whether the request self-identifies as coming from a node.
+
+    This is only a routing hint - it decides which remote endpoint to validate the
+    token against (see `_authenticate_node_with_server`), not a trust decision by
+    itself. A request that sets this header with e.g. a user's token will simply fail
+    node validation at the server, since the server's node-validate endpoint only
+    accepts node tokens.
+
+    Returns
+    -------
+    bool
+        Whether the request identifies itself as coming from a node.
+    """
+    return request.headers.get("Client-Type") == "node"
+
+
+def _authenticate_entity_with_server(
+    validate_token: Callable[[str], tuple[Response, int] | tuple[None, None]],
+) -> tuple[Response | dict, HTTPStatus]:
+    """
+    Authenticate the caller (a user or a node) with its own vantage6 server.
+
+    Shared by `_authenticate_with_server` and `_authenticate_node_with_server`, which
+    differ only in which server endpoint confirms the token.
+
+    Parameters
+    ----------
+    validate_token : Callable[[str], tuple[Response, int] | tuple[None, None]]
+        Function that asks the server at the given URL whether the caller's token
+        (from the `Authorization` header) is valid - `request_validate_server_token`
+        for users, `request_validate_node_token` for nodes.
+
+    Returns
+    -------
+    tuple[Response | dict, HTTPStatus]
+        The server's response and 200 if the token is valid, or an error message and
+        an appropriate status code otherwise.
     """
     msg = "Missing Server-Url header"
     if not request.headers.get("Server-Url"):
@@ -149,7 +209,7 @@ def _authenticate_with_server(*args, **kwargs):
         return {"msg": msg}, HTTPStatus.FORBIDDEN
 
     # check if token is valid
-    response, status_code = request_validate_server_token(server_url)
+    response, status_code = validate_token(server_url)
     if response is None or status_code == HTTPStatus.NOT_FOUND:
         msg = "Could not connect to the vantage6 server. Please check the server URL."
         log.warning(msg)
@@ -165,6 +225,25 @@ def _authenticate_with_server(*args, **kwargs):
         return {"msg": msg}, HTTPStatus.UNAUTHORIZED
 
     return response, HTTPStatus.OK
+
+
+def _authenticate_with_server(*args, **kwargs) -> tuple[Response | dict, HTTPStatus]:
+    """
+    Authenticate a user with its own vantage6 server.
+    """
+    return _authenticate_entity_with_server(request_validate_server_token)
+
+
+def _authenticate_node_with_server() -> tuple[Response | dict, HTTPStatus]:
+    """
+    Authenticate a node with its own vantage6 server.
+
+    Unlike `_authenticate_with_server`, a successful result here never looks the node
+    up as a store `User` - nodes are recognized purely by their own server confirming
+    the token is valid, for the small number of endpoints that explicitly opt in to
+    accepting them (see `with_permission_to_view_algorithms`'s `allow_node` option).
+    """
+    return _authenticate_entity_with_server(request_validate_node_token)
 
 
 def _authorize_user(
@@ -295,9 +374,16 @@ def with_permission(resource: str, operation: Operation) -> callable:
     return protection_decorator
 
 
-def with_permission_to_view_algorithms() -> callable:
+def with_permission_to_view_algorithms(allow_node: bool = False) -> callable:
     """
     Decorator to verify that the user has as a permission on a resource.
+
+    Parameters
+    ----------
+    allow_node : bool, optional
+        If True, also allow requests that self-identify as coming from a node (see
+        `_is_node_client_request`) to view approved algorithms, regardless of the
+        store's `algorithm_view` policy.
 
     Returns
     -------
@@ -309,12 +395,6 @@ def with_permission_to_view_algorithms() -> callable:
     def protection_decorator(fn):
         @wraps(fn)
         def decorator(self, *args, **kwargs):
-            policies = Policy.get_as_dict()
-            # check if everyone has permission to view algorithms
-            algorithm_view_policy = policies.get(
-                StorePolicies.ALGORITHM_VIEW, DefaultStorePolicies.ALGORITHM_VIEW.value
-            )
-
             # check if user is trying to view algorithms that are not approved by review
             # or have been invalidated - these algorithms always require authentication
             # even when algorithms are open to all
@@ -324,6 +404,26 @@ def with_permission_to_view_algorithms() -> callable:
                 or request_args.get("under_review")
                 or request_args.get("in_review_process")
                 or request_args.get("invalidated")
+            )
+
+            # a node re-verifying an image against this store's catalog is always
+            # allowed to see approved algorithms, independent of the store's
+            # algorithm_view policy - it is never allowed to see non-approved ones.
+            # Unlike the user path below, a node that identifies itself here but
+            # fails authentication is rejected outright rather than falling through
+            # to the user flow, since a node's token would never pass user
+            # authentication either.
+            if allow_node and request_approved and _is_node_client_request():
+                response, status = _authenticate_node_with_server()
+                if status != HTTPStatus.OK:
+                    return response, status
+                g.node = True
+                return fn(self, *args, **kwargs)
+
+            policies = Policy.get_as_dict()
+            # check if everyone has permission to view algorithms
+            algorithm_view_policy = policies.get(
+                StorePolicies.ALGORITHM_VIEW, DefaultStorePolicies.ALGORITHM_VIEW.value
             )
 
             # TODO v5+ remove this deprecated policy "algorithms_open"

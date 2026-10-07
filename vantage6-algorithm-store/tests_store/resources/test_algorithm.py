@@ -157,6 +157,83 @@ class TestAlgorithmResources(TestResources):
         whitelisted_server.delete()
         user.delete()
 
+    @patch("vantage6.algorithm.store.resource.request_validate_node_token")
+    def test_view_algorithm_decorator_node(self, validate_node_token_mock):
+        """
+        Test that a request self-identifying as a node (Client-Type: node header) is
+        allowed to list approved algorithms (`allow_node=True` on the decorator) once
+        its own server confirms the token, even under the store's most restrictive
+        algorithm_view policy and without any store User being registered - and that
+        this does not extend to non-approved algorithms.
+        """
+        # even the most restrictive policy should not block a node
+        policy = Policy(
+            key=StorePolicies.ALGORITHM_VIEW,
+            value=AlgorithmViewPolicies.ONLY_WITH_EXPLICIT_PERMISSION,
+        )
+        policy.save()
+        whitelisted_server = self.register_server()
+        node_headers = {
+            "server_url": SERVER_URL,
+            "Authorization": "Mock",
+            "Client-Type": "node",
+        }
+
+        # the node's own server says the token is not valid -> denied
+        validate_node_token_mock.return_value = (
+            MockResponse(),
+            HTTPStatus.UNAUTHORIZED,
+        )
+        rv = self.app.get("/api/algorithm", headers=node_headers)
+        self.assertNotEqual(rv.status_code, HTTPStatus.OK)
+
+        # the node's own server confirms the token is valid -> allowed
+        validate_node_token_mock.return_value = (MockResponse(), HTTPStatus.OK)
+        rv = self.app.get("/api/algorithm", headers=node_headers)
+        self.assertEqual(rv.status_code, HTTPStatus.OK)
+
+        # a node cannot use this to see non-approved algorithms
+        for arg in [
+            "awaiting_reviewer_assignment",
+            "under_review",
+            "in_review_process",
+            "invalidated",
+        ]:
+            rv = self.app.get(f"/api/algorithm?{arg}=1", headers=node_headers)
+            self.assertNotEqual(rv.status_code, HTTPStatus.OK)
+
+        # this is not a blanket bypass: a request without the Client-Type header is
+        # still governed by the normal (server/user-based) auth flow, which under
+        # this policy requires a registered, permissioned store user
+        rv = self.app.get("/api/algorithm", headers=HEADERS)
+        self.assertNotEqual(rv.status_code, HTTPStatus.OK)
+
+        # cleanup
+        policy.delete()
+        whitelisted_server.delete()
+
+    def test_view_algorithm_single_not_affected_by_node_bypass(self):
+        """
+        Test that the node bypass on the algorithm list endpoint does not extend to
+        /api/algorithm/<id>, which was deliberately left on the un-modified
+        decorator.
+        """
+        algorithm = Algorithm(name="test_algorithm", status=AlgorithmStatus.APPROVED)
+        algorithm.save()
+
+        node_headers = {
+            "server_url": SERVER_URL,
+            "Authorization": "Mock",
+            "Client-Type": "node",
+        }
+        # no policy is defined, so the default applies - and a node token is not
+        # recognized at all here, since this endpoint never got `allow_node=True`
+        rv = self.app.get(f"/api/algorithm/{algorithm.id}", headers=node_headers)
+        self.assertNotEqual(rv.status_code, HTTPStatus.OK)
+
+        # cleanup
+        algorithm.delete()
+
     @patch("vantage6.algorithm.store.resource.request_validate_server_token")
     def test_algorithm_view_multi(self, validate_token_mock):
         """Test GET /api/algorithm"""
@@ -561,6 +638,31 @@ class TestAlgorithmResources(TestResources):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json["description"], "new_description")
+
+        # check that another developer cannot update this algorithm - they are
+        # not its owner
+        other_username = "other_developer"
+        self.register_user(
+            server.id,
+            username=other_username,
+            user_rules=[Rule.get_by_("algorithm", Operation.EDIT)],
+        )
+        validate_token_mock.return_value = (
+            MockResponse({"username": other_username}),
+            HTTPStatus.OK,
+        )
+        response = self.app.patch(
+            f"/api/algorithm/{algorithm.id}",
+            json={"description": "other_description"},
+            headers=HEADERS,
+        )
+        self.assertEqual(response.status_code, 403)
+
+        # switch back to the algorithm's own developer for the remaining checks
+        validate_token_mock.return_value = (
+            MockResponse({"username": USERNAME}),
+            HTTPStatus.OK,
+        )
 
         # check that algorithm cannot be updated if it is approved
         algorithm.status = AlgorithmStatus.APPROVED
