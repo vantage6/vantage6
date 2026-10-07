@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import re
+import shutil
 import threading
 import time
 import uuid
@@ -21,11 +22,17 @@ from vantage6.common.docker.addons import (
     get_digest,
     get_image_name_wo_tag,
 )
-from vantage6.common.enum import AlgorithmStepType, RunStatus, TaskDatabaseType
+from vantage6.common.enum import (
+    AlgorithmStepType,
+    DatabaseMountMode,
+    RunStatus,
+    TaskDatabaseType,
+)
 from vantage6.common.globals import (
     DATAFRAME_BETWEEN_GROUPS_SEPARATOR,
     DATAFRAME_WITHIN_GROUP_SEPARATOR,
     DEFAULT_ALPINE_IMAGE,
+    DEFAULT_DB_MOUNT_MODE,
     ENV_VAR_EQUALS_REPLACEMENT,
     SESSION_STATE_FILENAME,
     STRING_ENCODING,
@@ -44,6 +51,7 @@ from vantage6.node.globals import (
     DEFAULT_PROXY_PORT,
     ENV_VARS_NOT_SETTABLE_BY_NODE,
     K8S_EVENT_STREAM_LOOP_TIMEOUT,
+    TASK_FILES_ROOT,
     TASK_JOB_INPUT_PATH,
     TASK_JOB_OUTPUT_PATH,
     TASK_JOB_SESSION_FOLDER_PATH,
@@ -262,8 +270,13 @@ class ContainerManager:
         - is_dir: whether the database is a directory
         - type: the type of the database
         - env: the environment variables to be passed to the algorithm container
+        - mount_mode: how a file/folder database is mounted in algorithm containers.
+          Ignored for service-based databases.
 
         It reads these from the environment variables that are passed to the node.
+
+        File databases in 'copy' mount mode are copied to the task directory, so that
+        algorithms never get write access to the original file.
 
         Returns
         -------
@@ -292,7 +305,8 @@ class ContainerManager:
                 "type": "sql",
                 "env": {
                     "some_other_key": "some_other_value",
-                }
+                },
+                "mount_mode": "ro",
             }
         }
         ```
@@ -316,6 +330,16 @@ class ContainerManager:
 
             db_type_env_var = f"DATABASE_{env_label}_TYPE"
             db_type = os.environ.get(db_type_env_var, "")
+
+            mount_mode_env_var = f"DATABASE_{env_label}_MOUNT_MODE"
+            mount_mode = os.environ.get(mount_mode_env_var, DEFAULT_DB_MOUNT_MODE)
+            mount_mode = mount_mode.lower()
+            if mount_mode not in DatabaseMountMode.list():
+                raise ValueError(
+                    f"Invalid mount_mode '{mount_mode}' for database '{label}'. "
+                    f"Supported values are: {', '.join(DatabaseMountMode.list())}."
+                )
+            mount_mode = DatabaseMountMode(mount_mode)
             # In case we are dealing with a file or directory and when running the node
             # instance in a POD, our internal path to that file or folder is different.
             # At this point we are not sure what the type of database is so we just
@@ -334,6 +358,10 @@ class ContainerManager:
             if db_is_file or db_is_dir:
                 local_uri = str(tmp_uri)
 
+            if db_is_file and mount_mode == DatabaseMountMode.COPY:
+                # Algorithms get the copy mounted instead of the original file
+                uri = self._copy_database_file(label, tmp_uri)
+
             # Get additional environment variables and remove the DATABASE_[LABEL]_
             # prefix
             env = {}
@@ -341,6 +369,7 @@ class ContainerManager:
                 if key.startswith(f"DATABASE_{env_label}_") and key not in [
                     uri_env_var,
                     db_type_env_var,
+                    mount_mode_env_var,
                 ]:
                     env[key.replace(f"DATABASE_{env_label}_", "")] = os.environ[key]
 
@@ -352,10 +381,34 @@ class ContainerManager:
                 is_dir=db_is_dir,
                 type=db_type,
                 env=env,
+                mount_mode=mount_mode,
             )
 
         self.log.debug("Databases: %s", databases)
         return databases
+
+    def _copy_database_file(self, label: str, db_path: Path) -> str:
+        """
+        Copy a file database to the task directory.
+
+        Parameters
+        ----------
+        label: str
+            Label of the database
+        db_path: Path
+            Path to the database file inside the node pod
+
+        Returns
+        -------
+        str
+            Path to the copy on the host system
+        """
+        relative_path = Path("databases") / db_path.name
+        copy_path = Path(TASK_FILES_ROOT) / relative_path
+        copy_path.parent.mkdir(parents=True, exist_ok=True)
+        self.log.info("Copying database '%s' to %s", label, copy_path)
+        shutil.copy(db_path, copy_path)
+        return str(Path(self.host_data_dir) / relative_path)
 
     def run(
         self,
@@ -1052,9 +1105,14 @@ class ContainerManager:
             source_database = databases_to_use[0]
             db: TaskDB = self.databases[source_database["label"]]
             if db.is_file or db.is_dir:
-                if db.mount_mode == "ro":
+                if db.mount_mode == DatabaseMountMode.READ_ONLY:
                     self.log.info(
                         f"Binding database {source_database['label']} as read-only"
+                    )
+                elif db.is_file:
+                    self.log.info(
+                        f"Binding copy of database {source_database['label']} as "
+                        "read-write"
                     )
                 else:
                     self.log.info(
@@ -1065,20 +1123,10 @@ class ContainerManager:
                     host_path=db.uri,
                     mount_path=db.local_uri,
                     type_="File" if db.is_file else "Directory",
-                    read_only=db.mount_mode == "ro",
+                    read_only=db.mount_mode == DatabaseMountMode.READ_ONLY,
                 )
                 volumes.append(db_volume)
                 vol_mounts.append(db_mount)
-
-            if db.mount_mode == "ro" and not db.is_file and not db.is_dir:
-                self.log.error(
-                    f"Database {source_database['label']} is of type {db.type} but "
-                    "mount_mode is 'ro'. This is not supported."
-                )
-                raise PermanentAlgorithmStartFail(
-                    f"Database {source_database['label']} is of type {db.type} but "
-                    "mount_mode is 'ro'. This is not supported."
-                )
 
             environment_variables[ContainerEnvNames.DATABASE_URI.value] = db.local_uri
             environment_variables[ContainerEnvNames.DATABASE_TYPE.value] = db.type
