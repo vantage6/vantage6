@@ -26,8 +26,24 @@ Release notes
     creates the new Keycloak clients at startup. For a standalone store, create the
     ``store-admin-client`` client in Keycloak yourself, with only the
     ``realm-management`` role ``view-users``.
-  - Rotate the secret of ``backend-admin-client``, which algorithm stores received
-    before.
+  - HQ's Keycloak clients are now named after HQ. HQ renames them in existing realms
+    at startup: ``backend-admin-client`` becomes ``hq-admin-client`` and
+    ``public_client`` becomes ``hq-public-client``. Rename these settings in your
+    configuration, as the old names are no longer read:
+
+    - ``keycloak.adminClient`` → ``hqAdminClient``
+    - ``keycloak.adminClientSecret`` → ``hqAdminClientSecret``
+    - ``keycloak.publicClient`` → ``hqPublicClient``
+    - auth chart: ``keycloak.realmImport.publicClient`` → ``hqPublicClient`` and
+      ``keycloak.realmImport.backend_client_secret`` → ``hq_admin_client_secret``
+    - UI: ``ui.keycloak.client`` → ``ui.keycloak.hqPublicClient``, and the
+      ``KEYCLOAK_CLIENT`` environment variable → ``KEYCLOAK_HQ_CLIENT``
+    - Python client: ``UserClient(auth_client=...)`` → ``auth_hq_client``, and
+      ``v6 test feature-test --auth-client`` → ``--auth-hq-client``
+
+    If you had set a custom name for the public client, set ``hqPublicClient`` to that
+    name; HQ only renames clients that still have the old default names.
+  - Rotate the secret of the HQ admin client, which algorithm stores received before.
   - Mark the algorithm stores that use the same Keycloak as HQ with
     ``uses_hq_keycloak: true`` in ``hq.algorithm_stores``, or with a ``PATCH`` to
     ``/algorithmstore/<id>`` as a user with global collaboration edit permission.

@@ -150,7 +150,7 @@ submitting particular tasks) that you might want to share publicly.
    # Normally, these are not needed, unless your server admin has configured them
    # to non-default values
    keycloak_realm = "vantage6"
-   keycloak_client = "public_client"
+   keycloak_hq_client = "hq-public-client"
 
 
 Then, we connect to the vantage6 hub by initializing a Client
@@ -169,7 +169,7 @@ object, and authenticating
        hq_url=config.hq_url,
        auth_url=config.auth_url,
        auth_realm=config.keycloak_realm,
-       auth_client=config.keycloak_client,
+       auth_hq_client=config.keycloak_hq_client,
        log_level='debug'
    )
    # Authenticate. This will try to open a browser to authenticate. If this is not

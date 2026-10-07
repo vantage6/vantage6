@@ -65,7 +65,7 @@ export const provideKeycloakAngular = () =>
     config: {
       realm: environment.keycloak_realm,
       url: environment.auth_url,
-      clientId: environment.keycloak_client
+      clientId: environment.keycloak_hq_client
     },
     initOptions: {
       onLoad: 'check-sso',

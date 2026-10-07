@@ -164,19 +164,20 @@ keycloak:
     # whether to require users to update their password on first login.
     passwordUpdateRequired: {{ keycloak.passwordUpdateRequired | default(true) }}
 
-    # public client configuration. The public client is used by users to authenticate
-    # in the browser.
-    publicClient:
-      {% if keycloak.publicClient is defined %}
-      name: {{ keycloak.publicClient.name | default('public_client') }}
+    # HQ public client configuration. Users authenticate with this client to get
+    # tokens for HQ, e.g. in the browser. The client users log in with to get tokens
+    # for algorithm stores uses the same redirect URIs.
+    hqPublicClient:
+      {% if keycloak.hqPublicClient is defined %}
+      name: {{ keycloak.hqPublicClient.name | default('hq-public-client') }}
       {% endif %}
       # redirect URIs are the URIs that keycloak is allowed to redirect to after
       # authentication. This should normally be set to the UI URL. If you have
       # other applications that can use the vantage6 Keycloak instance, those should be
       # added as well.
       redirectUris:
-        {% if keycloak.publicClient.redirectUris %}
-        {% for uri in keycloak.publicClient.redirectUris %}
+        {% if keycloak.hqPublicClient.redirectUris %}
+        {% for uri in keycloak.hqPublicClient.redirectUris %}
         - "{{ uri }}/*"
         {% endfor %}
         {% else %}
@@ -185,7 +186,7 @@ keycloak:
         {% endif %}
 
     {% if keycloak.standalone is defined and keycloak.standalone %}
-    backend_client_secret: {{ yaml_sq(keycloak.adminClientSecret | default('myadminclientsecret')) }}
+    hq_admin_client_secret: {{ yaml_sq(keycloak.hqAdminClientSecret | default('myadminclientsecret')) }}
     store_admin_client_secret: {{ yaml_sq(keycloak.storeAdminClientSecret | default('mystoreadminclientsecret')) }}
     {% endif %}
 

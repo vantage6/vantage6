@@ -52,8 +52,10 @@ hq:
     realm: vantage6
     adminUsername: admin
     adminPassword: admin
-    adminClient: backend-admin-client
-    adminClientSecret: myadminclientsecret
+    hqAdminClient: hq-admin-client
+    hqAdminClientSecret: myadminclientsecret
+    hqStoreReaderClient: hq-store-reader-client
+    storeAdminClient: store-admin-client
 
   # The secret key used to generate JWT authorization tokens. This should
   # be kept secret as others are able to generate access tokens if they
@@ -193,7 +195,8 @@ ui:
   # keycloak settings
   keycloak:
     realm: vantage6
-    client: public_client
+    hqPublicClient: hq-public-client
+    storePublicClient: store-public-client
     publicUrl: http://localhost:7680
 
   # Allowed algorithm stores for Bearer token inclusion (comma-separated URLs)

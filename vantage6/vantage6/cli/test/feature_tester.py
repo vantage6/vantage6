@@ -2,7 +2,7 @@ import sys
 
 import click
 
-from vantage6.common.globals import Ports
+from vantage6.common.globals import DEFAULT_KEYCLOAK_HQ_PUBLIC_CLIENT, Ports
 
 from vantage6.client import UserClient
 from vantage6.client.utils import LogLevel
@@ -31,10 +31,10 @@ from vantage6.cli.utils import error
     help="Realm of the authentication service (Keycloak)",
 )
 @click.option(
-    "--auth-client",
+    "--auth-hq-client",
     type=str,
-    default="public_client",
-    help="Client ID of the authentication service (Keycloak)",
+    default=DEFAULT_KEYCLOAK_HQ_PUBLIC_CLIENT,
+    help="Client ID users log in with to get a token for HQ (Keycloak)",
 )
 @click.option(
     "--collaboration",
@@ -82,7 +82,7 @@ def cli_test_features(
     hq_url: str,
     auth_url: str,
     auth_realm: str,
-    auth_client: str,
+    auth_hq_client: str,
     collaboration: int,
     organizations: list[int] | None,
     all_nodes: bool,
@@ -108,7 +108,7 @@ def cli_test_features(
         hq_url=hq_url,
         auth_url=auth_url,
         auth_realm=auth_realm,
-        auth_client=auth_client,
+        auth_hq_client=auth_hq_client,
         log_level=LogLevel.CRITICAL,
     )
     client.authenticate()

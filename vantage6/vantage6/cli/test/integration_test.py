@@ -2,7 +2,7 @@ from pathlib import Path
 
 import click
 
-from vantage6.common.globals import Ports
+from vantage6.common.globals import DEFAULT_KEYCLOAK_HQ_PUBLIC_CLIENT, Ports
 
 from vantage6.cli.sandbox.new import cli_new_sandbox
 from vantage6.cli.sandbox.remove import cli_sandbox_remove
@@ -98,7 +98,7 @@ def cli_test_integration(
         hq_url=f"http://localhost:{Ports.SANDBOX_HQ}/hq",
         auth_url=f"http://localhost:{Ports.SANDBOX_AUTH}",
         auth_realm="vantage6",
-        auth_client="public_client",
+        auth_hq_client=DEFAULT_KEYCLOAK_HQ_PUBLIC_CLIENT,
         collaboration=1,
         organizations=None,
         all_nodes=True,

@@ -40,8 +40,9 @@ keycloak:
     failureFactor: 5
     smtpServer:
       # placeholder for SMTP server configuration
-    publicClient:
-      name: public_client
+    hqPublicClient:
+      # Defaults to global.keycloak.hqPublicClient, or else "hq-public-client"
+      name: ""
 
 
 # PostgreSQL configuration for Keycloak

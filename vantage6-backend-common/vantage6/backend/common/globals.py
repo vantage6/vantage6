@@ -17,10 +17,15 @@ DEFAULT_SUPPORT_EMAIL_ADDRESS = "support@vantage6.ai"
 # default email address used in 'from' header
 DEFAULT_EMAIL_FROM_ADDRESS = "noreply@vantage6.ai"
 
-# Keycloak client HQ uses to call algorithm stores as itself
-HQ_KEYCLOAK_CLIENT = "hq-client"
-# Keycloak client algorithm stores use to look up users
-STORE_ADMIN_KEYCLOAK_CLIENT = "store-admin-client"
+# Default name of the Keycloak client HQ uses to read approved algorithms from
+# algorithm stores as itself
+DEFAULT_HQ_STORE_READER_KEYCLOAK_CLIENT = "hq-store-reader-client"
+# Default name of the Keycloak client algorithm stores use to look up users
+DEFAULT_STORE_ADMIN_KEYCLOAK_CLIENT = "store-admin-client"
+# Names of HQ's Keycloak clients in realms created before they were named after HQ.
+# HQ renames them at startup.
+LEGACY_HQ_ADMIN_KEYCLOAK_CLIENT = "backend-admin-client"
+LEGACY_HQ_PUBLIC_KEYCLOAK_CLIENT = "public_client"
 
 
 class RequiredBackendEnvVars(StrEnumBase):

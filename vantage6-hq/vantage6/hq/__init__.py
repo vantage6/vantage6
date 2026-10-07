@@ -36,8 +36,8 @@ from vantage6.common.exceptions import (
     SuperUserAlreadyExistsError,
 )
 from vantage6.common.globals import (
-    DEFAULT_KEYCLOAK_PUBLIC_CLIENT,
-    DEFAULT_KEYCLOAK_PUBLIC_STORE_CLIENT,
+    DEFAULT_KEYCLOAK_HQ_PUBLIC_CLIENT,
+    DEFAULT_KEYCLOAK_STORE_PUBLIC_CLIENT,
     DEFAULT_PROMETHEUS_EXPORTER_PORT,
     HQ_TOKEN_AUDIENCE,
     PING_INTERVAL_SECONDS,
@@ -48,7 +48,11 @@ from vantage6.cli.context.hq import HQContext
 
 from vantage6.backend.common import Vantage6App
 from vantage6.backend.common.auth import ensure_keycloak_token_setup
-from vantage6.backend.common.globals import RequiredBackendEnvVars
+from vantage6.backend.common.globals import (
+    DEFAULT_HQ_STORE_READER_KEYCLOAK_CLIENT,
+    DEFAULT_STORE_ADMIN_KEYCLOAK_CLIENT,
+    RequiredBackendEnvVars,
+)
 from vantage6.backend.common.metrics import Metrics, start_prometheus_exporter
 from vantage6.backend.common.permission import RuleNeed
 
@@ -58,8 +62,10 @@ from vantage6.hq.controller import cleanup
 from vantage6.hq.default_roles import DefaultRole, get_default_roles
 from vantage6.hq.globals import (
     HQ_MODULE_NAME,
+    HQ_STORE_READER_CLIENT_ENV_VAR,
     RESOURCES,
     RESOURCES_PATH,
+    STORE_ADMIN_CLIENT_ENV_VAR,
     STORE_ADMIN_CLIENT_SECRET_ENV_VAR,
 )
 from vantage6.hq.model.base import Database, DatabaseSessionManager
@@ -365,11 +371,17 @@ class HQApp(Vantage6App):
         """
         keycloak_config = self.ctx.config.get("keycloak", {})
         ensure_keycloak_token_setup(
-            public_client=keycloak_config.get(
-                "public_client", DEFAULT_KEYCLOAK_PUBLIC_CLIENT
+            hq_public_client=keycloak_config.get(
+                "hq_public_client", DEFAULT_KEYCLOAK_HQ_PUBLIC_CLIENT
             ),
-            public_store_client=keycloak_config.get(
-                "public_store_client", DEFAULT_KEYCLOAK_PUBLIC_STORE_CLIENT
+            hq_store_reader_client=os.environ.get(
+                HQ_STORE_READER_CLIENT_ENV_VAR, DEFAULT_HQ_STORE_READER_KEYCLOAK_CLIENT
+            ),
+            store_admin_client=os.environ.get(
+                STORE_ADMIN_CLIENT_ENV_VAR, DEFAULT_STORE_ADMIN_KEYCLOAK_CLIENT
+            ),
+            store_public_client=keycloak_config.get(
+                "store_public_client", DEFAULT_KEYCLOAK_STORE_PUBLIC_CLIENT
             ),
             store_admin_client_secret=os.environ.get(STORE_ADMIN_CLIENT_SECRET_ENV_VAR),
         )

@@ -90,7 +90,7 @@ def cli_hub_new(
                 "httpPort": 7680,
             },
             "hostname": base_config["auth_url"],
-            "publicClient": {
+            "hqPublicClient": {
                 "redirectUris": [
                     f"{base_config['ui_url']}",
                 ],

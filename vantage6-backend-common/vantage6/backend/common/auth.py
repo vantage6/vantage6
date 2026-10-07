@@ -2,7 +2,12 @@ import logging
 import os
 from dataclasses import dataclass
 
-from keycloak import KeycloakAdmin, KeycloakError, KeycloakOpenID
+from keycloak import (
+    KeycloakAdmin,
+    KeycloakAuthenticationError,
+    KeycloakError,
+    KeycloakOpenID,
+)
 
 from vantage6.common.globals import (
     HQ_AUDIENCE_SCOPE,
@@ -12,8 +17,8 @@ from vantage6.common.globals import (
 )
 
 from vantage6.backend.common.globals import (
-    HQ_KEYCLOAK_CLIENT,
-    STORE_ADMIN_KEYCLOAK_CLIENT,
+    LEGACY_HQ_ADMIN_KEYCLOAK_CLIENT,
+    LEGACY_HQ_PUBLIC_KEYCLOAK_CLIENT,
     RequiredBackendEnvVars,
 )
 from vantage6.backend.common.resource.error_handling import BadRequestError
@@ -30,11 +35,12 @@ class KeycloakServiceAccount:
     user_id: str
 
 
-def _get_admin_token():
-    """Get a token for the admin client"""
+def _get_admin_token(admin_client: str | None = None):
+    """Get a token for the admin client, by default the configured one"""
     keycloak_openid = KeycloakOpenID(
         server_url=os.environ.get(RequiredBackendEnvVars.KEYCLOAK_URL.value),
-        client_id=os.environ.get(RequiredBackendEnvVars.KEYCLOAK_ADMIN_CLIENT.value),
+        client_id=admin_client
+        or os.environ.get(RequiredBackendEnvVars.KEYCLOAK_ADMIN_CLIENT.value),
         realm_name=os.environ.get(RequiredBackendEnvVars.KEYCLOAK_REALM.value),
         client_secret_key=os.environ.get(
             RequiredBackendEnvVars.KEYCLOAK_ADMIN_CLIENT_SECRET.value
@@ -45,11 +51,17 @@ def _get_admin_token():
     return keycloak_openid.token(grant_type="client_credentials")
 
 
-def get_keycloak_admin_client():
+def get_keycloak_admin_client(admin_client: str | None = None):
     """
     Get a KeycloakAdmin client
+
+    Parameters
+    ----------
+    admin_client : str | None
+        Name of the Keycloak client to log in with. By default, the configured admin
+        client.
     """
-    token = _get_admin_token()
+    token = _get_admin_token(admin_client)
 
     # Create KeycloakAdmin with the service account token
     keycloak_admin = KeycloakAdmin(
@@ -287,42 +299,97 @@ def _ensure_audience_scopes(keycloak_admin: KeycloakAdmin) -> None:
         )
 
 
+def _rename_client(
+    keycloak_admin: KeycloakAdmin, old_name: str, new_name: str
+) -> str | None:
+    """
+    Rename a Keycloak client if it exists. Its secret, settings and mappers stay the
+    same.
+
+    Returns
+    -------
+    str | None
+        Internal ID of the renamed client, or None if no client was named `old_name`
+    """
+    client_id = keycloak_admin.get_client_id(old_name)
+    if client_id is None:
+        return None
+    log.info("Renaming Keycloak client '%s' to '%s'", old_name, new_name)
+    client = keycloak_admin.get_client(client_id)
+    client["clientId"] = new_name
+    keycloak_admin.update_client(client_id, client)
+    return client_id
+
+
+def _ensure_admin_client_name() -> None:
+    """
+    Rename HQ's admin client in realms where it still has its old name. HQ cannot log
+    in with the configured name until this is done, so it logs in with the old name,
+    which uses the same secret.
+    """
+    admin_client = os.environ.get(RequiredBackendEnvVars.KEYCLOAK_ADMIN_CLIENT.value)
+    if admin_client == LEGACY_HQ_ADMIN_KEYCLOAK_CLIENT:
+        return
+    try:
+        _get_admin_token()
+        return
+    except KeycloakAuthenticationError:
+        pass
+    try:
+        keycloak_admin = get_keycloak_admin_client(LEGACY_HQ_ADMIN_KEYCLOAK_CLIENT)
+    except KeycloakAuthenticationError:
+        # Neither name works: leave the error to the caller's own login attempt
+        return
+    _rename_client(keycloak_admin, LEGACY_HQ_ADMIN_KEYCLOAK_CLIENT, admin_client)
+
+
 def ensure_keycloak_token_setup(
-    public_client: str,
-    public_store_client: str,
+    hq_public_client: str,
+    hq_store_reader_client: str,
+    store_admin_client: str,
+    store_public_client: str,
     store_admin_client_secret: str | None = None,
 ) -> None:
     """
     Make sure the Keycloak realm issues separate tokens for HQ and for algorithm
-    stores.
+    stores, and that HQ's clients are named after HQ.
 
     New deployments get this from the realm import; this brings existing realms up to
     date. It is safe to run on every start.
 
     Parameters
     ----------
-    public_client : str
+    hq_public_client : str
         Client users log in with to get a token for HQ
-    public_store_client : str
+    hq_store_reader_client : str
+        Client HQ uses to read approved algorithms from algorithm stores as itself
+    store_admin_client : str
+        Client algorithm stores use to look up users
+    store_public_client : str
         Client users log in with to get a token for algorithm stores
     store_admin_client_secret : str | None
         Secret for the client algorithm stores use to look up users. The client is
         only created when this is given.
     """
+    _ensure_admin_client_name()
     keycloak_admin: KeycloakAdmin = get_keycloak_admin_client()
     _ensure_audience_scopes(keycloak_admin)
 
-    public_client_id = keycloak_admin.get_client_id(public_client)
-    if public_client_id is None:
-        log.warning("Keycloak client '%s' not found", public_client)
+    hq_public_client_id = keycloak_admin.get_client_id(
+        hq_public_client
+    ) or _rename_client(
+        keycloak_admin, LEGACY_HQ_PUBLIC_KEYCLOAK_CLIENT, hq_public_client
+    )
+    if hq_public_client_id is None:
+        log.warning("Keycloak client '%s' not found", hq_public_client)
     else:
-        _add_default_scope(keycloak_admin, public_client_id, HQ_AUDIENCE_SCOPE)
-        if keycloak_admin.get_client_id(public_store_client) is None:
-            log.info("Creating Keycloak client '%s'", public_store_client)
-            template = keycloak_admin.get_client(public_client_id)
+        _add_default_scope(keycloak_admin, hq_public_client_id, HQ_AUDIENCE_SCOPE)
+        if keycloak_admin.get_client_id(store_public_client) is None:
+            log.info("Creating Keycloak client '%s'", store_public_client)
+            template = keycloak_admin.get_client(hq_public_client_id)
             keycloak_admin.create_client(
                 {
-                    "clientId": public_store_client,
+                    "clientId": store_public_client,
                     "publicClient": True,
                     "enabled": True,
                     "standardFlowEnabled": template.get("standardFlowEnabled", True),
@@ -339,26 +406,28 @@ def ensure_keycloak_token_setup(
                     "protocolMappers": [_client_type_mapper("user")],
                 }
             )
-    public_store_client_id = keycloak_admin.get_client_id(public_store_client)
-    if public_store_client_id is not None:
-        _add_default_scope(keycloak_admin, public_store_client_id, STORE_AUDIENCE_SCOPE)
+    store_public_client_id = keycloak_admin.get_client_id(store_public_client)
+    if store_public_client_id is not None:
+        _add_default_scope(keycloak_admin, store_public_client_id, STORE_AUDIENCE_SCOPE)
 
-    if keycloak_admin.get_client_id(HQ_KEYCLOAK_CLIENT) is None:
-        log.info("Creating Keycloak client '%s'", HQ_KEYCLOAK_CLIENT)
-        keycloak_admin.create_client(_service_account_client(HQ_KEYCLOAK_CLIENT, "hq"))
+    if keycloak_admin.get_client_id(hq_store_reader_client) is None:
+        log.info("Creating Keycloak client '%s'", hq_store_reader_client)
+        keycloak_admin.create_client(
+            _service_account_client(hq_store_reader_client, "hq")
+        )
     _add_default_scope(
         keycloak_admin,
-        keycloak_admin.get_client_id(HQ_KEYCLOAK_CLIENT),
+        keycloak_admin.get_client_id(hq_store_reader_client),
         STORE_AUDIENCE_SCOPE,
     )
 
     if (
         store_admin_client_secret
-        and keycloak_admin.get_client_id(STORE_ADMIN_KEYCLOAK_CLIENT) is None
+        and keycloak_admin.get_client_id(store_admin_client) is None
     ):
-        log.info("Creating Keycloak client '%s'", STORE_ADMIN_KEYCLOAK_CLIENT)
+        log.info("Creating Keycloak client '%s'", store_admin_client)
         client_id = keycloak_admin.create_client(
-            _service_account_client(STORE_ADMIN_KEYCLOAK_CLIENT, None)
+            _service_account_client(store_admin_client, None)
             | {"secret": store_admin_client_secret}
         )
         realm_management_id = keycloak_admin.get_client_id("realm-management")

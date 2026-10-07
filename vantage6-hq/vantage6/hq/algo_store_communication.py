@@ -11,9 +11,13 @@ from keycloak import KeycloakOpenID
 from vantage6.common.globals import DEFAULT_API_PATH, HTTP_LOCALHOST, LINUX_LOCALHOST
 
 from vantage6.backend.common.auth import get_service_account_in_keycloak
-from vantage6.backend.common.globals import HQ_KEYCLOAK_CLIENT, RequiredBackendEnvVars
+from vantage6.backend.common.globals import (
+    DEFAULT_HQ_STORE_READER_KEYCLOAK_CLIENT,
+    RequiredBackendEnvVars,
+)
 
 from vantage6.hq import db
+from vantage6.hq.globals import HQ_STORE_READER_CLIENT_ENV_VAR
 
 module_name = __name__.split(".")[-1]
 log = logging.getLogger(module_name)
@@ -36,13 +40,14 @@ def get_hq_token_for_stores() -> str:
     if _hq_store_token.get("expires_at", 0) > time.time():
         return _hq_store_token["access_token"]
 
+    client_name = os.environ.get(
+        HQ_STORE_READER_CLIENT_ENV_VAR, DEFAULT_HQ_STORE_READER_KEYCLOAK_CLIENT
+    )
     keycloak_openid = KeycloakOpenID(
         server_url=os.environ.get(RequiredBackendEnvVars.KEYCLOAK_URL.value),
         realm_name=os.environ.get(RequiredBackendEnvVars.KEYCLOAK_REALM.value),
-        client_id=HQ_KEYCLOAK_CLIENT,
-        client_secret_key=get_service_account_in_keycloak(
-            HQ_KEYCLOAK_CLIENT
-        ).client_secret,
+        client_id=client_name,
+        client_secret_key=get_service_account_in_keycloak(client_name).client_secret,
     )
     token = keycloak_openid.token(grant_type="client_credentials")
     _hq_store_token["access_token"] = token["access_token"]

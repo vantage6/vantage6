@@ -75,7 +75,7 @@ def cli_hq_import(ctx: HQContext, file: str, drop_all: bool) -> None:
         hq_url=f"{ctx.config['hq']['baseUrl']}{ctx.config['hq']['apiPath']}",
         auth_url=ctx.config["ui"]["keycloak"]["publicUrl"],
         auth_realm=ctx.config["ui"]["keycloak"]["realm"],
-        auth_client=ctx.config["ui"]["keycloak"]["client"],
+        auth_hq_client=ctx.config["ui"]["keycloak"]["hqPublicClient"],
         log_level=LogLevel.INFO,
     )
 

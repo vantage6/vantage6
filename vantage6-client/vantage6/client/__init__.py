@@ -21,8 +21,8 @@ from vantage6.common.encryption import DummyCryptor, RSACryptor
 from vantage6.common.enum import TaskDatabaseType
 from vantage6.common.globals import (
     APPNAME,
-    DEFAULT_KEYCLOAK_PUBLIC_CLIENT,
-    DEFAULT_KEYCLOAK_PUBLIC_STORE_CLIENT,
+    DEFAULT_KEYCLOAK_HQ_PUBLIC_CLIENT,
+    DEFAULT_KEYCLOAK_STORE_PUBLIC_CLIENT,
     AuthStatus,
 )
 from vantage6.common.kubernetes.utils import running_in_wsl
@@ -48,9 +48,9 @@ class UserClient(ClientBase):
         hq_url: str,
         auth_url: str,
         auth_realm: str = "vantage6",
-        auth_client: str = DEFAULT_KEYCLOAK_PUBLIC_CLIENT,
+        auth_hq_client: str = DEFAULT_KEYCLOAK_HQ_PUBLIC_CLIENT,
         log_level=LogLevel.INFO,
-        auth_store_client: str = DEFAULT_KEYCLOAK_PUBLIC_STORE_CLIENT,
+        auth_store_client: str = DEFAULT_KEYCLOAK_STORE_PUBLIC_CLIENT,
     ) -> None:
         """Create user client
 
@@ -64,14 +64,14 @@ class UserClient(ClientBase):
             The url of the authentication service.
         auth_realm : str, optional
             The Keycloak realm to use for authentication, by default 'vantage6'
-        auth_client : str, optional
+        auth_hq_client : str, optional
             The Keycloak client to use for authentication with HQ, by default
-            'public_client'
+            'hq-public-client'
         log_level : str, optional
             The log level to use, by default 'info'
         auth_store_client : str, optional
             The Keycloak client to use for authentication with algorithm stores, by
-            default 'public_store_client'
+            default 'store-public-client'
         """
         super().__init__(hq_url=hq_url, auth_url=auth_url)
 
@@ -79,7 +79,7 @@ class UserClient(ClientBase):
         self.log = self._get_logger(log_level)
 
         self.auth_realm = auth_realm
-        self.auth_client = auth_client
+        self.auth_hq_client = auth_hq_client
         self.auth_store_client = auth_store_client
 
         # service account settings
@@ -109,7 +109,7 @@ class UserClient(ClientBase):
 
         self.kc_openid = KeycloakOpenID(
             server_url=self.auth_url,
-            client_id=self.auth_client,
+            client_id=self.auth_hq_client,
             realm_name=self.auth_realm,
         )
         self.kc_openid_store = KeycloakOpenID(
@@ -177,7 +177,7 @@ class UserClient(ClientBase):
         if not device_endpoint:
             return
 
-        token = self._device_login(device_endpoint, token_endpoint, self.auth_client)
+        token = self._device_login(device_endpoint, token_endpoint, self.auth_hq_client)
         if not token:
             return
 

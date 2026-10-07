@@ -24,8 +24,10 @@ hq:
     realm: {{ hq.keycloak.realm | default('vantage6') }}
     adminUsername: {{ hq.keycloak.adminUsername | default('admin') }}
     adminPassword: {{ yaml_sq(hq.keycloak.adminPassword | default('admin')) }}
-    adminClient: {{ hq.keycloak.adminClient | default('backend-admin-client') }}
-    adminClientSecret: {{ yaml_sq(hq.keycloak.adminClientSecret | default('myadminclientsecret')) }}
+    hqAdminClient: {{ hq.keycloak.hqAdminClient | default('hq-admin-client') }}
+    hqAdminClientSecret: {{ yaml_sq(hq.keycloak.hqAdminClientSecret | default('myadminclientsecret')) }}
+    hqStoreReaderClient: {{ hq.keycloak.hqStoreReaderClient | default('hq-store-reader-client') }}
+    storeAdminClient: {{ hq.keycloak.storeAdminClient | default('store-admin-client') }}
   {% endif %}
 
   internal:
@@ -261,7 +263,8 @@ ui:
   # keycloak connection settings
   keycloak:
       realm: {{ ui.keycloak.realm | default('vantage6') }}
-      client: {{ ui.keycloak.client | default('public_client') }}
+      hqPublicClient: {{ ui.keycloak.hqPublicClient | default('hq-public-client') }}
+      storePublicClient: {{ ui.keycloak.storePublicClient | default('store-public-client') }}
       publicUrl: {{ ui.keycloak.publicUrl | default('http://localhost:7680') }}
   {% endif %}
 
