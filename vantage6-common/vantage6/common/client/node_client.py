@@ -3,12 +3,12 @@ This module provides a client interface for the node to communicate with the
 central server.
 """
 
-import jwt
 import datetime
 import time
-
 from threading import Thread
+from urllib.parse import urlparse
 
+import jwt
 from vantage6.common import WhoAmI
 from vantage6.common.client.client_base import ClientBase
 from vantage6.common.globals import (
@@ -29,6 +29,10 @@ class NodeClient(ClientBase):
 
         self.run = self.Run(self)
         self.algorithm_store = self.AlgorithmStore(self)
+        # ClientBase.request()/generate_path_to() look up `self.store` for
+        # `is_for_algorithm_store=True` requests (i.e. requests sent to the algorithm
+        # store itself, rather than to the central server).
+        self.store = self.algorithm_store
 
     def authenticate(self, api_key: str) -> None:
         """
@@ -255,8 +259,13 @@ class NodeClient(ClientBase):
                     data["result"] = result_uuid
             return self.parent.request(f"run/{id_}", json=data, method="patch")
 
-    class AlgorithmStore(ClientBase.SubClient):
+    class AlgorithmStore(ClientBase.AlgorithmStoreSubClientBase):
         """Subclient for the algorithm store endpoint."""
+
+        @staticmethod
+        def _is_localhost(url: str | None) -> bool:
+            """Check whether `url` refers to the caller's own container/host."""
+            return bool(url) and ("localhost" in url or "127.0.0.1" in url)
 
         def get(self, id_) -> dict:
             """
@@ -273,6 +282,70 @@ class NodeClient(ClientBase):
                 The algorithms as json.
             """
             return self.parent.request(f"algorithmstore/{id_}")
+
+        def get_algorithm(self, image: str) -> dict | None:
+            """
+            Ask the algorithm store directly whether `image` is a registered,
+            approved algorithm. Unlike `get`, this talks to the algorithm store
+            server itself rather than to the central server's own record of it -
+            call `set` first to select which store to query.
+
+            Parameters
+            ----------
+            image : str
+                URI of the image to look up in the store.
+
+            Returns
+            -------
+            dict | None
+                The algorithm as registered in the store, or None if the store
+                could not confirm that this image is a registered, approved
+                algorithm (including when the store could not be reached at all,
+                or does not yet support node requests - callers should treat this
+                as "could not verify", not just "not found").
+            """
+            if self._is_localhost(self.url) and not self._is_localhost(
+                self.parent.host
+            ):
+                # This node is talking to its own server just fine, which means
+                # self.parent.host already resolves the host machine from
+                # inside this node's own container - since the store is
+                # typically exposed on that same host machine in dev/test
+                # setups, reuse that address rather than asking for the same
+                # information to be configured a second time. Only the
+                # scheme+hostname are reused, not the server's own port - the
+                # store almost certainly listens on a different one.
+                parsed_server = urlparse(self.parent.host)
+                if parsed_server.scheme and parsed_server.hostname:
+                    host_uri = f"{parsed_server.scheme}://{parsed_server.hostname}"
+                    self.url = (
+                        self.url.replace("localhost", host_uri)
+                        .replace("127.0.0.1", host_uri)
+                        .replace("http://http://", "http://")
+                    )
+
+            # we should also ensure server URL header is passed as localhost instead
+            # of host.docker.internal
+            server_url_header = self.parent.base_path
+            if "host.docker.internal" in server_url_header:
+                server_url_header = server_url_header.replace(
+                    "host.docker.internal", "localhost"
+                )
+
+            response = self.parent.request(
+                "algorithm",
+                params={"image": image},
+                is_for_algorithm_store=True,
+                headers={
+                    "Server-Url": server_url_header,
+                    "Client-Type": "node",
+                },
+                # don't retry indefinitely if the store is unreachable - a single
+                # task's policy check should not be able to stall the node
+                attempts_on_timeout=3,
+            )
+            data = (response or {}).get("data") or []
+            return data[0] if data else None
 
     def is_encrypted_collaboration(self) -> bool:
         """
@@ -358,8 +431,8 @@ class NodeClient(ClientBase):
         )
         ovpn_config = response.get("ovpn_config")
         if not ovpn_config:
-            self.log.warn("Refreshing VPN keypair not successful!")
-            self.log.warn("Disabling node-to-node communication via VPN")
+            self.log.warning("Refreshing VPN keypair not successful!")
+            self.log.warning("Disabling node-to-node communication via VPN")
             return False
 
         # write new configuration back to file
