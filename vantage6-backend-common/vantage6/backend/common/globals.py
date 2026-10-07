@@ -20,11 +20,6 @@ DEFAULT_EMAIL_FROM_ADDRESS = "noreply@vantage6.ai"
 # Default name of the Keycloak client HQ uses to read approved algorithms from
 # algorithm stores as itself
 DEFAULT_HQ_STORE_READER_KEYCLOAK_CLIENT = "hq-store-reader-client"
-# Default name of the Keycloak client algorithm stores use to look up users
-DEFAULT_STORE_ADMIN_KEYCLOAK_CLIENT = "store-admin-client"
-# Name of HQ's admin client in realms created before it was named after HQ. HQ renames
-# it at startup.
-LEGACY_HQ_ADMIN_KEYCLOAK_CLIENT = "backend-admin-client"
 
 
 class RequiredBackendEnvVars(StrEnumBase):

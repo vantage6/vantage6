@@ -58,9 +58,6 @@ hq:
     hqAdminClient: hq-admin-client
     hqAdminClientSecret: myadminclientsecret
     hqStoreReaderClient: hq-store-reader-client
-    storeAdminClient: store-admin-client
-    # Optional: if set, HQ creates the store admin client with this secret
-    storeAdminClientSecret: mystoreadminclientsecret
 
   # The secret key used to generate JWT authorization tokens. This should
   # be kept secret as others are able to generate access tokens if they

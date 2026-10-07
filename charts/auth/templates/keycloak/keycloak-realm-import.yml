@@ -173,7 +173,7 @@ spec:
             - view-users
       {{- end }}
     # The audience client scopes and the client HQ uses to read from algorithm stores
-    # (hqStoreReaderClient) are created by HQ at startup, also for existing realms.
+    # (hqStoreReaderClient) are created by HQ at startup.
     # Defining clientScopes here would replace Keycloak's built-in scopes.
     clients:
       - clientId: {{ $publicClient.name | default $globalKeycloak.publicClient | default "public_client" }}

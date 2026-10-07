@@ -18,25 +18,21 @@ Release notes
 
 - **Upgrade notes**
 
-  - Upgrade HQ, algorithm stores, the UI, nodes and Python clients together: older
-    versions are refused once HQ and stores check the token audience.
-  - Set ``storeAdminClientSecret`` in the Keycloak settings of the hub (or of a
-    standalone store), and delete the existing ``<release>-hq-secrets`` and
-    ``<release>-store-secrets`` Kubernetes secrets so they are recreated. HQ then
-    creates the new Keycloak clients at startup. For a standalone store, create the
-    ``store-admin-client`` client in Keycloak yourself, with only the
-    ``realm-management`` role ``view-users``.
-  - HQ's admin client is now named after HQ: HQ renames ``backend-admin-client`` to
-    ``hq-admin-client`` in existing realms at startup. Rename these settings in your
-    configuration, as the old names are no longer read:
+  - Existing 5.0.x hubs cannot be upgraded in place, as the Keycloak realm and the HQ
+    database changed: set up the hub again. Nodes, the UI and Python clients must
+    also use this version, as HQ and stores refuse tokens of older versions.
+  - Keycloak settings were renamed, and algorithm stores need their own client. In
+    your configuration:
 
     - ``keycloak.adminClient`` → ``hqAdminClient``
     - ``keycloak.adminClientSecret`` → ``hqAdminClientSecret``
     - auth chart: ``keycloak.realmImport.backend_client_secret`` →
       ``hq_admin_client_secret``
     - UI: ``ui.keycloak.client`` → ``ui.keycloak.publicClient``
+    - new: ``storeAdminClientSecret``. A standalone store needs a
+      ``store-admin-client`` client in Keycloak with only the ``realm-management``
+      role ``view-users``.
 
-  - Rotate the secret of the HQ admin client, which algorithm stores received before.
   - Mark the algorithm stores that use the same Keycloak as HQ with
     ``uses_hq_keycloak: true`` in ``hq.algorithm_stores``, or with a ``PATCH`` to
     ``/algorithmstore/<id>`` as a user with global collaboration edit permission.

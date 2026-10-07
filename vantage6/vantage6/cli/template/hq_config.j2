@@ -27,11 +27,6 @@ hq:
     hqAdminClient: {{ hq.keycloak.hqAdminClient | default('hq-admin-client') }}
     hqAdminClientSecret: {{ yaml_sq(hq.keycloak.hqAdminClientSecret | default('myadminclientsecret')) }}
     hqStoreReaderClient: {{ hq.keycloak.hqStoreReaderClient | default('hq-store-reader-client') }}
-    storeAdminClient: {{ hq.keycloak.storeAdminClient | default('store-admin-client') }}
-    {% if hq.keycloak.storeAdminClientSecret is defined %}
-    # if set, HQ creates the store admin client with this secret
-    storeAdminClientSecret: {{ yaml_sq(hq.keycloak.storeAdminClientSecret) }}
-    {% endif %}
   {% endif %}
 
   internal:

@@ -49,7 +49,6 @@ from vantage6.backend.common import Vantage6App
 from vantage6.backend.common.auth import ensure_keycloak_token_setup
 from vantage6.backend.common.globals import (
     DEFAULT_HQ_STORE_READER_KEYCLOAK_CLIENT,
-    DEFAULT_STORE_ADMIN_KEYCLOAK_CLIENT,
     RequiredBackendEnvVars,
 )
 from vantage6.backend.common.metrics import Metrics, start_prometheus_exporter
@@ -64,8 +63,6 @@ from vantage6.hq.globals import (
     HQ_STORE_READER_CLIENT_ENV_VAR,
     RESOURCES,
     RESOURCES_PATH,
-    STORE_ADMIN_CLIENT_ENV_VAR,
-    STORE_ADMIN_CLIENT_SECRET_ENV_VAR,
 )
 from vantage6.hq.model.base import Database, DatabaseSessionManager
 from vantage6.hq.permission import PermissionManager
@@ -376,10 +373,6 @@ class HQApp(Vantage6App):
             hq_store_reader_client=os.environ.get(
                 HQ_STORE_READER_CLIENT_ENV_VAR, DEFAULT_HQ_STORE_READER_KEYCLOAK_CLIENT
             ),
-            store_admin_client=os.environ.get(
-                STORE_ADMIN_CLIENT_ENV_VAR, DEFAULT_STORE_ADMIN_KEYCLOAK_CLIENT
-            ),
-            store_admin_client_secret=os.environ.get(STORE_ADMIN_CLIENT_SECRET_ENV_VAR),
         )
 
     def _create_super_user(self) -> None:
