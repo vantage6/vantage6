@@ -359,9 +359,9 @@ class ClientBase(BlobStorageMixin):
             If the client is not authenticated
         """
         assert self._access_token, "Encryption can only be setup after authentication"
-        assert self.whoami.organization_id, (
-            "Organization unknown... Did you authenticate?"
-        )
+        assert (
+            self.whoami.organization_id
+        ), "Organization unknown... Did you authenticate?"
 
         if private_key_file is None:
             self.cryptor = DummyCryptor()
