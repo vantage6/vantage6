@@ -201,8 +201,9 @@ def _initalize_client(hq_url: str, auth_url: str) -> Client:
     Client
         An authenticated client to the vantage6 hub.
     """
-    # Wait for Keycloak realm to be ready before attempting authentication
+    # Wait for Keycloak realm and HQ to be ready before attempting authentication
     _wait_for_keycloak_realm(auth_url)
+    _wait_for_hq(hq_url)
 
     client = Client(
         hq_url=hq_url,
@@ -212,23 +213,52 @@ def _initalize_client(hq_url: str, auth_url: str) -> Client:
 
     info("Waiting for authentication...")
     max_attempts = 120
-    attempt = 1
 
-    while attempt <= max_attempts:
+    for _ in range(max_attempts):
+        print(".", end="", flush=True)
         try:
-            print(".", end="", flush=True)
             client.authenticate()
-            info("Successfully authenticated!")
-            break
         except (requests.RequestException, AttributeError):
-            if attempt == max_attempts:
-                error(
-                    f"Failed to authenticate after {max_attempts} attempts. "
-                    "Vantage6 hub may not be online."
-                )
-                raise
+            pass
+        # authenticate() logs failures without raising, so check that it got as far as
+        # retrieving the user
+        if client.whoami is not None:
+            info("Successfully authenticated!")
+            return client
+        time.sleep(5)
 
-            time.sleep(5)
-            attempt += 1
+    error(
+        f"Failed to authenticate after {max_attempts} attempts. "
+        "Vantage6 hub may not be online."
+    )
+    raise RuntimeError("Could not authenticate to the vantage6 hub")
 
-    return client
+
+def _wait_for_hq(hq_url: str, timeout: int = 600) -> None:
+    """
+    Wait for HQ to be online before attempting authentication.
+
+    HQ creates the Keycloak client scopes that give tokens their audience before it
+    starts serving requests. A login approved before that yields tokens that HQ
+    refuses, and refreshing them does not help.
+
+    Parameters
+    ----------
+    hq_url : str
+        The URL of the HQ, including its API path.
+    timeout : int
+        Maximum time to wait in seconds. Default is 600.
+    """
+    info("Waiting for HQ to be ready...")
+    start_time = time.time()
+    while (time.time() - start_time) < timeout:
+        try:
+            if requests.get(f"{hq_url}/version", timeout=5).status_code == 200:
+                info("HQ is ready.")
+                return
+        except requests.exceptions.RequestException:
+            pass
+        time.sleep(2)
+
+    error(f"Timeout: HQ did not become available within {timeout} seconds.")
+    raise TimeoutError(f"HQ not ready after {timeout} seconds")
