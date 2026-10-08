@@ -53,8 +53,6 @@ class TestResources(unittest.TestCase):
         # set required environment variables *before* creating the app
         os.environ["KEYCLOAK_URL"] = "dummy-keycloak-url"
         os.environ["KEYCLOAK_REALM"] = "dummy-keycloak-realm"
-        os.environ["KEYCLOAK_ADMIN_USERNAME"] = "dummy-keycloak-admin-username"
-        os.environ["KEYCLOAK_ADMIN_PASSWORD"] = "dummy-keycloak-admin-password"
         os.environ["KEYCLOAK_ADMIN_CLIENT"] = "dummy-keycloak-admin-client"
         os.environ["KEYCLOAK_ADMIN_CLIENT_SECRET"] = (
             "dummy-keycloak-admin-client-secret"

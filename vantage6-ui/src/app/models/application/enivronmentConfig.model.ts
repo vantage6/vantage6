@@ -2,7 +2,6 @@ export interface EnvironmentConfig {
   production: boolean;
   hq_url: string;
   api_path: string;
-  allowed_algorithm_stores: string;
   auth_url: string;
   keycloak_realm: string;
   keycloak_client: string;

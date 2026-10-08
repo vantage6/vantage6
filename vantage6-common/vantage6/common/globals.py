@@ -54,7 +54,7 @@ STORE_TOKEN_AUDIENCE = "vantage6-store"
 # Keycloak client scopes that add the audiences above
 HQ_AUDIENCE_SCOPE = "vantage6-hq-audience"
 STORE_AUDIENCE_SCOPE = "vantage6-store-audience"
-# Keycloak clients users log in with: one for HQ tokens, one for store tokens
+# Default Keycloak client users log in with, for both HQ and algorithm stores
 DEFAULT_KEYCLOAK_PUBLIC_CLIENT = "public_client"
 
 # Maximum interval to wait for requesting results from a task
