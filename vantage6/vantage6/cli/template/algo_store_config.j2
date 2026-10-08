@@ -27,6 +27,7 @@ store:
   keycloak:
     url: {{ store.keycloak.url }}
     realm: {{ store.keycloak.realm | default('vantage6') }}
+    adminUsername: {{ store.keycloak.adminUsername | default('admin') }}
     # the store's own Keycloak client, which can only look up users
     storeAdminClient: {{ store.keycloak.storeAdminClient | default('store-admin-client') }}
     storeAdminClientSecret: {{ yaml_sq(store.keycloak.storeAdminClientSecret | default('mystoreadminclientsecret')) }}

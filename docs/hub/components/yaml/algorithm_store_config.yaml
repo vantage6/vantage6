@@ -45,6 +45,8 @@ store:
   keycloak:
     url: https://my-vantage6-auth.org
     realm: vantage6
+    # Username of the store's root user
+    adminUsername: admin
     # Keycloak client the store uses to look up users
     storeAdminClient: store-admin-client
     storeAdminClientSecret: mystoreadminclientsecret

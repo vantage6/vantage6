@@ -394,6 +394,7 @@ deployments:
           keycloak:
             url: ${KEYCLOAK_URL}
             realm: ${KEYCLOAK_REALM}
+            adminUsername: ${KEYCLOAK_ADMIN_USERNAME}
             storeAdminClientSecret: ${KEYCLOAK_STORE_ADMIN_CLIENT_SECRET}
           logging:
             level: DEBUG
