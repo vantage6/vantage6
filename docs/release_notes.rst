@@ -17,6 +17,10 @@ Release notes
     <https://github.com/vantage6/vantage6/security/advisories/GHSA-v995-8jhw-349w>`_).
     This is not fixed in version 4: there, only link algorithm stores that you trust
     as much as your server.
+  - Tasks from an algorithm store are refused if their method is not registered in
+    the store, and subtasks are now also checked against the store
+    (`GHSA-4998-q23j-7w5r
+    <https://github.com/vantage6/vantage6/security/advisories/GHSA-4998-q23j-7w5r>`_).
 
 - **Upgrade notes**
 

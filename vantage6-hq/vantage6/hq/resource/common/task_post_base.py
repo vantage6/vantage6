@@ -747,7 +747,8 @@ class TaskPostBase(ServicesResources):
     ) -> AlgorithmStepType:
         """
         Check if the action of the task matches the action in the algorithm store. If
-        no action is provided, use the action from the algorithm store.
+        no action is provided, use the action from the algorithm store. If the
+        algorithm is from a store, the method must be registered there.
 
         Parameters
         ----------
@@ -774,9 +775,12 @@ class TaskPostBase(ServicesResources):
             algo_func = next(
                 (f for f in algorithm["functions"] if f["name"] == method), None
             )
-            store_action = (
-                AlgorithmStepType(algo_func["step_type"]) if algo_func else None
-            )
+            if not algo_func:
+                raise BadRequestError(
+                    f"Method '{method}' is not registered for this algorithm in the "
+                    "algorithm store."
+                )
+            store_action = AlgorithmStepType(algo_func["step_type"])
 
         if action and store_action and action != store_action:
             raise BadRequestError(
@@ -853,6 +857,16 @@ class TaskPostBase(ServicesResources):
             parent = db.Task.get(g.container["task_id"])
             store = parent.algorithm_store
             image_with_hash = parent.image
+            # look up the algorithm so that the subtask's method and action are checked
+            # against the store, just like those of tasks created by users
+            if store:
+                try:
+                    algorithm = self._get_algorithm_from_store(
+                        store=store, image=image_with_hash
+                    )
+                except Exception as e:
+                    log.exception("Error while getting algorithm from store")
+                    raise BadRequestError(str(e)) from e
 
         return image_with_hash, store, algorithm
 

@@ -1,11 +1,13 @@
 import logging
 from http import HTTPStatus
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from vantage6.common import logger_name
 from vantage6.common.enum import AlgorithmStepType, RunStatus, TaskStatus
+from vantage6.common.exceptions import AlgorithmRetrievalError
 
 from vantage6.hq.model import (
+    AlgorithmStore,
     Collaboration,
     Node,
     Organization,
@@ -16,12 +18,23 @@ from vantage6.hq.model import (
     Task,
 )
 from vantage6.hq.model.rule import Operation, Scope
+from vantage6.hq.resource.common.task_post_base import TaskPostBase
 from vantage6.hq.resource.event import kill_task
 
 from .test_resource_base import TestResourceBase
 
 logger = logger_name(__name__)
 log = logging.getLogger(logger)
+
+# algorithm as returned by the algorithm store
+STORE_ALGORITHM = {
+    "image": "some-image",
+    "digest": "sha256:1234",
+    "functions": [
+        {"name": "central", "step_type": AlgorithmStepType.CENTRAL_COMPUTE.value},
+        {"name": "partial", "step_type": AlgorithmStepType.FEDERATED_COMPUTE.value},
+    ],
+}
 
 
 class TestResources(TestResourceBase):
@@ -456,6 +469,135 @@ class TestResources(TestResourceBase):
         col.delete()
         node2.delete()
         col2.delete()
+
+    @patch.object(TaskPostBase, "_get_algorithm_from_store")
+    def test_create_task_action_checked_against_store_as_user(self, mock_get_algo):
+        mock_get_algo.return_value = STORE_ALGORITHM
+        org = Organization()
+        col = Collaboration(organizations=[org], encrypted=False)
+        col.save()
+        node = Node(organization=org, collaboration=col)
+        node.save()
+        store = AlgorithmStore(
+            name="test", url="http://test.com", api_path="/api", collaboration=col
+        )
+        store.save()
+        rule = Rule.get_by_("task", Scope.COLLABORATION, Operation.CREATE)
+        user = self.create_user(organization=org, rules=[rule])
+        headers = self.login(user)
+        session = Session(name="test_session", user_id=user.id, collaboration=col)
+        session.save()
+
+        task_json = {
+            "method": "not-in-store",
+            "collaboration_id": col.id,
+            "organizations": [{"id": org.id}],
+            "image": "some-image",
+            "session_id": session.id,
+            "store_id": store.id,
+            "action": AlgorithmStepType.FEDERATED_COMPUTE.value,
+        }
+
+        # method that is not registered in the store
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
+
+        # action that does not match the store
+        task_json["method"] = "partial"
+        task_json["action"] = AlgorithmStepType.CENTRAL_COMPUTE.value
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
+
+        # action that matches the store
+        task_json["action"] = AlgorithmStepType.FEDERATED_COMPUTE.value
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.CREATED)
+
+        # no action given: the action from the store is used
+        task_json["method"] = "central"
+        del task_json["action"]
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.CREATED)
+        task = Task.get(results.json["id"])
+        self.assertEqual(task.runs[0].action, AlgorithmStepType.CENTRAL_COMPUTE.value)
+
+        # cleanup
+        self.delete_tasks()
+        session.delete()
+        store.delete()
+        node.delete()
+        org.delete()
+        col.delete()
+
+    @patch.object(TaskPostBase, "_get_algorithm_from_store")
+    def test_create_subtask_action_checked_against_store(self, mock_get_algo):
+        mock_get_algo.return_value = STORE_ALGORITHM
+        org = Organization()
+        col = Collaboration(organizations=[org], encrypted=False)
+        col.save()
+        store = AlgorithmStore(
+            name="test", url="http://test.com", api_path="/api", collaboration=col
+        )
+        store.save()
+        user = self.create_user()
+        session = Session(name="test_session", user_id=user.id, collaboration=col)
+        session.save()
+
+        parent_task = Task(
+            collaboration=col,
+            image="some-image",
+            init_org=org,
+            algorithm_store=store,
+        )
+        parent_task.save()
+        Run(
+            organization=org,
+            task=parent_task,
+            status=RunStatus.PENDING.value,
+            action=AlgorithmStepType.CENTRAL_COMPUTE.value,
+        ).save()
+        headers = self.login_container(
+            collaboration=col, organization=org, task=parent_task
+        )
+
+        task_json = {
+            "method": "not-in-store",
+            "collaboration_id": col.id,
+            "organizations": [{"id": org.id}],
+            "image": "some-image",
+            "session_id": session.id,
+            "action": AlgorithmStepType.FEDERATED_COMPUTE.value,
+        }
+
+        # method that is not registered in the store
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
+
+        # the algorithm is looked up in the parent's store by the parent's image
+        mock_get_algo.assert_called_with(store=store, image=parent_task.image)
+
+        # action that does not match the store
+        task_json["method"] = "partial"
+        task_json["action"] = AlgorithmStepType.CENTRAL_COMPUTE.value
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
+
+        # action that matches the store
+        task_json["action"] = AlgorithmStepType.FEDERATED_COMPUTE.value
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.CREATED)
+
+        # algorithm cannot be retrieved from the store
+        mock_get_algo.side_effect = AlgorithmRetrievalError("store unavailable")
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
+
+        # cleanup
+        self.delete_tasks()
+        session.delete()
+        store.delete()
+        org.delete()
+        col.delete()
 
     def test_delete_task_permissions(self):
         # test non-existing task
