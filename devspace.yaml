@@ -326,7 +326,6 @@ deployments:
             adminPassword: ${KEYCLOAK_ADMIN_PASSWORD}
             hqAdminClient: ${KEYCLOAK_HQ_ADMIN_CLIENT}
             hqAdminClientSecret: ${KEYCLOAK_HQ_ADMIN_CLIENT_SECRET}
-            storeAdminClientSecret: ${KEYCLOAK_STORE_ADMIN_CLIENT_SECRET}
           logging:
             level: DEBUG
             volumeHostPath: ${LOG_MOUNT_PATH}/hq
