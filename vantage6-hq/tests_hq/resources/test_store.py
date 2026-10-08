@@ -133,6 +133,16 @@ class TestResources(TestResourceBase):
         self.assertEqual(rv.status_code, HTTPStatus.CREATED)
         self.assertTrue(rv.json["uses_hq_keycloak"])
 
+        # also when the store is made available to all collaborations, which replaces
+        # the records of the separate collaborations
+        rv = self.app.post(
+            "/api/algorithmstore",
+            headers=glo_headers,
+            json={k: v for k, v in record.items() if k != "collaboration_id"},
+        )
+        self.assertEqual(rv.status_code, HTTPStatus.CREATED)
+        self.assertTrue(rv.json["uses_hq_keycloak"])
+
         # cleanup
         for resource in AlgorithmStore.get():
             resource.delete()
