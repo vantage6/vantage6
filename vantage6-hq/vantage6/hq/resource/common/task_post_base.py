@@ -26,10 +26,7 @@ from vantage6.backend.common.resource.error_handling import (
 )
 
 from vantage6.hq import db
-from vantage6.hq.algo_store_communication import (
-    get_hq_token_for_stores,
-    request_algo_store,
-)
+from vantage6.hq.algo_store_communication import HQStoreToken, request_algo_store
 from vantage6.hq.dataclass import CreateTaskDB
 from vantage6.hq.permission import (
     Operation as P,
@@ -888,7 +885,7 @@ class TaskPostBase(ServicesResources):
         # could use at HQ, and HQ must not be able to act as the user there. Stores
         # that use another Keycloak get no token at all.
         headers = (
-            {"Authorization": f"Bearer {get_hq_token_for_stores()}"}
+            {"Authorization": f"Bearer {HQStoreToken.get()}"}
             if store.uses_hq_keycloak
             else {}
         )

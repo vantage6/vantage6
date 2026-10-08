@@ -56,7 +56,7 @@ class TestTokenAudience(TestResourceBase):
         )
         self.assertEqual(rv.status_code, HTTPStatus.UNAUTHORIZED)
 
-    @patch("vantage6.hq.resource.common.task_post_base.get_hq_token_for_stores")
+    @patch("vantage6.hq.resource.common.task_post_base.HQStoreToken.get")
     @patch("vantage6.hq.resource.common.task_post_base.request_algo_store")
     def test_store_lookup_uses_hq_token(self, request_algo_store, get_token):
         """

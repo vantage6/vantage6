@@ -25,39 +25,51 @@ log = logging.getLogger(module_name)
 # seconds before HQ's token for algorithm stores expires that it is renewed
 HQ_STORE_TOKEN_RENEWAL_MARGIN = 30
 
-_hq_store_token: dict = {}
-
-
-def get_hq_token_for_stores() -> str:
+class HQStoreToken:
     """
-    Get the token HQ uses to call algorithm stores.
+    The token HQ uses to call algorithm stores.
 
     The token is issued to HQ itself (not to a user) and is only valid at algorithm
-    stores, where it only allows reading approved algorithms.
-
-    Returns
-    -------
-    str
-        Access token
+    stores, where it only allows reading approved algorithms. It is kept until shortly
+    before it expires.
     """
-    if _hq_store_token.get("expires_at", 0) > time.time():
-        return _hq_store_token["access_token"]
 
-    client_name = os.environ.get(
-        HQ_STORE_READER_CLIENT_ENV_VAR, DEFAULT_HQ_STORE_READER_KEYCLOAK_CLIENT
-    )
-    keycloak_openid = KeycloakOpenID(
-        server_url=os.environ.get(RequiredBackendEnvVars.KEYCLOAK_URL.value),
-        realm_name=os.environ.get(RequiredBackendEnvVars.KEYCLOAK_REALM.value),
-        client_id=client_name,
-        client_secret_key=get_service_account_in_keycloak(client_name).client_secret,
-    )
-    token = keycloak_openid.token(grant_type="client_credentials")
-    _hq_store_token["access_token"] = token["access_token"]
-    _hq_store_token["expires_at"] = (
-        time.time() + token["expires_in"] - HQ_STORE_TOKEN_RENEWAL_MARGIN
-    )
-    return token["access_token"]
+    _access_token: str | None = None
+    _expires_at: float = 0
+
+    @classmethod
+    def get(cls) -> str:
+        """
+        Get a valid token, requesting a new one if needed.
+
+        Returns
+        -------
+        str
+            Access token
+        """
+        if cls._access_token is None or cls._expires_at <= time.time():
+            cls._renew()
+        return cls._access_token
+
+    @classmethod
+    def _renew(cls) -> None:
+        """Request a new token from Keycloak."""
+        client_name = os.environ.get(
+            HQ_STORE_READER_CLIENT_ENV_VAR, DEFAULT_HQ_STORE_READER_KEYCLOAK_CLIENT
+        )
+        keycloak_openid = KeycloakOpenID(
+            server_url=os.environ.get(RequiredBackendEnvVars.KEYCLOAK_URL.value),
+            realm_name=os.environ.get(RequiredBackendEnvVars.KEYCLOAK_REALM.value),
+            client_id=client_name,
+            client_secret_key=get_service_account_in_keycloak(
+                client_name
+            ).client_secret,
+        )
+        token = keycloak_openid.token(grant_type="client_credentials")
+        cls._access_token = token["access_token"]
+        cls._expires_at = (
+            time.time() + token["expires_in"] - HQ_STORE_TOKEN_RENEWAL_MARGIN
+        )
 
 
 def _check_algorithm_store_online(algorithm_store_url: str) -> bool:
