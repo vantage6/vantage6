@@ -105,9 +105,10 @@ def _authorize_user(
     return None, None
 
 
-def _is_node_or_hq_request() -> bool:
+def _get_request_client_type() -> str | None:
     """
-    Check whether the current request carries a valid node or HQ JWT.
+    Get the `vantage6_client_type` of the valid JWT of the current request, e.g.
+    "node" or "hq".
 
     Nodes and HQ are never registered as a store `User` - unlike `_authenticate`, this
     does not do a database lookup. It only relies on the `vantage6_client_type` claim
@@ -118,11 +119,11 @@ def _is_node_or_hq_request() -> bool:
 
     Returns
     -------
-    bool
-        Whether the request is authenticated as a node or as HQ.
+    str | None
+        The client type, or None if the request has no token or no client type.
     """
     verify_jwt_in_request(optional=True)
-    return get_jwt().get("vantage6_client_type") in ("node", "hq")
+    return get_jwt().get("vantage6_client_type")
 
 
 def with_authentication() -> Callable:
@@ -189,20 +190,27 @@ def with_permission(resource: str, operation: Operation) -> Callable:
     return protection_decorator
 
 
-def with_permission_to_view_algorithms(allow_node_and_hq: bool = False) -> Callable:
+def with_permission_to_view_algorithms(
+    allow_node: bool = False, allow_hq: bool = False
+) -> Callable:
     """
     Decorator to verify that the user has as a permission on a resource.
 
     Parameters
     ----------
-    allow_node_and_hq : bool, optional
-        If True, also allow requests authenticated as a node or as HQ (see
-        `_is_node_or_hq_request`) to view approved algorithms, regardless of the
+    allow_node : bool, optional
+        If True, also allow requests authenticated as a node (see
+        `_get_request_client_type`) to view approved algorithms, regardless of the
         store's `algorithm_view` policy. This lets nodes independently re-verify - for
         their own `allowed_algorithm_stores` policy - that an image is a registered,
-        approved algorithm in this store, and lets HQ look up the algorithm of a new
-        task, without either being registered as a store `User`. Access is still
-        restricted to approved algorithms only. Default is False.
+        approved algorithm in this store, without requiring the node to be registered
+        as a store `User`. Access is still restricted to approved algorithms only.
+        Default is False.
+    allow_hq : bool, optional
+        If True, also allow requests authenticated as HQ to view approved algorithms,
+        regardless of the store's `algorithm_view` policy. This lets HQ look up the
+        algorithm of a new task. Access is still restricted to approved algorithms
+        only. Default is False.
 
     Returns
     -------
@@ -210,6 +218,12 @@ def with_permission_to_view_algorithms(allow_node_and_hq: bool = False) -> Calla
         Decorated function that can be used to access endpoints that require
         authentication.
     """
+
+    allowed_client_types = {
+        client_type
+        for client_type, allowed in (("node", allow_node), ("hq", allow_hq))
+        if allowed
+    }
 
     def protection_decorator(fn):
         @wraps(fn)
@@ -228,7 +242,11 @@ def with_permission_to_view_algorithms(allow_node_and_hq: bool = False) -> Calla
             # nodes re-verifying an image and HQ looking up a task's algorithm are
             # always allowed to see approved algorithms, independent of the store's
             # algorithm_view policy - they are never allowed to see non-approved ones
-            if allow_node_and_hq and request_approved and _is_node_or_hq_request():
+            if (
+                allowed_client_types
+                and request_approved
+                and _get_request_client_type() in allowed_client_types
+            ):
                 g.node = True
                 return fn(self, *args, **kwargs)
 

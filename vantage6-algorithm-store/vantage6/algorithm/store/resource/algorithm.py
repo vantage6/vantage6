@@ -148,7 +148,7 @@ class AlgorithmBaseResource(AlgorithmStoreResources):
 class Algorithms(AlgorithmBaseResource):
     """Resource for /algorithm"""
 
-    @with_permission_to_view_algorithms(allow_node_and_hq=True)
+    @with_permission_to_view_algorithms(allow_node=True, allow_hq=True)
     def get(self):
         """List algorithms
         ---

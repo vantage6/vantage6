@@ -139,7 +139,7 @@ class TestAlgorithmResources(TestResources):
     def test_view_algorithm_decorator_node(self):
         """
         Test that a node JWT is always allowed to list approved algorithms
-        (`allow_node_and_hq=True` on the decorator), even under the store's most
+        (`allow_node=True` on the decorator), even under the store's most
         restrictive algorithm_view policy - and that this does not extend to
         non-approved algorithms.
         """
