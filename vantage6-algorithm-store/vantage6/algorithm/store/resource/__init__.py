@@ -247,7 +247,6 @@ def with_permission_to_view_algorithms(
                 and request_approved
                 and _get_request_client_type() in allowed_client_types
             ):
-                g.node = True
                 return fn(self, *args, **kwargs)
 
             policies = Policy.get_as_dict()
