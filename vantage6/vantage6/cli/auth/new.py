@@ -76,30 +76,11 @@ def global_auth_settings_questionaire() -> dict[str, Any]:
     can also be used by the standalone auth chart, which can also use this function
     """
     return {
-        "hqAdminClientSecret": _get_hq_admin_client_secret(),
-        # secret for the Keycloak client algorithm stores use to look up users
+        # secrets of the Keycloak clients HQ and algorithm stores use
+        "hqAdminClientSecret": generate_password(password_length=32),
         "storeAdminClientSecret": generate_password(password_length=32),
         "adminPassword": _get_admin_password(),
     }
-
-
-def _get_hq_admin_client_secret() -> str:
-    """
-    Get the secret of the Keycloak client HQ uses to manage users and clients.
-    """
-    provide_secret = q.confirm(
-        "Do you want to choose a secret for the Keycloak HQ admin client yourself? ",
-        default=False,
-    ).unsafe_ask()
-
-    if provide_secret:
-        admin_client_secret = q.password(
-            "Enter Keycloak HQ admin client secret:"
-        ).unsafe_ask()
-    else:
-        admin_client_secret = generate_password(password_length=32)
-
-    return admin_client_secret
 
 
 def _get_admin_password() -> str:
