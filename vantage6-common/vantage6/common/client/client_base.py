@@ -279,7 +279,7 @@ class ClientBase(BlobStorageMixin):
 
         # add additional headers if any are given
         auth_headers = self.store_headers if is_for_algorithm_store else self.headers
-        headers = auth_headers if headers is None else headers | auth_headers
+        headers = (headers or {}) | auth_headers
 
         timeout_attempts = 0
         while True:
