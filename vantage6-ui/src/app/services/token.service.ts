@@ -78,7 +78,8 @@ export class TokenService {
   }
 }
 
-const hqUrlPattern = getUrlPattern([environment.hq_url]);
+// include the API path, so that the token is not sent to e.g. a store on the same host
+const hqUrlPattern = getUrlPattern([environment.hq_url + environment.api_path]);
 
 /*
  * Adds the token for HQ to requests to HQ.
