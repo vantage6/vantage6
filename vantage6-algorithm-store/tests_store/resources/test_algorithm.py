@@ -218,7 +218,7 @@ class TestAlgorithmResources(TestResources):
         for client_type in ["node", "hq"]:
             headers = self.login_node(client_type=client_type, audience="vantage6-hq")
             rv = self.app.get("/api/algorithm", headers=headers)
-            self.assertNotEqual(rv.status_code, HTTPStatus.OK)
+            self.assertEqual(rv.status_code, HTTPStatus.UNAUTHORIZED)
 
         # cleanup
         policy.delete()
@@ -234,7 +234,7 @@ class TestAlgorithmResources(TestResources):
 
         headers = self.login_node(audience=["vantage6-store", "vantage6-hq"])
         rv = self.app.get("/api/algorithm", headers=headers)
-        self.assertNotEqual(rv.status_code, HTTPStatus.OK)
+        self.assertEqual(rv.status_code, HTTPStatus.UNAUTHORIZED)
 
     def test_view_algorithm_single_not_affected_by_node_bypass(self):
         """

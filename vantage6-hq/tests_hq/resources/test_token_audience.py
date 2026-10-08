@@ -24,7 +24,7 @@ class TestTokenAudience(TestResourceBase):
         rv = self.app.get(
             "/api/user", headers=self.login(user, audience=STORE_TOKEN_AUDIENCE)
         )
-        self.assertNotEqual(rv.status_code, HTTPStatus.OK)
+        self.assertEqual(rv.status_code, HTTPStatus.UNAUTHORIZED)
 
         hq_token = jwt.encode(
             {
@@ -38,7 +38,7 @@ class TestTokenAudience(TestResourceBase):
             algorithm="RS256",
         )
         rv = self.app.get("/api/user", headers={"Authorization": f"Bearer {hq_token}"})
-        self.assertNotEqual(rv.status_code, HTTPStatus.OK)
+        self.assertEqual(rv.status_code, HTTPStatus.UNAUTHORIZED)
 
     def test_tokens_for_hq_and_stores_refused(self):
         """
@@ -54,7 +54,7 @@ class TestTokenAudience(TestResourceBase):
                 user, audience=[HQ_TOKEN_AUDIENCE, STORE_TOKEN_AUDIENCE]
             ),
         )
-        self.assertNotEqual(rv.status_code, HTTPStatus.OK)
+        self.assertEqual(rv.status_code, HTTPStatus.UNAUTHORIZED)
 
     @patch("vantage6.hq.resource.common.task_post_base.get_hq_token_for_stores")
     @patch("vantage6.hq.resource.common.task_post_base.request_algo_store")

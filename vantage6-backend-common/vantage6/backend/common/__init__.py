@@ -100,6 +100,7 @@ class Vantage6App:
         # Setup the Flask-JWT-Extended extension (JWT: JSON Web Token)
         self.jwt = JWTManager(self.app)
         self._reject_tokens_for_other_audiences()
+        self._respond_unauthorized_to_invalid_tokens()
         self.configure_jwt()
 
         # Setup Principal, granular API access manegement
@@ -145,6 +146,24 @@ class Vantage6App:
             if isinstance(audience, str):
                 audience = [audience]
             return not other_audiences.intersection(audience)
+
+    def _respond_unauthorized_to_invalid_tokens(self) -> None:
+        """
+        Respond with 401 Unauthorized to invalid tokens, e.g. tokens for another
+        audience, instead of flask-jwt-extended's defaults 422 and 400.
+        """
+
+        @self.jwt.invalid_token_loader
+        def invalid_token(error: str) -> Response:
+            return make_response({"msg": error}, HTTPStatus.UNAUTHORIZED)
+
+        @self.jwt.token_verification_failed_loader
+        # pylint: disable=unused-argument
+        def token_verification_failed(jwt_header: dict, jwt_data: dict) -> Response:
+            return make_response(
+                {"msg": "Token is not valid for this service"},
+                HTTPStatus.UNAUTHORIZED,
+            )
 
     @abstractmethod
     def configure_flask(self) -> None:
