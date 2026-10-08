@@ -41,9 +41,9 @@ from pathlib import Path
 from threading import Thread
 from socketio import Client as SocketIO
 from gevent.pywsgi import WSGIServer
-from enum import Enum
 
 from vantage6.common import logger_name
+from vantage6.common.enum import EnumBase
 from vantage6.common.docker.addons import (
     ContainerKillListener,
     check_docker_running,
@@ -76,7 +76,7 @@ from vantage6.node.docker.squid import Squid
 from vantage6.node._version import __version__  # noqa: F401
 
 
-class VPNConnectMode(Enum):
+class VPNConnectMode(EnumBase):
     FIRST_TRY = 1
     REFRESH_KEYPAIR = 2
     REFRESH_COMPLETE = 3
