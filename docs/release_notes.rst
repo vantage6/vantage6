@@ -39,6 +39,7 @@ Release notes
     Other stores receive no tokens, so only their public algorithms can be used.
   - When a store restricts who may view algorithms, HQ no longer checks at task
     creation whether the user may view the algorithm, only whether it is approved.
+  - HQ and algorithm stores respond to invalid tokens with 401 instead of 422 or 400.
 
 5.0.3
 -----
