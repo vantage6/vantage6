@@ -59,8 +59,15 @@ INTERVAL_MULTIPLIER = 1.5
 # Default timeout for requests to the server
 REQUEST_TIMEOUT = 300
 
-# Default chunk size for streaming inputs and results
+# In-memory buffer size when reading a stream (downloads, file reads).
 DEFAULT_CHUNK_SIZE = 1024 * 1024  # 1MB
+
+# Part size for chunked HTTP uploads. Must stay below the server's uwsgi
+# --chunked-input-limit (MAX_CHUNKED_INPUT_PART).
+HTTP_UPLOAD_CHUNK_SIZE = 256 * 1024  # 256 KiB
+
+# Passed to uwsgi as --chunked-input-limit by `v6 server start` and server.sh.
+MAX_CHUNKED_INPUT_PART = 16 * 1024 * 1024  # 16 MiB
 
 
 class InstanceType(str, Enum):

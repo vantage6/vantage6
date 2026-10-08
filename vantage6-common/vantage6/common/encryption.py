@@ -33,7 +33,11 @@ from cryptography.hazmat.primitives.serialization import (
 )
 
 from vantage6.common import Singleton, logger_name, bytes_to_base64s, base64s_to_bytes
-from vantage6.common.globals import DEFAULT_CHUNK_SIZE, STRING_ENCODING
+from vantage6.common.globals import (
+    DEFAULT_CHUNK_SIZE,
+    HTTP_UPLOAD_CHUNK_SIZE,
+    STRING_ENCODING,
+)
 
 SEPARATOR = "$"
 SHARED_ENCRYPT_KEY_LENGTH = 32
@@ -142,7 +146,7 @@ class CryptorBase(metaclass=Singleton):
         self,
         stream: IO[bytes],
         pubkey_base64s: str = None,
-        chunk_size=DEFAULT_CHUNK_SIZE,
+        chunk_size=HTTP_UPLOAD_CHUNK_SIZE,
     ):
         """
         Base64-encode a stream, yielding encoded chunks.
@@ -739,7 +743,7 @@ class RSACryptor(CryptorBase):
             yield final_chunk
 
     def encrypt_stream(
-        self, stream, pubkey_base64s: str, chunk_size=DEFAULT_CHUNK_SIZE
+        self, stream, pubkey_base64s: str, chunk_size=HTTP_UPLOAD_CHUNK_SIZE
     ):
         """
         Encrypt a stream using hybrid RSA/AES encryption.
