@@ -18,13 +18,14 @@ def cleanup_runs_data(config: dict, include_input: bool = False):
 
     Parameters
     ----------
-    days : int
-        The number of days after which results should be cleared.
+    config : dict
+        Server configuration.
+    include_input : bool
+        Whether to clear the `input` field as well as the `result` field.
     """
     days = config.get("runs_data_cleanup_days")
-    azure_config = config.get("large_result_store", {})
-    if azure_config:
-        storage_adapter = AzureStorageService(azure_config)
+    azure_config = config.get("large_result_store")
+    storage_adapter = AzureStorageService(azure_config) if azure_config else None
     threshold_date = datetime.now(timezone.utc) - timedelta(days=days)
     session = DatabaseSessionManager.get_session()
 
