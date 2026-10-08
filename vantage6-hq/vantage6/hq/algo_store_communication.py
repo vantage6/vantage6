@@ -22,6 +22,9 @@ from vantage6.hq.globals import HQ_STORE_READER_CLIENT_ENV_VAR
 module_name = __name__.split(".")[-1]
 log = logging.getLogger(module_name)
 
+# seconds before HQ's token for algorithm stores expires that it is renewed
+HQ_STORE_TOKEN_RENEWAL_MARGIN = 30
+
 _hq_store_token: dict = {}
 
 
@@ -51,8 +54,9 @@ def get_hq_token_for_stores() -> str:
     )
     token = keycloak_openid.token(grant_type="client_credentials")
     _hq_store_token["access_token"] = token["access_token"]
-    # renew a little before it expires
-    _hq_store_token["expires_at"] = time.time() + token["expires_in"] - 30
+    _hq_store_token["expires_at"] = (
+        time.time() + token["expires_in"] - HQ_STORE_TOKEN_RENEWAL_MARGIN
+    )
     return token["access_token"]
 
 
