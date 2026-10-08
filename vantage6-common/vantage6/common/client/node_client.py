@@ -94,8 +94,18 @@ class NodeClient(ClientBase):
         """Get new tokens: one for HQ and one for algorithm stores."""
         self.log.debug("Obtaining new token")
         self._obtain_client_credentials_tokens(self.kc_openid)
-        decoded_token = self.kc_openid.decode_token(self._access_token)
-        self.token_validity_period = decoded_token["exp"] - decoded_token["iat"]
+        # the HQ and store tokens may be valid for different periods: renew both before
+        # the first one expires
+        self.token_validity_period = min(
+            token["exp"] - token["iat"] for token in self._decoded_tokens()
+        )
+
+    def _decoded_tokens(self) -> list[dict]:
+        """Decode the HQ token and the algorithm store token."""
+        return [
+            self.kc_openid.decode_token(token)
+            for token in (self._access_token, self._store_access_token)
+        ]
 
     def auto_renew_token(self) -> None:
         """Start a thread that refreshes token before it expires."""
@@ -113,8 +123,8 @@ class NodeClient(ClientBase):
         interval_between_refreshes = period_start_refresh / 20
         token_expired = False
         while True:
-            # get the time until the token expires
-            expiry_time = self.kc_openid.decode_token(self.token)["exp"]
+            # get the time until the first of the tokens expires
+            expiry_time = min(token["exp"] for token in self._decoded_tokens())
             time_until_expiry = expiry_time - time.time()
             if time_until_expiry < period_start_refresh:
                 if time_until_expiry < 0 and not token_expired:

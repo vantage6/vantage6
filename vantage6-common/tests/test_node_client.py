@@ -27,6 +27,25 @@ class TestTokens(TestCase):
             self.client._store_access_token, f"token-for-{STORE_AUDIENCE_SCOPE}"
         )
 
+    def test_token_validity_is_shortest_of_both_tokens(self):
+        self.client.kc_openid = MagicMock()
+        self.client.kc_openid.token.side_effect = lambda grant_type, scope: {
+            "access_token": scope
+        }
+        for hq_validity, store_validity in [(300, 120), (120, 300)]:
+            with self.subTest(hq_validity=hq_validity, store_validity=store_validity):
+                decoded_tokens = {
+                    HQ_AUDIENCE_SCOPE: {"exp": hq_validity, "iat": 0},
+                    STORE_AUDIENCE_SCOPE: {"exp": store_validity, "iat": 0},
+                }
+                self.client.kc_openid.decode_token.side_effect = (
+                    decoded_tokens.__getitem__
+                )
+
+                self.client.obtain_new_token()
+
+                self.assertEqual(self.client.token_validity_period, 120)
+
     @patch("vantage6.common.client.client_base.requests.get")
     def test_request_sends_matching_token(self, mock_get):
         mock_get.return_value.status_code = 200
