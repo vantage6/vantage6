@@ -15,6 +15,8 @@ Release notes
     algorithm stores get their own Keycloak client that can only look up users
     (`GHSA-v995-8jhw-349w
     <https://github.com/vantage6/vantage6/security/advisories/GHSA-v995-8jhw-349w>`_).
+    This is not fixed in version 4: there, only link algorithm stores that you trust
+    as much as your server.
 
 - **Upgrade notes**
 
