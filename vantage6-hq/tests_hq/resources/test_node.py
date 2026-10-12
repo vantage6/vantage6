@@ -566,3 +566,28 @@ class TestResources(TestResourceBase):
         org2.delete()
         org3.delete()
         col.delete()
+
+    def test_node_other_collaboration_of_same_organization(self):
+        org = Organization()
+        col = Collaboration(organizations=[org])
+        other_col = Collaboration(organizations=[org])
+        node = self.create_node(organization=org, collaboration=col)
+        sibling_node = self.create_node(organization=org, collaboration=other_col)
+
+        headers = self.login_node(node)
+
+        # view
+        results = self.app.get(f"/api/node/{node.id}", headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        results = self.app.get(f"/api/node/{sibling_node.id}", headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+        results = self.app.get("/api/node", headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        self.assertEqual([n["id"] for n in results.json["data"]], [node.id])
+
+        # edit
+        results = self.app.patch(
+            f"/api/node/{sibling_node.id}", headers=headers, json={"name": "A"}
+        )
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+        self.assertNotEqual(Node.get(sibling_node.id).name, "A")

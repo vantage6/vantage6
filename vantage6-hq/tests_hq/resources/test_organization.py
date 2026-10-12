@@ -266,3 +266,27 @@ class TestResources(TestResourceBase):
             json={"name": "not-going-to-happen"},
         )
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+    def test_view_organization_node_other_collaboration_of_same_organization(self):
+        org = Organization()
+        org2 = Organization()
+        org_other_col = Organization()
+        col = Collaboration(organizations=[org, org2])
+        other_col = Collaboration(organizations=[org, org_other_col])
+        other_col.save()
+        node = self.create_node(organization=org, collaboration=col)
+
+        headers = self.login_node(node)
+
+        results = self.app.get(f"/api/organization/{org2.id}", headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        results = self.app.get(f"/api/organization/{org_other_col.id}", headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        results = self.app.get("/api/organization", headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        self.assertEqual({o["id"] for o in results.json["data"]}, {org.id, org2.id})
+        results = self.app.get(
+            f"/api/organization?collaboration_id={other_col.id}", headers=headers
+        )
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)

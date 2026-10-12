@@ -235,8 +235,7 @@ class MultiRunBase(RunBase):
         # filter based on permissions
         if not self.r.v_glo.can():
             if self.r.v_col.can():
-                col_ids = [col.id for col in auth_org.collaborations]
-                q = q.filter(Collaboration.id.in_(col_ids))
+                q = q.filter(Collaboration.id.in_(self.obtain_auth_collaboration_ids()))
             elif self.r.v_org.can():
                 q = q.filter(Organization.id == auth_org.id)
             elif self.r.v_own.can():
@@ -682,6 +681,17 @@ class Run(SingleRunBase):
             )
             log.warning("    Run organization: %s", run.organization_id)
             log.warning("    Node organization: %s", g.node.organization)
+            return {
+                "msg": "This is not your algorithm run to PATCH!"
+            }, HTTPStatus.UNAUTHORIZED
+
+        if run.task.collaboration_id != g.node.collaboration_id:
+            log.warning(
+                "Node %s tries to update a run that does not belong to them.",
+                g.node.name,
+            )
+            log.warning("    Run collaboration: %s", run.task.collaboration_id)
+            log.warning("    Node collaboration: %s", g.node.collaboration_id)
             return {
                 "msg": "This is not your algorithm run to PATCH!"
             }, HTTPStatus.UNAUTHORIZED
