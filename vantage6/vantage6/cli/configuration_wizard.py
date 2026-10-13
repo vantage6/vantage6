@@ -110,41 +110,7 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
             default="10.76.0.0/16",
         ).unsafe_ask()
 
-    is_policies = q.confirm(
-        "Do you want to limit the algorithms allowed to run on your node? This "
-        "should always be done for production scenarios.",
-        default=True,
-    ).unsafe_ask()
-    policies = {}
-    if is_policies:
-        info(
-            "You can limit the algorithms that can run on your node in two ways: by "
-            "allowing specific algorithms or by allowing all algorithms in a given "
-            "algorithm store."
-        )
-        ask_single_algorithms = q.confirm(
-            "Do you want to enter a list of allowed algorithms?"
-        ).unsafe_ask()
-        if ask_single_algorithms:
-            policies[NodePolicy.ALLOWED_ALGORITHMS.value] = _get_allowed_algorithms()
-        ask_algorithm_stores = q.confirm(
-            "Do you want to allow algorithms from specific algorithm stores?"
-        ).unsafe_ask()
-        if ask_algorithm_stores:
-            policies[NodePolicy.ALLOWED_ALGORITHM_STORES.value] = (
-                _get_allowed_algorithm_stores()
-            )
-        if ask_single_algorithms and ask_algorithm_stores:
-            require_both_whitelists = q.confirm(
-                "Do you want to allow only algorithms that are both in the list of "
-                "allowed algorithms *AND* are part of one of the allowed algorithm "
-                "stores? If not, algorithms will be allowed if they are in either the "
-                "list of allowed algorithms or one of the allowed algorithm stores.",
-                default=True,
-            ).unsafe_ask()
-            policies["allow_either_whitelist_or_store"] = not require_both_whitelists
-    if policies:
-        config["policies"] = policies
+    config["policies"] = _get_algorithm_policies()
 
     res = q.select(
         "Which level of logging would you like?",
@@ -203,6 +169,52 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
     }
 
     return config
+
+
+def _get_algorithm_policies() -> dict:
+    """
+    Prompt the user for the policies on which algorithms may run on their node. At
+    least one of the allowed algorithms or allowed algorithm stores is required.
+
+    Returns
+    -------
+    dict
+        Dictionary with the algorithm policies
+    """
+    info(
+        "You must limit the algorithms that can run on your node. You can do this in "
+        "two ways: by allowing specific algorithms or by allowing all algorithms in a "
+        "given algorithm store."
+    )
+    policies = {}
+    while not policies:
+        ask_single_algorithms = q.confirm(
+            "Do you want to enter a list of allowed algorithms?"
+        ).unsafe_ask()
+        if ask_single_algorithms:
+            policies[NodePolicy.ALLOWED_ALGORITHMS.value] = _get_allowed_algorithms()
+        ask_algorithm_stores = q.confirm(
+            "Do you want to allow algorithms from specific algorithm stores?"
+        ).unsafe_ask()
+        if ask_algorithm_stores:
+            policies[NodePolicy.ALLOWED_ALGORITHM_STORES.value] = (
+                _get_allowed_algorithm_stores()
+            )
+        if not policies:
+            error(
+                "You must define allowed algorithms and/or allowed algorithm stores. "
+                "Please try again."
+            )
+    if ask_single_algorithms and ask_algorithm_stores:
+        require_both_whitelists = q.confirm(
+            "Do you want to allow only algorithms that are both in the list of "
+            "allowed algorithms *AND* are part of one of the allowed algorithm "
+            "stores? If not, algorithms will be allowed if they are in either the "
+            "list of allowed algorithms or one of the allowed algorithm stores.",
+            default=True,
+        ).unsafe_ask()
+        policies["allow_either_whitelist_or_store"] = not require_both_whitelists
+    return policies
 
 
 def _get_allowed_algorithms() -> list[str]:
