@@ -53,6 +53,23 @@ class AuthInstallTest(unittest.TestCase):
             ],
         )
 
+    def test_clusterrolebinding_subject_patched_to_install_namespace(self):
+        result, kubectl = self._invoke_install()
+
+        self.assertEqual(result.exit_code, 0, result.output)
+        patch_commands = [
+            invocation.args[0]
+            for invocation in kubectl.call_args_list
+            if invocation.args[0][:3]
+            == ["patch", "clusterrolebinding", "keycloak-operator-clusterrole-binding"]
+        ]
+        self.assertEqual(len(patch_commands), 1)
+        patch_arg = next(arg for arg in patch_commands[0] if arg.startswith("-p="))
+        # The subject namespace must be the namespace the operator is
+        # installed in, not the placeholder from the Keycloak docs.
+        self.assertIn('"test-ns"', patch_arg)
+        self.assertNotIn("custom-namespace", patch_arg)
+
     def test_26_7_and_later_install_client_crds(self):
         expected = [
             "keycloaks.k8s.keycloak.org-v1.yml",
