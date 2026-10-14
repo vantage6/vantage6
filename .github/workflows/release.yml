@@ -340,6 +340,37 @@ jobs:
         run: make algorithm-omop-base-image BASE=${major}.${minor} TAG=${major}.${minor}
           PUSH_REG=true TAG_LATEST=$tag_latest
 
+  # The basic algorithm images only expose functions of the vantage6 algorithm tools.
+  # Creating a new patch tag in their repositories triggers their release workflow,
+  # which rebuilds them on the algorithm base image built above, so that they contain
+  # the algorithm tools of this release.
+  algorithm-basics-images:
+    name: Trigger rebuild of basic algorithm images
+    runs-on: ubuntu-latest
+    needs: [ version, algorithm-base-image ]
+    if: ${{ needs.version.outputs.stage == '' }}
+    strategy:
+      matrix:
+        repository:
+          - vantage6/v6-preprocess-basics-py
+          - vantage6/v6-extract-basics-py
+    env:
+      # tags created with the default GITHUB_TOKEN do not trigger workflows
+      GH_TOKEN: ${{ secrets.COMMIT_PAT }}
+      REPOSITORY: ${{ matrix.repository }}
+    steps:
+      - name: Create new patch tag
+        run: |
+          latest=$(gh api "repos/${REPOSITORY}/tags" --paginate --jq '.[].name' \
+            | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1)
+          IFS=. read -r major minor patch <<< "${latest}"
+          new_tag="${major}.${minor}.$((patch + 1))"
+          branch=$(gh api "repos/${REPOSITORY}" --jq .default_branch)
+          sha=$(gh api "repos/${REPOSITORY}/commits/${branch}" --jq .sha)
+          gh api "repos/${REPOSITORY}/git/refs" -f ref="refs/tags/${new_tag}" \
+            -f sha="${sha}"
+          echo "Created tag ${new_tag} on ${REPOSITORY} (${sha})"
+
   # Update the server and node images
   deploy:
     runs-on: ubuntu-latest
