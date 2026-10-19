@@ -66,14 +66,6 @@ data:
       {{- if .Values.node.prometheus.enabled }}
       report_interval_seconds: {{ .Values.node.prometheus.report_interval_seconds | default 60 }}
       {{- end }}
-    {{- if .Values.node.private_docker_registries }}
-    private_docker_registries:
-      {{- range .Values.node.private_docker_registries }}
-      - registry: {{ .registry }}
-        username: {{ .username }}
-        password: {{ .password | quote }}
-      {{- end }}
-    {{- end }}
     {{- if .Values.node.debug }}
     debug:
       socketio: {{ .Values.node.debug.socketio }}
@@ -84,10 +76,4 @@ data:
     dev:
       task_dir_extension: {{ .Values.node.dev.task_dir_extension }}
     {{- end }}
-    {{- end }}
-    {{- if .Values.node.algorithm_env }}
-    algorithm_env:
-      {{- range $key, $value := .Values.node.algorithm_env }}
-      {{ $key }}: {{ $value }}
-      {{- end }}
     {{- end }}

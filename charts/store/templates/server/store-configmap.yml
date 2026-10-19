@@ -7,11 +7,6 @@ data:
   config.yaml: |
     api_path: {{ .Values.store.api_path }}
     description: {{ .Values.store.description }}
-    {{- if .Values.database.external }}
-    uri: {{ .Values.database.uri }}
-    {{- else }}
-    uri: postgresql://{{ .Values.database.username }}:{{ .Values.database.password }}@{{ .Release.Name }}-store-postgres:5432/{{ .Values.database.name }}
-    {{- end }}
     logging:
       backup_count: {{ .Values.store.logging.backup_count }}
       datefmt: {{ .Values.store.logging.datefmt | quote }}
@@ -58,14 +53,6 @@ data:
       - {{ . }}
       {{- end }}
     {{- end }}
-    {{- if .Values.store.private_docker_registries }}
-    private_docker_registries:
-      {{- range .Values.store.private_docker_registries }}
-      - registry: {{ .registry }}
-        username: {{ .username }}
-        password: {{ .password | quote }}
-      {{- end }}
-    {{- end }}
     {{- if .Values.store.dev }}
     dev:
       host_uri: {{ .Values.store.dev.host_uri }}
@@ -99,9 +86,6 @@ data:
       port: {{ .Values.store.smtpServer.port }}
       {{- if .Values.store.smtpServer.user }}
       user: {{ .Values.store.smtpServer.user }}
-      {{- end }}
-      {{- if .Values.store.smtpServer.password }}
-      password: {{ .Values.store.smtpServer.password | quote }}
       {{- end }}
       from: {{ .Values.store.smtpServer.from }}
       {{- if .Values.store.smtpServer.replyTo }}

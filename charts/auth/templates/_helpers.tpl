@@ -34,3 +34,17 @@ Match labels
 {{- define "auth.matchLabels" -}}
 {{- include "common.matchLabels" (dict "Chart" .Chart "Release" .Release "Values" .Values "Component" "auth") -}}
 {{- end }}
+
+{{/*
+Name of the Secret with the Keycloak database credentials
+*/}}
+{{- define "auth.dbSecretName" -}}
+{{- .Values.database.existingSecret | default (printf "%s-kc-db-secret" .Release.Name) -}}
+{{- end }}
+
+{{/*
+Name of the Secret with the credentials used in the realm import
+*/}}
+{{- define "auth.realmSecretName" -}}
+{{- .Values.keycloak.realmImport.existingSecret | default (printf "%s-realm-secrets" .Release.Name) -}}
+{{- end }}

@@ -52,7 +52,7 @@ spec:
           value: "1000"
         envFrom:
         - secretRef:
-            name: {{ .Release.Name }}-store-secrets
+            name: {{ include "store.secretName" . }}
         ports:
         - containerPort: {{ .Values.store.internal.port }}
         command:
