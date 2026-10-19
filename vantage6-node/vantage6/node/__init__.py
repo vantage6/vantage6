@@ -38,6 +38,7 @@ import requests.exceptions
 from gevent.pywsgi import WSGIServer
 from keycloak import KeycloakAuthenticationError
 from socketio import Client as SocketIO
+from socketio.exceptions import BadNamespaceError
 
 from vantage6.common import logger_name, validate_required_env_vars
 from vantage6.common.client.node_client import NodeClient
@@ -550,21 +551,36 @@ class Node:
             retries += 1
             self.log.debug("Waiting for /tasks namespace to connect...")
             time.sleep(1)
+        if "/tasks" not in self.socketIO.namespaces:
+            self.log.warning(
+                "Not connected to /tasks namespace, skipping algorithm status change "
+                "notification for run %s",
+                run_id,
+            )
+            return
         self.log.debug("Connected to /tasks namespace")
 
-        self.socketIO.emit(
-            "algorithm_status_change",
-            data={
-                "node_id": self.client.whoami.id_,
-                "status": status.value,
-                "run_id": run_id,
-                "task_id": task_id,
-                "collaboration_id": self.client.collaboration_id,
-                "organization_id": self.client.whoami.organization_id,
-                "parent_id": parent_id,
-            },
-            namespace="/tasks",
-        )
+        try:
+            self.socketIO.emit(
+                "algorithm_status_change",
+                data={
+                    "node_id": self.client.whoami.id_,
+                    "status": status.value,
+                    "run_id": run_id,
+                    "task_id": task_id,
+                    "collaboration_id": self.client.collaboration_id,
+                    "organization_id": self.client.whoami.organization_id,
+                    "parent_id": parent_id,
+                },
+                namespace="/tasks",
+            )
+        except BadNamespaceError:
+            # the namespace may have disconnected between the check above and the emit
+            self.log.warning(
+                "Lost connection to /tasks namespace, skipping algorithm status change "
+                "notification for run %s",
+                run_id,
+            )
 
     def __send_updates_finished_tasks(self) -> None:
         """
