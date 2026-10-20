@@ -35,6 +35,7 @@ from threading import Thread
 import psutil
 import pynvml
 import requests.exceptions
+from engineio.payload import Payload
 from gevent.pywsgi import WSGIServer
 from keycloak import KeycloakAuthenticationError
 from socketio import Client as SocketIO
@@ -45,6 +46,7 @@ from vantage6.common.enum import AlgorithmStepType, RunStatus, TaskStatusQueryOp
 from vantage6.common.exceptions import EncryptionMismatchError
 from vantage6.common.globals import (
     PING_INTERVAL_SECONDS,
+    SOCKETIO_MAX_DECODE_PACKETS,
     NodeConfigKey,
     NodePolicy,
     RequiredNodeEnvVars,
@@ -722,20 +724,36 @@ class Node:
         self.socketIO.register_namespace(NodeTaskNamespace("/tasks"))
         NodeTaskNamespace.node_worker_ref = self
 
+        allow_http_polling = self.config.get("allow_http_polling", False)
+        Payload.max_decode_packets = SOCKETIO_MAX_DECODE_PACKETS
+        if allow_http_polling:
+            self.log.info("HTTP long-polling is allowed for the socket connection")
+        else:
+            self.log.info("Using the websocket transport for the socket connection")
+
         self.socketIO.connect(
             url=self.client.hq_url,
             headers=self.client.headers,
             wait=False,
+            transports=None if allow_http_polling else ["websocket"],
         )
 
         # Log the outcome
         i = 0
         while not self.socketIO.connected:
             if i > TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET:
-                self.log.critical(
-                    "Could not connect to the websocket channels, do you have a "
-                    "slow connection?"
-                )
+                if allow_http_polling:
+                    self.log.critical(
+                        "Could not connect to the websocket channels, do you have a "
+                        "slow connection?"
+                    )
+                else:
+                    self.log.critical(
+                        "Could not connect to the websocket channels. If your "
+                        "network does not support websocket connections, set "
+                        "`allow_http_polling: true` in the node configuration to "
+                        "fall back to HTTP long-polling."
+                    )
                 sys.exit(1)
             self.log.debug("Waiting for socket connection...")
             time.sleep(1)
