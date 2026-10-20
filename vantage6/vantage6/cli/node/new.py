@@ -1,4 +1,3 @@
-import os
 import sys
 from pathlib import Path
 
@@ -15,7 +14,6 @@ from vantage6.common.globals import (
     InstanceType,
     NodePolicy,
     Ports,
-    RequiredNodeEnvVars,
 )
 
 from vantage6.cli.common.new import new
@@ -83,7 +81,7 @@ def node_configuration_questionaire(
     """
     config = q.unsafe_prompt(
         [
-            {"type": "text", "name": "api_key", "message": "Enter given api-key:"},
+            {"type": "text", "name": "apiKey", "message": "Enter given api-key:"},
             {
                 "type": "text",
                 "name": "hq_url",
@@ -112,7 +110,7 @@ def node_configuration_questionaire(
                 "type": "text",
                 "name": "api_path",
                 "message": "Path of the api:",
-                "default": "/api",
+                "default": "/hq",
             },
             {
                 "type": "text",
@@ -192,12 +190,26 @@ def node_configuration_questionaire(
         "volumeHostPath": log_dir,
     }
 
+    default_auth_url = (
+        config["hq_url"].replace("://hq.", "://auth.", 1)
+        if "://hq." in config["hq_url"]
+        else f"{HTTP_LOCALHOST}:{Ports.DEV_AUTH.value}"
+    )
+    config["keycloak_url"] = (
+        q.text(
+            "The URL of the authentication service (Keycloak):",
+            default=default_auth_url,
+        )
+        .unsafe_ask()
+        .rstrip("/")
+    )
+
     # Check if we can login to HQ to retrieve collaboration settings
     client = NodeClient(
         instance_name,
-        config["api_key"],
+        config["apiKey"],
         hq_url=f"{config['hq_url']}:{config['port']}{config['api_path']}",
-        auth_url=os.environ.get(RequiredNodeEnvVars.KEYCLOAK_URL.value),
+        auth_url=config["keycloak_url"],
     )
     try:
         client.authenticate()
@@ -234,7 +246,16 @@ def node_configuration_questionaire(
         "private_key": private_key,
     }
 
-    # pack the entire config in a dict with the 'node' key at top level
+    # move the answers that are nested in the configuration file to their section
+    config["name"] = instance_name
+    config["hq"] = {
+        "url": config.pop("hq_url"),
+        "port": config.pop("port"),
+        "path": config.pop("api_path"),
+    }
+    config["keycloak"] = {"url": config.pop("keycloak_url")}
+    config["persistence"] = {"tasks": {"hostPath": config.pop("task_dir")}}
+
     return {"node": config}
 
 

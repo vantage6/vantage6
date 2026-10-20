@@ -56,22 +56,27 @@ class WizardTest(unittest.TestCase):
         ]
         authenticate.side_effect = None
         config = node_configuration_questionaire(
-            data_dir="/data", instance_name="iknl", log_dir="/log"
+            data_dir="/data",
+            instance_name="iknl",
+            log_dir="/log",
         )
 
         keys = [
-            "api_key",
-            "api_path",
             "databases",
+            "apiKey",
             "encryption",
+            "hq",
+            "keycloak",
             "logging",
-            "port",
-            "hq_url",
-            "task_dir",
+            "name",
+            "persistence",
         ]
         for key in keys:
             self.assertIn(key, config["node"])
         nested_keys = [
+            ["hq", "url"],
+            ["hq", "port"],
+            ["hq", "path"],
             ["policies", NodePolicy.ALLOWED_ALGORITHMS.value],
             ["policies", NodePolicy.ALLOWED_ALGORITHM_STORES.value],
             ["encryption", "private_key"],
