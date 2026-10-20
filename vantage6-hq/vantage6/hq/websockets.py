@@ -75,9 +75,6 @@ class DefaultSocketNamespace(Namespace):
         self.log.info(f'Client connected: "{request.sid}"')
 
         # try to catch jwt authorization token.
-        # Clients that fail to authenticate are disconnected, so that they cannot
-        # trigger any other socket events. The token events are still sent before
-        # disconnecting, so that nodes know to renew their token and reconnect.
         try:
             verify_jwt_in_request()
 
