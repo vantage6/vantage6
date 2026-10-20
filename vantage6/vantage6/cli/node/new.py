@@ -8,6 +8,7 @@ from vantage6.common import error, info, warning
 from vantage6.common.client.node_client import NodeClient
 from vantage6.common.context import AppContext
 from vantage6.common.globals import (
+    APPNAME,
     FILE_BASED_DATABASE_TYPES,
     HTTP_LOCALHOST,
     SERVICE_BASED_DATABASE_TYPES,
@@ -17,7 +18,9 @@ from vantage6.common.globals import (
 )
 
 from vantage6.cli.common.new import new
+from vantage6.cli.common.utils import store_credentials_in_kubernetes_secrets
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
+from vantage6.cli.k8s_config import KubernetesConfig, select_k8s_config
 from vantage6.cli.utils import prompt_config_name
 
 
@@ -36,23 +39,38 @@ from vantage6.cli.utils import prompt_config_name
     default=N_FOL,
     help="Store this configuration in the user folders. This is the default.",
 )
+@click.option("--context", default=None, help="Kubernetes context to use")
+@click.option("--namespace", default=None, help="Kubernetes namespace to use")
 def cli_node_new_configuration(
     name: str,
     system_folders: bool,
+    context: str | None,
+    namespace: str | None,
 ) -> None:
     """
     Create a new node configuration.
 
     Checks if the configuration already exists. If this is not the case
-    a questionnaire is invoked to create a new configuration file.
+    a questionnaire is invoked to create a new configuration file. The API key and
+    database credentials are stored in a Kubernetes secret instead of in the
+    configuration file.
     """
     name = prompt_config_name(name)
     dirs = AppContext.instance_folders(InstanceType.NODE, name, system_folders)
     default_data_dir = str(dirs["data"])
     default_log_dir = str(dirs["log"])
     new(
-        config_producing_func=node_configuration_questionaire,
-        config_producing_func_args=(default_data_dir, default_log_dir, name),
+        # the Kubernetes configuration is selected after `new` checked that the
+        # configuration can be created
+        config_producing_func=lambda *args: node_configuration_questionaire(
+            *args, select_k8s_config(context=context, namespace=namespace)
+        ),
+        config_producing_func_args=(
+            default_data_dir,
+            default_log_dir,
+            name,
+            system_folders,
+        ),
         name=name,
         system_folders=system_folders,
         type_=InstanceType.NODE,
@@ -60,7 +78,11 @@ def cli_node_new_configuration(
 
 
 def node_configuration_questionaire(
-    data_dir: str, log_dir: str, instance_name: str
+    data_dir: str,
+    log_dir: str,
+    instance_name: str,
+    system_folders: bool,
+    k8s_cfg: KubernetesConfig,
 ) -> dict:
     """
     Questionary to generate a config file for the node instance.
@@ -73,6 +95,10 @@ def node_configuration_questionaire(
         Path to the log directory of the node instance.
     instance_name : str
         Name of the node instance.
+    system_folders : bool
+        Whether the configuration is stored in the system folders.
+    k8s_cfg : KubernetesConfig
+        Kubernetes configuration in which the node secret is created.
 
     Returns
     -------
@@ -255,8 +281,71 @@ def node_configuration_questionaire(
     }
     config["keycloak"] = {"url": config.pop("keycloak_url")}
     config["persistence"] = {"tasks": {"hostPath": config.pop("task_dir")}}
+    if k8s_cfg.k8s_node:
+        config["k8sNodeName"] = k8s_cfg.k8s_node
 
-    return {"node": config}
+    config = _store_node_secrets(config, instance_name, system_folders, k8s_cfg)
+    return {"namespace": k8s_cfg.namespace, "node": config}
+
+
+def node_secret_name(instance_name: str, system_folders: bool) -> str:
+    """
+    Name of the Kubernetes secret with the sensitive node configuration.
+
+    Parameters
+    ----------
+    instance_name : str
+        Name of the node instance.
+    system_folders : bool
+        Whether the configuration is stored in the system folders.
+
+    Returns
+    -------
+    str
+        Name of the secret
+    """
+    scope = "system" if system_folders else "user"
+    return f"{APPNAME}-{instance_name}-{scope}-{InstanceType.NODE.value}-credentials"
+
+
+def _store_node_secrets(
+    node_config: dict,
+    instance_name: str,
+    system_folders: bool,
+    k8s_cfg: KubernetesConfig,
+) -> dict:
+    """
+    Move the API key and service-based database credentials from the node
+    configuration to a Kubernetes secret, and reference that secret instead.
+
+    Parameters
+    ----------
+    node_config : dict
+        Node configuration. The secret values are removed from it.
+    instance_name : str
+        Name of the node instance.
+    system_folders : bool
+        Whether the configuration is stored in the system folders.
+    k8s_cfg : KubernetesConfig
+        Kubernetes configuration in which the secret is created.
+
+    Returns
+    -------
+    dict
+        Node configuration that references the secret
+    """
+    secret_data = {"V6_API_KEY": node_config.pop("apiKey")}
+    for db in node_config["databases"]["serviceBased"]:
+        label = db["name"].replace("-", "_").upper()
+        secret_data[f"DATABASE_{label}_URI"] = db.pop("uri")
+        for key, value in db.pop("env", {}).items():
+            secret_data[f"DATABASE_{label}_{key.upper()}"] = value
+
+    secret_name = node_secret_name(instance_name, system_folders)
+    store_credentials_in_kubernetes_secrets(k8s_cfg, {secret_name: secret_data})
+
+    node_config["existingSecret"] = secret_name
+    return node_config
 
 
 def _get_file_based_database_config() -> dict:

@@ -1,4 +1,5 @@
-{% from "_yaml_macros.j2" import yaml_sq %}
+{% from "_yaml_macros.j2" import yaml_sq, secret_field with context %}
+{% set has_secret_ref = hq.existingSecret is defined and hq.existingSecret %}
 
 # Override the chart name
 nameOverride: {{ nameOverride | default('vantage6-hq') }}
@@ -17,15 +18,21 @@ hq:
   {% endif %}
   apiPath: {{ hq.apiPath | default('/hq') }}
 
+  {% if has_secret_ref %}
+  # Kubernetes secret with the sensitive configuration of HQ: database and RabbitMQ
+  # URIs, Keycloak admin credentials and the JWT secret key
+  existingSecret: {{ hq.existingSecret }}
+  {% endif %}
+
   # Keycloak configuration
   {% if hq.standalone is defined and hq.standalone %}
   keycloak:
     url: {{ hq.keycloak.url }}
     realm: {{ hq.keycloak.realm | default('vantage6') }}
     adminUsername: {{ hq.keycloak.adminUsername | default('admin') }}
-    adminPassword: {{ yaml_sq(hq.keycloak.adminPassword | default('admin')) }}
+    {{ secret_field('adminPassword', hq.keycloak.adminPassword, 'Keycloak admin password', 'admin', has_secret_ref) }}
     adminClient: {{ hq.keycloak.adminClient | default('backend-admin-client') }}
-    adminClientSecret: {{ yaml_sq(hq.keycloak.adminClientSecret | default('myadminclientsecret')) }}
+    {{ secret_field('adminClientSecret', hq.keycloak.adminClientSecret, 'Keycloak admin client secret', 'myadminclientsecret', has_secret_ref) }}
   {% endif %}
 
   internal:
@@ -205,7 +212,7 @@ rabbitmq:
   username: {{ rabbitmq.username | default('rabbitmquser') }}
 
   # The password of the RabbitMQ server
-  password: {{ yaml_sq(rabbitmq.password | default('rabbitmquserpassword')) }}
+  {{ secret_field('password', rabbitmq.password, 'RabbitMQ password', 'rabbitmquserpassword', has_secret_ref) }}
 
   # The vhost of the RabbitMQ server
   vhost: {{ rabbitmq.vhost | default('/vantage6') }}
@@ -215,7 +222,7 @@ database:
   external: {{ database.external | default(false) }}
   {% if database.external is defined and database.external %}
   # the URI of the external database
-  uri: {{ database.uri | default('postgresql://vantage6:vantage6@localhost:5432/vantage6') }}
+  {{ secret_field('uri', database.uri, 'Database URI', 'postgresql://vantage6:vantage6@localhost:5432/vantage6', has_secret_ref) }}
   {% else %}
   # The image of the database
   image:
@@ -231,7 +238,7 @@ database:
   username: {{ database.username | default('vantage6') }}
 
   # The password of the database
-  password: {{ yaml_sq(database.password | default('vantage6')) }}
+  {{ secret_field('password', database.password, 'Database password', 'vantage6', has_secret_ref) }}
 
   # The name of the database
   name: {{ database.name | default('vantage6') }}

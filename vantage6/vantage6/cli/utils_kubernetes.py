@@ -191,12 +191,17 @@ def _validate_certificate_with_ssl(cert_data: bytes) -> bool:
         return False
 
 
-def load_kubernetes_config_with_fallback() -> bool:
+def load_kubernetes_config_with_fallback(context: str | None = None) -> bool:
     """
     Load Kubernetes configuration with fallback for development environments.
 
     This function tries to load the Kubernetes configuration and handles
     common issues like SSL certificate problems in development environments.
+
+    Parameters
+    ----------
+    context : str | None
+        Kubernetes context to use. If None, the current context is used.
 
     Returns
     -------
@@ -213,7 +218,7 @@ def load_kubernetes_config_with_fallback() -> bool:
     # Fallback to kubeconfig
     try:
         # Load kubeconfig into default config, then adjust CA if MicroK8s
-        config.load_kube_config()
+        config.load_kube_config(context=context)
         cfg = client.Configuration.get_default_copy()
         configure_kubernetes_client_for_microk8s(cfg)
         client.Configuration.set_default(cfg)
@@ -224,11 +229,16 @@ def load_kubernetes_config_with_fallback() -> bool:
         return False
 
 
-def create_kubernetes_apis_with_ssl_handling() -> tuple[
-    client.CoreV1Api, client.BatchV1Api
-]:
+def create_kubernetes_apis_with_ssl_handling(
+    context: str | None = None,
+) -> tuple[client.CoreV1Api, client.BatchV1Api]:
     """
     Create Kubernetes API clients with SSL handling for development environments.
+
+    Parameters
+    ----------
+    context : str | None
+        Kubernetes context to use. If None, the current context is used.
 
     Returns
     -------
@@ -236,7 +246,7 @@ def create_kubernetes_apis_with_ssl_handling() -> tuple[
         Tuple of CoreV1Api and BatchV1Api clients
     """
     # Load configuration with fallback handling
-    if not load_kubernetes_config_with_fallback():
+    if not load_kubernetes_config_with_fallback(context):
         raise RuntimeError("Failed to load Kubernetes configuration")
 
     # Create API clients
@@ -246,11 +256,16 @@ def create_kubernetes_apis_with_ssl_handling() -> tuple[
     return core_api, batch_api
 
 
-def get_core_api_with_ssl_handling() -> client.CoreV1Api:
+def get_core_api_with_ssl_handling(context: str | None = None) -> client.CoreV1Api:
     """
     Get the CoreV1Api client with SSL handling for development environments.
+
+    Parameters
+    ----------
+    context : str | None
+        Kubernetes context to use. If None, the current context is used.
     """
-    core_api, _ = create_kubernetes_apis_with_ssl_handling()
+    core_api, _ = create_kubernetes_apis_with_ssl_handling(context)
     return core_api
 
 

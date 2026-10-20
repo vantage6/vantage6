@@ -1,4 +1,6 @@
-{% from "_yaml_macros.j2" import yaml_sq, yaml_optional_sq_field %}
+{% from "_yaml_macros.j2" import yaml_sq, yaml_optional_sq_field, secret_field with context %}
+{% set has_realm_secret_ref = keycloak.realmImportSecret is defined and keycloak.realmImportSecret %}
+{% set has_db_secret_ref = database.existingSecret is defined and database.existingSecret %}
 
 keycloak:
   # Whether the Keycloak is deployed standalone or as part of a vantage6 hub.
@@ -75,7 +77,7 @@ keycloak:
     # adminPassword: admin
     {% else %}
     adminUser: {{ keycloak.adminUser | default('admin') }}
-    adminPassword: {{ yaml_sq(keycloak.adminPassword | default('admin')) }}
+    {{ secret_field('adminPassword', keycloak.adminPassword, 'Keycloak admin password', 'admin') }}
     # for production, we recommend storing the admin password in a secret (which MUST
     # contain the 'username' and 'password' keys).
     # adminPassword: {{ keycloak.adminPassword | default('admin') }}
@@ -95,6 +97,11 @@ keycloak:
   # a number of users, roles and secrets that are required for vantage6.
   realmImport:
     enabled: true
+    {% if has_realm_secret_ref %}
+    # Kubernetes secret with the 'admin-password', 'backend-client-secret' and, if
+    # the SMTP server requires authentication, 'smtp-password' keys
+    existingSecret: {{ keycloak.realmImportSecret }}
+    {% endif %}
     {% if keycloak.standalone is defined and keycloak.standalone %}
     realm: {{ keycloak.realm | default('vantage6') }}
     {% endif %}
@@ -150,11 +157,7 @@ keycloak:
       {% if keycloak.adminUser is defined %}
       username: {{ keycloak.adminUser | default('admin') }}
       {% endif %}
-      {% if keycloak.production %}
-      password: {{ yaml_sq(keycloak.adminPassword | default('Admin123!')) }}
-      {% else %}
-      password: {{ yaml_sq(keycloak.adminPassword | default('admin')) }}
-      {% endif %}
+      {{ secret_field('password', keycloak.adminPassword, 'vantage6 admin password', 'admin', has_realm_secret_ref) }}
     {% endif %}
 
     # whether to verify email on first login. This should only be enabled if an SMTP
@@ -185,7 +188,7 @@ keycloak:
         {% endif %}
 
     {% if keycloak.standalone is defined and keycloak.standalone %}
-    backend_client_secret: {{ yaml_sq(keycloak.adminClientSecret | default('myadminclientsecret')) }}
+    {{ secret_field('backend_client_secret', keycloak.adminClientSecret, 'Keycloak admin client secret', 'myadminclientsecret', has_realm_secret_ref) }}
     {% endif %}
 
     # SMTP server configuration for email sending
@@ -223,8 +226,13 @@ database:
   external: {{ database.external | default(false) }}
   host: {{ database.host | default('') }}
   port: {{ database.port | default(5432) }}
+  {% if has_db_secret_ref %}
+  # Kubernetes secret with the 'username' and 'password' keys of the database user
+  existingSecret: {{ database.existingSecret }}
+  {% else %}
   username: {{ database.username | default('keycloak') }}
-  password: {{ yaml_sq(database.password | default('keycloak')) }}
+  {{ secret_field('password', database.password, 'Auth database password', 'keycloak') }}
+  {% endif %}
   name: {{ database.name | default('keycloak') }}
   {% if not database.external %}
   image:

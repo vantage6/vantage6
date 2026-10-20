@@ -15,7 +15,10 @@ from vantage6.cli.common.start import (
     helm_install,
     prestart_checks,
 )
-from vantage6.cli.common.utils import create_directory_if_not_exists
+from vantage6.cli.common.utils import (
+    create_directory_if_not_exists,
+    ensure_referenced_secrets_exist,
+)
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import ChartName, InfraComponentName
 from vantage6.cli.k8s_config import select_k8s_config
@@ -57,6 +60,7 @@ def cli_node_start(
     prestart_checks(ctx, InstanceType.NODE, name, system_folders)
 
     k8s_config = select_k8s_config(context=context, namespace=namespace)
+    ensure_referenced_secrets_exist(ctx.config, k8s_config)
 
     create_directory_if_not_exists(ctx.log_dir)
     create_directory_if_not_exists(ctx.data_dir)

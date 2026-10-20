@@ -96,30 +96,100 @@ For more details on the gateway and TLS configuration, see :ref:`gateway-configu
 Configuring secrets
 -------------------
 
-To keep sensitive information secure, vantage6 uses Kubernetes Secrets.
-The vantage6 CLI creates Kubernetes Secrets for credentials. If you don't use the CLI,
-you should create the secrets in this section manually.
+To keep sensitive information secure, vantage6 stores credentials in Kubernetes
+Secrets.
 
-.. warning::
+``v6 hub new`` and ``v6 node new`` create the Secrets below in the namespace you select,
+and only write the names of the Secrets in the configuration file. The credentials are
+printed once, or not at all for generated values. Start the hub or node in the same
+namespace: ``v6 hub start`` and ``v6 node start`` check that the Secrets exist there.
+``v6 hub remove`` and ``v6 node remove`` offer to delete them, or delete them without
+asking when run with ``--force``.
 
-  Most Kubernetes secrets are currently created by the Helm chart based on the
-  values.yaml file. This practice is not ideal because the secrets are stored in plain
-  text in the values.yaml file. We will soon provide a way to create these secrets using
-  the CLI as well (see
-  `Issue #2391 <https://github.com/vantage6/vantage6/issues/2391>`_) - so the number of
-  secrets in this section will increase soon.
+If you deploy with Helm directly, create the Secrets yourself and reference them with the
+values listed below. If you don't reference a Secret, the chart creates one from the
+credentials in the values file. That is convenient for development, but means the
+credentials are stored in plain text in that file, so don't do this in production.
+
+.. note::
+
+  When a chart references an existing Secret, it refuses to render if you also put the
+  corresponding credentials in the values file, because those would be ignored.
 
 Authentication chart (``auth``)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- **Purpose**: Store the keycloak admin username/password. Note that this is a different
-  admin than the vantage6 admin - it is used to manage the Keycloak service.
-- **Created by**: ``v6 auth new``
-- **Reference in Helm values**: ``keycloak.auth.adminUserSecret``
-- **Required keys**:
+The authentication chart uses three Secrets, each referenced by its own Helm value. The
+Keycloak operator reads them: the database and admin Secrets when starting Keycloak, and
+the realm Secret when importing the vantage6 realm. If the chart deploys the database
+itself, that database also takes its password from the database Secret.
 
-  - ``username``
-  - ``password``
+.. list-table::
+  :header-rows: 1
+  :widths: 30 35 35
+
+  * - Helm value
+    - Required keys
+    - Purpose
+  * - ``keycloak.auth.adminUserSecret``
+    - ``username``, ``password``
+    - Admin of the Keycloak service itself (**different user** from the vantage6 admin)
+  * - ``database.existingSecret``
+    - ``username``, ``password``
+    - Credentials of the Keycloak database
+  * - ``keycloak.realmImport.existingSecret``
+    - ``admin-password``, ``backend-client-secret``; ``smtp-password`` if the SMTP
+      server is set up and requires authentication
+    - Password of the vantage6 admin user and secret of the client that HQ and the
+      algorithm store use to manage Keycloak
+
+HQ chart (``hq``)
+^^^^^^^^^^^^^^^^^
+
+Reference the Secret with ``hq.existingSecret``. Its keys are made available to HQ as
+environment variables.
+
+- ``KEYCLOAK_ADMIN_PASSWORD`` and ``KEYCLOAK_ADMIN_CLIENT_SECRET``: password of the
+  vantage6 admin user and secret of the Keycloak admin client. These must match
+  ``admin-password`` and ``backend-client-secret`` in the realm Secret of the ``auth``
+  chart. The admin username and client name are not secret; they are taken from the
+  Keycloak values (``adminUsername``, ``adminClient``).
+- ``V6_DATABASE_URI``: URI of the HQ database, including credentials.
+- ``V6_RABBITMQ_URI`` and ``RABBITMQ_PASSWORD``: the URI with which HQ connects to
+  RabbitMQ, e.g. ``amqp://<username>:<password>@<release>-rabbitmq:5672/%2Fvantage6``
+  (URL-encode the password), and the same password for the RabbitMQ service.
+- ``V6_JWT_SECRET_KEY``: key to sign container tokens. Use a long random value; all HQ
+  replicas must share it.
+- ``DATABASE_PASSWORD``: only when using the database deployed by the chart.
+- ``V6_LARGE_RESULT_STORE_CONNECTION_STRING``, ``V6_LARGE_RESULT_STORE_CLIENT_SECRET``:
+  only when using a large result store with these credentials.
+
+Algorithm store chart (``store``)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Reference the Secret with ``store.existingSecret``.
+
+- ``KEYCLOAK_ADMIN_PASSWORD`` and ``KEYCLOAK_ADMIN_CLIENT_SECRET``: as for HQ.
+- ``V6_DATABASE_URI``: URI of the store database, including credentials.
+- ``DATABASE_PASSWORD``: only when using the database deployed by the chart.
+- ``V6_SMTP_PASSWORD``: only when the SMTP server requires authentication.
+- ``V6_PRIVATE_DOCKER_REGISTRIES``: only when using private registries, as a JSON list,
+  e.g. ``[{"registry": "registry.example.org", "username": "u", "password": "p"}]``.
+
+Node chart (``node``)
+^^^^^^^^^^^^^^^^^^^^^
+
+Reference the Secret with ``node.existingSecret``.
+
+- ``V6_API_KEY``: the API key of the node.
+- ``DATABASE_[LABEL]_URI`` and ``DATABASE_[LABEL]_[KEY]``: URI and environment variables
+  of each service-based database, where ``[LABEL]`` is the database name in upper case,
+  with ``-`` replaced by ``_``.
+- ``V6_PRIVATE_DOCKER_REGISTRIES`` (JSON list, as above) and ``V6_ALGORITHM_ENV`` (JSON
+  object): only when using private registries or algorithm environment variables. These
+  can also be set in a Secret managed entirely by you, see ``node.createSecrets``.
+
+``v6 node set-api-key`` updates the API key in this Secret. Restart the node afterwards.
 
 External databases
 ------------------

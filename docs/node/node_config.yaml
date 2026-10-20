@@ -7,8 +7,11 @@ node:
   # The name of the node.
   name: node-1
 
-  # The API key of the node.
-  apiKey: abcdefghijklmnopqrstuvwxyz1234567890
+  # Kubernetes secret with the API key of the node (V6_API_KEY) and the URI and
+  # environment variables of service-based databases (DATABASE_<NAME>_URI and
+  # DATABASE_<NAME>_<ENV_VAR_NAME>). `v6 node new` creates this secret. For development
+  # environments, you can instead set `apiKey` here, and `uri` and `env` per database.
+  existingSecret: my-vantage6-node-secret
 
   # When true, the node verifies at startup that algorithm network isolation is
   # enforced by Kubernetes. If the check fails, the node refuses to start. Also, if
@@ -95,15 +98,11 @@ node:
     # machine. They will be accessed using the URI.
     serviceBased:
     - name: myPostgres
-      uri: postgres://vantage6-postgres:5432/vantage6
       type: other
-
-      # The environment variables set here will be passed to the algorithm containers as
-      # DATABASE_<NAME>_<ENV_VAR_NAME>. In this example, the node will set the
-      # DATABASE_MYPOSTGRES_USER and DATABASE_MYPOSTGRES_PASSWORD environment variables.
-      env:
-        USER: vantage6
-        PASSWORD: vantage6
+      # The URI and environment variables of this database are stored in the secret
+      # referenced by `existingSecret`, as DATABASE_MYPOSTGRES_URI and e.g.
+      # DATABASE_MYPOSTGRES_USER and DATABASE_MYPOSTGRES_PASSWORD. The environment
+      # variables are passed to the algorithm containers.
       # It is also possible not to specify the details of the service-based databases
       # in this configuration file, but elsewhere in kubernetes (e.g. a parent chart's
       # values.yaml file).
@@ -226,7 +225,9 @@ node:
     report_interval_seconds: 45
 
   # If your project uses a private Docker registry for algorithm images, you can specify
-  # them here so that the node can login and pull private images.
+  # them here so that the node can login and pull private images. The chart stores them
+  # in a Kubernetes secret. To keep the password out of this file, set createSecrets to
+  # false and provide them in your own secret as V6_PRIVATE_DOCKER_REGISTRIES (JSON).
   private_docker_registries:
     - registry: my-private-registry.com
       username: my-username

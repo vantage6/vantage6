@@ -9,6 +9,7 @@ from vantage6.cli.configuration_create import (
     select_configuration_questionnaire,
 )
 from vantage6.cli.hq.new import hq_configuration_questionaire
+from vantage6.cli.k8s_config import KubernetesConfig
 from vantage6.cli.node.new import node_configuration_questionaire
 
 module_path = "vantage6.cli.configuration_create"
@@ -29,9 +30,10 @@ class WizardTest(unittest.TestCase):
                     result[name] = None
         return result
 
+    @patch("vantage6.cli.node.new.store_credentials_in_kubernetes_secrets")
     @patch("vantage6.cli.node.new.q")
     @patch("vantage6.cli.node.new.NodeClient.authenticate")
-    def test_node_wizard(self, authenticate, q):
+    def test_node_wizard(self, authenticate, q, _store_credentials):
         """Check the node wizard runs without errors."""
         q.unsafe_prompt.side_effect = self.prompts
         q.confirm.return_value.unsafe_ask.side_effect = [
@@ -59,12 +61,14 @@ class WizardTest(unittest.TestCase):
             data_dir="/data",
             instance_name="iknl",
             log_dir="/log",
+            system_folders=False,
+            k8s_cfg=KubernetesConfig(namespace="vantage6"),
         )
 
         keys = [
             "databases",
-            "apiKey",
             "encryption",
+            "existingSecret",
             "hq",
             "keycloak",
             "logging",
