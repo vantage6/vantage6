@@ -46,17 +46,31 @@ to disk. If the secret already exists, the existing key is reused (unless you us
 encryption.
 
 If your organization already has a public key at HQ, a new key is not generated: store
-the organization's existing private key with ``--from-file`` instead (``v6 node new``
-asks for it). Replacing the organization's keypair requires
-``--replace-organization-key``.
+the organization's existing private key instead. If another node of your organization
+already holds it, get it out of that node's secret with
+``v6 node get-private-key --name <existing node> --to-file <path>``. Then store it with
+``v6 node create-private-key --from-file <path>``, and delete the file afterwards.
+Alternatively, ``v6 node new`` detects that your organization already has a key and
+asks for the path to the private key file, and stores it for you.
+
+Users of your organization also need the private key to encrypt task input and decrypt
+results in an encrypted collaboration. Get it with
+``v6 node get-private-key --name <node> --to-file <path>`` and use it in the Python
+client with ``client.setup_encryption(<path>)``, or upload it in the UI when you select
+the collaboration. Keep this file secure, as anyone holding it can decrypt your
+organization's data.
+
+Replacing the organization's keypair requires ``--replace-organization-key``.
+
+.. caution::
+
+    Replacing the keypair breaks your organization's other nodes and users that still
+    use the old private key: they can no longer decrypt data. Give them the new private
+    key, e.g. by storing it in the other nodes with
+    ``v6 node create-private-key --from-file <path> --overwrite``.
 
 The secret is kept when the node is stopped or restarted, and is deleted when the node
 is removed with ``v6 node remove``.
-
-To use an existing private key, store it with
-``v6 node create-private-key --from-file <path to private key>``.
-To get the key out of the secret, e.g. for the Python client, UI or another node, use
-``v6 node get-private-key --to-file <path>``.
 
 .. warning::
 
