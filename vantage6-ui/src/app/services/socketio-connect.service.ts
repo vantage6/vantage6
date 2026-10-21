@@ -20,14 +20,16 @@ export class SocketioConnectService {
 
   connect() {
     if (this.socket === null) {
-      const token = this.authService.getToken();
       // connect to tasks namespace
       const namespace = '/tasks';
       this.socket = io(`${environment.hq_url}${namespace}`, {
         withCredentials: true,
-        extraHeaders: {
-          Authorization: `Bearer ${token}`
-        }
+        // Prefer websockets and only fall back to HTTP long-polling if they fail
+        transports: ['websocket', 'polling'],
+        tryAllTransports: true,
+        // Browsers cannot set headers on websocket connections, so the token is sent
+        // in the auth payload. It is read on each (re)connect so it is never stale.
+        auth: (cb) => cb({ token: this.authService.getToken() })
       });
       this.subscribe();
     }

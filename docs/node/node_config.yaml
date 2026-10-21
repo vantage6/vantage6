@@ -132,6 +132,12 @@ node:
   # NOTE: It's recommented to set this to false when using sensitive data
   share_algorithm_logs: true
 
+  # Whether the node may fall back to HTTP long-polling for its socket connection
+  # with HQ. By default, the node only uses websockets, which is more stable. Only set
+  # this to true if your network does not support websocket connections. Default is
+  # false.
+  allow_http_polling: false
+
   # Define who is allowed to run which algorithms on this node.
   policies:
     # Control which algorithm images are allowed to run on this node. This is
