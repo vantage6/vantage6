@@ -222,6 +222,12 @@ class HQApp(Vantage6App):
         # set JWT secret key to generate container tokens
         # ensure that jwt_secret_key is set in the config if it didn't exist yet - that
         # allows it to be used in the container token generation
+        if not self.ctx.config.get("jwt_secret_key"):
+            log.warning(
+                "No JWT secret key configured: generating one for this process. "
+                "Container tokens will not be valid on other HQ replicas or after a "
+                "restart."
+            )
         self.app.config["jwt_secret_key"] = self.ctx.config.setdefault(
             "jwt_secret_key", str(uuid.uuid4())
         )

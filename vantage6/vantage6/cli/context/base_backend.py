@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import ClassVar
+
 from vantage6.common.context import AppContext
 
 from vantage6.cli.globals import (
@@ -15,6 +17,10 @@ class BaseBackendContext(AppContext):
     Contains functions that the HQContext and AlgorithmStoreContext have
     in common.
     """
+
+    CONFIG_ENV_OVERRIDES: ClassVar[dict[str, tuple[str, ...]]] = {
+        "V6_DATABASE_URI": ("uri",)
+    }
 
     def get_database_uri(self) -> str:
         """

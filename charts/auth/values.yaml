@@ -27,6 +27,10 @@ keycloak:
 
   realmImport:
     enabled: true
+    # Name of an existing secret with the keys 'admin-password', 'backend-client-secret'
+    # and, if the SMTP server requires authentication, 'smtp-password'. If empty, a
+    # secret is created from the values in this file.
+    existingSecret: ""
     waitForKeycloak:
       enabled: true
       timeout: 300s
@@ -47,6 +51,9 @@ keycloak:
 # PostgreSQL configuration for Keycloak
 database:
   external: true
+  # Name of an existing secret with the keys 'username' and 'password'. If empty, a
+  # secret is created from the values below.
+  existingSecret: ""
   host: ""
   username: ""
   password: ""

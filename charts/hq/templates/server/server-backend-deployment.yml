@@ -84,7 +84,7 @@ spec:
           value: "1000"
         envFrom:
         - secretRef:
-            name: {{ .Release.Name }}-hq-secrets
+            name: {{ include "vantage6.secretName" . }}
         ports:
         - containerPort: {{ .Values.hq.internal.port }}
         {{- if and .Values.prometheus .Values.prometheus.enabled }}

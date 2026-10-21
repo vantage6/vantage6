@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import os.path
 from pathlib import Path
+from typing import ClassVar
 
 from vantage6.common.context import AppContext
 from vantage6.common.globals import STRING_ENCODING, InstanceType
@@ -34,6 +35,14 @@ class NodeContext(AppContext):
     # The node configuration manager is aware of the structure of the node
     # configuration file and makes sure only valid configuration can be loaded.
     INST_CONFIG_MANAGER = NodeConfigurationManager
+    CONFIG_ENV_OVERRIDES: ClassVar[dict[str, tuple[str, ...]]] = {
+        "V6_PRIVATE_DOCKER_REGISTRIES": ("private_docker_registries",),
+        "V6_ALGORITHM_ENV": ("algorithm_env",),
+    }
+    CONFIG_ENV_JSON: ClassVar[dict[str, type]] = {
+        "V6_PRIVATE_DOCKER_REGISTRIES": list,
+        "V6_ALGORITHM_ENV": dict,
+    }
 
     def __init__(
         self,
