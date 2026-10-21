@@ -64,6 +64,7 @@ e.g. ``v6 node start --help`` .
 +---------------------+------------------------------------------------+
 | ``v6 node           | Create the node's private key (stored in a     |
 | create-private-key``| Kubernetes secret) and upload its public key   |
+|                     | to HQ                                          |
 +---------------------+------------------------------------------------+
 | ``v6 node           | Get the node's private key, e.g. to use it in  |
 | get-private-key``   | the Python client or UI                        |
