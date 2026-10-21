@@ -55,7 +55,6 @@ spec:
         - name: node-logs
           mountPath: /mnt/log
         {{- if .Values.node.encryption.enabled }}
-        # path must match PRIVATE_KEY_MOUNT_PATH in vantage6-node/vantage6/node/globals.py
         - name: private-key
           mountPath: /app/encryption
           readOnly: true
