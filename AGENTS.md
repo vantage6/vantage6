@@ -14,6 +14,15 @@ Privacy-preserving federated learning infrastructure. Python 3.13 monorepo manag
 - **Never run `make image` or `make publish`** — builds and releases are deliberate, user-initiated actions
 - **Never commit changes unless explicitly asked** — always present diffs for review first
 
+## Agent Skills
+
+Shared workflow skills live in `.agents/skills/` (`.claude/skills`, `.github/skills` and `.cursor/skills` are symlinks to it):
+
+- `issue-to-pr` — take a GitHub issue through assessment, plan, implementation and PR, with user approval at each phase
+- `security-advisory` — take a GitHub security advisory to a fix PR in its private fork, with user approval at each phase
+
+If your tool does not load skills automatically, read the relevant `SKILL.md` and follow it.
+
 ## Packages (8 PyPI + 1 Angular UI)
 
 All Python packages install under the `vantage6.*` namespace:
