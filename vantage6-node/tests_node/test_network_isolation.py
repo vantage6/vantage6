@@ -1,3 +1,5 @@
+import os
+import signal
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -84,13 +86,15 @@ class TestNodeProductionGating:
                 False,
                 "probe failed",
             )
-            with patch("vantage6.node.exit", side_effect=SystemExit(1)) as mock_exit:
+            # the node signals itself rather than calling sys.exit(), so that it also
+            # shuts down when a fatal error is detected outside of the main thread
+            with patch("vantage6.node.os.kill") as mock_kill:
                 with (
                     patch.object(Node, "_setup_node_client", return_value=MagicMock()),
                     pytest.raises(SystemExit),
                 ):
                     Node(ctx)
-                mock_exit.assert_called_once_with(1)
+                mock_kill.assert_called_once_with(os.getpid(), signal.SIGTERM)
 
     def test_production_false_warns_on_isolation_failure(self, caplog):
         ctx = MagicMock()
