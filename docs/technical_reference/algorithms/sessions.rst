@@ -200,7 +200,7 @@ Session storage
 When a new session is created, each node creates a new session folder. In this folder,
 the dataframes and session log are stored. This log keeps track on which action was
 performed on the dataframe. You can inspect the log on the node by using the command
-``parquet-tools show state.parquet``.
+``python -c "import pyarrow.parquet as pq; print(pq.read_table('state.parquet').to_pandas())"``.
 
 The session folder can also be used to share data between different tasks that are not
 related to sessions, for example, when you need to store a secret key that is used in a
