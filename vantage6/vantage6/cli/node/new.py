@@ -299,8 +299,6 @@ def node_configuration_questionaire(
     else:
         encryption = q.confirm("Enable encryption?", default=True).unsafe_ask()
 
-    # the private key itself is stored in a Kubernetes secret, see
-    # `v6 node create-private-key`
     config["encryption"] = {
         "enabled": encryption is True or encryption == "true",
     }

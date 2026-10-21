@@ -313,7 +313,6 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         }
         if self.node_image:
             config["node"]["image"] = self.node_image
-            # allow locally built images that are not available in a registry
             config["node"]["imagePullPolicy"] = "IfNotPresent"
 
         if self.encrypted:
