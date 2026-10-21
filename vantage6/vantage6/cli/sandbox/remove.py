@@ -91,7 +91,8 @@ def cli_sandbox_remove(
             system_folders=False,
             force=True,
         )
-        # remove the node's private key secret (only present in encrypted sandboxes)
+        # remove the node's private key secret (only present in encrypted sandboxes).
+        # If no secret exists, delete_private_key_secret will not throw error
         try:
             delete_private_key_secret(node_ctx, k8s_config)
         except (RuntimeError, ApiException, HTTPError) as exc:
