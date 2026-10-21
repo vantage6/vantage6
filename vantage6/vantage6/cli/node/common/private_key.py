@@ -15,6 +15,7 @@ from kubernetes.client.exceptions import ApiException
 
 from vantage6.common import base64s_to_bytes, bytes_to_base64s, info
 from vantage6.common.encryption import RSACryptor
+from vantage6.common.enum import StrEnumBase
 
 from vantage6.cli.common.utils import create_kubernetes_secret
 from vantage6.cli.context.node import NodeContext
@@ -22,6 +23,29 @@ from vantage6.cli.k8s_config import KubernetesConfig
 from vantage6.cli.utils_kubernetes import get_core_api_with_ssl_handling
 
 PRIVATE_KEY_SECRET_KEY = "private_key.pem"
+
+
+class KeyPolicy(StrEnumBase):
+    """
+    How to handle an existing private key secret and the organization's public key at
+    HQ when storing a node's private key.
+
+    - ``keep_existing``: keep the node's existing secret. If there is none, store the
+      given key or generate one. The key must match HQ's public key, which is uploaded
+      if HQ has none.
+    - ``replace_node_key``: replace the node's secret. The key must still match HQ's
+      public key, which is uploaded if HQ has none.
+    - ``rotate_organization_key``: replace the node's secret and, after confirmation,
+      the organization's public key at HQ. Other nodes and users of the organization
+      then need the new private key.
+    - ``local_only``: create the secret if it is missing, without contacting HQ. The
+      key is checked against HQ when the node starts.
+    """
+
+    KEEP_EXISTING = "keep_existing"
+    REPLACE_NODE_KEY = "replace_node_key"
+    ROTATE_ORGANIZATION_KEY = "rotate_organization_key"
+    LOCAL_ONLY = "local_only"
 
 
 def private_key_secret_name(ctx: NodeContext) -> str:

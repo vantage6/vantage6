@@ -18,6 +18,7 @@ from vantage6.cli.context.hub import HubContext
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import CLICommandName
 from vantage6.cli.k8s_config import KubernetesConfig, select_k8s_config
+from vantage6.cli.node.common.private_key import KeyPolicy
 from vantage6.cli.node.create_private_key import create_and_store_private_key
 from vantage6.cli.sandbox.config.node import NodeDataset, NodeSandboxConfigManager
 from vantage6.cli.sandbox.populate import populate_hub_sandbox
@@ -271,7 +272,9 @@ def _create_node_private_keys(
         # contexts are singletons: clear the cache to get the context of this node
         NodeContext._instances.pop(NodeContext, None)
         node_ctx = NodeContext(node_config_name, system_folders=False, is_sandbox=True)
-        create_and_store_private_key(node_ctx, k8s_config, upload=False)
+        create_and_store_private_key(
+            node_ctx, k8s_config, key_policy=KeyPolicy.LOCAL_ONLY
+        )
 
 
 def _print_auth_credentials(hub_name: str) -> None:

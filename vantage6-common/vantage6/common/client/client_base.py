@@ -374,7 +374,7 @@ class ClientBase(BlobStorageMixin):
                 "The private key does not belong to the public key that HQ has for "
                 "your organization. Use your organization's existing private key. "
                 "To replace the organization's keypair on purpose, use "
-                "'v6 node create-private-key --replace-organization-key'."
+                "'v6 node create-private-key --key-policy rotate_organization_key'."
             )
 
         self.cryptor = cryptor

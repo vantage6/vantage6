@@ -507,10 +507,10 @@ class NodeCLITest(unittest.TestCase):
         write.assert_not_called()
         self.assertEqual(self._uploads(client), [])
 
-    def test_create_private_key_replace_organization_key(self):
+    def test_create_private_key_rotate_organization_key(self):
         self.confirm_answer = True
         result, _, write, client = self._run_create_private_key(
-            ["--replace-organization-key"], hq_public_key=self.HQ_KEY
+            ["--key-policy", "rotate_organization_key"], hq_public_key=self.HQ_KEY
         )
         self.assertEqual(result.exit_code, 0, result.output)
         self.confirm.assert_called_once()
@@ -520,7 +520,7 @@ class NodeCLITest(unittest.TestCase):
         # declining the confirmation changes nothing
         self.confirm_answer = False
         result, _, write, client = self._run_create_private_key(
-            ["--replace-organization-key"], hq_public_key=self.HQ_KEY
+            ["--key-policy", "rotate_organization_key"], hq_public_key=self.HQ_KEY
         )
         self.assertEqual(result.exit_code, 0, result.output)
         write.assert_not_called()
@@ -535,12 +535,35 @@ class NodeCLITest(unittest.TestCase):
         write.assert_not_called()
         self.assertEqual(self._uploads(client), [])
 
-    def test_create_private_key_no_upload(self):
-        result, _, write, client = self._run_create_private_key(["--no-upload"])
+    def test_create_private_key_local_only(self):
+        result, _, write, client = self._run_create_private_key(
+            ["--key-policy", "local_only"]
+        )
 
         self.assertEqual(result.exit_code, 0, result.output)
         write.assert_called_once()
         client.request.assert_not_called()
+
+    def test_create_private_key_replace_node_key(self):
+        """The existing secret is replaced, but only by a key matching HQ's."""
+        args = ["--key-policy", "replace_node_key"]
+        result, _, write, client = self._run_create_private_key(
+            [*args, "--from-file", "org_key.pem"],
+            hq_public_key=self.HQ_KEY,
+            existing=OTHER_PRIVATE_KEY_PEM,
+        )
+        self.assertEqual(result.exit_code, 0, result.output)
+        self.assertEqual(write.call_args.args[2], TEST_PRIVATE_KEY_PEM)
+        self.assertEqual(self._uploads(client), [])
+
+        result, _, write, client = self._run_create_private_key(
+            [*args, "--from-file", "other_key.pem"],
+            hq_public_key=self.HQ_KEY,
+            existing=TEST_PRIVATE_KEY_PEM,
+        )
+        self.assertEqual(result.exit_code, 1)
+        write.assert_not_called()
+        self.assertEqual(self._uploads(client), [])
 
     def test_create_private_key_invalid_file(self):
         result, _, write, _ = self._run_create_private_key(

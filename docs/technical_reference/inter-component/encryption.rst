@@ -41,8 +41,8 @@ To create a new keypair, you can use the command ``v6 node create-private-key``.
 This will create the keypair and share the public key with HQ. The private key is
 stored in a Kubernetes secret (``<node release name>-private-key``) in the namespace of
 the node, which is mounted into the node when it starts. No private key file is written
-to disk. If the secret already exists, the existing key is reused (unless you use the
-``--overwrite`` flag). ``v6 node new`` offers to create the key when you enable
+to disk. If the secret already exists, the existing key is reused (unless you use
+``--key-policy replace_node_key``). ``v6 node new`` offers to create the key when you enable
 encryption.
 
 If your organization already has a public key at HQ, a new key is not generated: store
@@ -60,14 +60,15 @@ client with ``client.setup_encryption(<path>)``, or upload it in the UI when you
 the collaboration. Keep this file secure, as anyone holding it can decrypt your
 organization's data.
 
-Replacing the organization's keypair requires ``--replace-organization-key``.
+Replacing the organization's keypair requires
+``--key-policy rotate_organization_key``.
 
 .. caution::
 
     Replacing the keypair breaks your organization's other nodes and users that still
     use the old private key: they can no longer decrypt data. Give them the new private
     key, e.g. by storing it in the other nodes with
-    ``v6 node create-private-key --from-file <path> --overwrite``.
+    ``v6 node create-private-key --from-file <path> --key-policy replace_node_key``.
 
 The secret is kept when the node is stopped or restarted, and is deleted when the node
 is removed with ``v6 node remove``.
