@@ -115,7 +115,6 @@ def permissions(permissions: PermissionManager) -> None:
         scope=S.ORGANIZATION,
         operation=P.EDIT,
         description="edit node that is part of your organization",
-        assign_to_node=True,
     )
 
     add(
@@ -677,14 +676,12 @@ class Node(NodeBase):
         node.delete()
         return {"msg": f"Successfully deleted node id={id}"}, HTTPStatus.OK
 
-    @with_user_or_node
+    @with_user
     def patch(self, id):
         """Update node
         ---
         description: >-
-          Update the node specified by the id. Only a user or node that belongs
-          to the organization of the node are allowed to update it.\n
-          If the node does not exists it is created as a new node.\n
+          Update the node specified by the id.\n
 
           ### Permission Table\n
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
@@ -753,9 +750,7 @@ class Node(NodeBase):
         if not node:
             return {"msg": f"Node id={id} not found!"}, HTTPStatus.NOT_FOUND
 
-        if not self.r.allowed_for_org(
-            P.EDIT, node.organization_id
-        ) or self.is_node_outside_its_collab(node.collaboration_id):
+        if not self.r.allowed_for_org(P.EDIT, node.organization_id):
             return {
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED

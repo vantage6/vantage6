@@ -585,9 +585,10 @@ class TestResources(TestResourceBase):
         self.assertEqual(results.status_code, HTTPStatus.OK)
         self.assertEqual([n["id"] for n in results.json["data"]], [node.id])
 
-        # edit
-        results = self.app.patch(
-            f"/api/node/{sibling_node.id}", headers=headers, json={"name": "A"}
-        )
-        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
-        self.assertNotEqual(Node.get(sibling_node.id).name, "A")
+        # edit: nodes cannot edit any node, not even themselves
+        for target in (node, sibling_node):
+            results = self.app.patch(
+                f"/api/node/{target.id}", headers=headers, json={"name": "A"}
+            )
+            self.assertNotEqual(results.status_code, HTTPStatus.OK)
+            self.assertNotEqual(Node.get(target.id).name, "A")
