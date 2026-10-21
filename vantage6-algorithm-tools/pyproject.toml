@@ -7,7 +7,7 @@ name = "vantage6-algorithm-tools"
 version = "5.0.3"
 description = "Vantage6 algorithm tools"
 readme = "README.md"
-license = {text = "MIT"}
+license = {text = "Apache-2.0"}
 authors = [
     {name = "Vantage6 Team"}
 ]

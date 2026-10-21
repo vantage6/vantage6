@@ -7,7 +7,7 @@ name = "vantage6-node"
 version = "5.0.3"
 description = "vantage6 node"
 readme = "README.md"
-license = {text = "MIT"}
+license = {text = "Apache-2.0"}
 authors = [
     {name = "Vantage6 Team"}
 ]
