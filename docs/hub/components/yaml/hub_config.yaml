@@ -56,8 +56,8 @@ global:
     adminClient: backend-admin-client
     publicClient: public_client
     adminUsername: admin
-    adminPassword: change-me
-    adminClientSecret: change-me-too
+    # The admin password and admin client secret are stored in the Kubernetes
+    # secrets referenced below (see "Configuring secrets").
 
   # Optional shared node name for local-storage based volumes (logs, prometheus).
   # If set, HQ and Store can inherit this when they use hostPath PVs.
@@ -84,15 +84,31 @@ global:
 hq:
   # Set to false to skip deploying the HQ subchart when using the hub parent chart.
   enabled: true
-  # configuration for the headquarters should be placed here
+  hq:
+    # Kubernetes secret with the database and RabbitMQ URIs, Keycloak admin
+    # credentials and JWT secret key
+    existingSecret: my-hub-hq-credentials
+  # other configuration for the headquarters should be placed here
 
 auth:
   # Set to false to skip deploying the auth subchart when using the hub parent chart.
   enabled: true
-  # configuration for the authentication service should be placed here
+  database:
+    # Kubernetes secret with the 'username' and 'password' of the Keycloak database
+    existingSecret: my-hub-auth-db-credentials
+  keycloak:
+    auth:
+      adminUserSecret: my-hub-keycloak-admin
+    realmImport:
+      # Kubernetes secret with the 'admin-password' and 'backend-client-secret'
+      existingSecret: my-hub-realm-credentials
+  # other configuration for the authentication service should be placed here
 
 store:
   # Set to false to skip deploying the algorithm store subchart when using the hub
   # parent chart.
   enabled: true
-  # configuration for the algorithm store should be placed here
+  store:
+    # Kubernetes secret with the database URI and Keycloak admin credentials
+    existingSecret: my-hub-store-credentials
+  # other configuration for the algorithm store should be placed here

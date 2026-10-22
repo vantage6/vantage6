@@ -33,7 +33,7 @@ spec:
   keycloakCRName: {{ .Release.Name }}-kc
   {{- $realmSecretName := include "auth.realmSecretName" . }}
   {{- $smtpConfig := .Values.keycloak.realmImport.smtpServer | default (dict) }}
-  {{- $smtpPassword := or $smtpConfig.password (and .Values.keycloak.realmImport.existingSecret $smtpConfig.auth) }}
+  {{- $smtpPassword := or $smtpConfig.password (and .Values.keycloak.realmImport.existingSecret (eq (toString $smtpConfig.auth) "true")) }}
   placeholders:
     V6_REALM_ADMIN_PASSWORD:
       secret:

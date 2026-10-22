@@ -1,4 +1,5 @@
-{% from "_yaml_macros.j2" import yaml_sq %}
+{% from "_yaml_macros.j2" import yaml_sq, secret_field with context %}
+{% set has_secret_ref = store.existingSecret is defined and store.existingSecret %}
 
 # Override the chart name
 nameOverride: {{ nameOverride | default('vantage6-store') }}
@@ -22,15 +23,21 @@ store:
   {% endif %}
   api_path: {{ store.api_path | default('/store') }}
 
+  {% if has_secret_ref %}
+  # Kubernetes secret with the sensitive configuration of the store: database URI,
+  # Keycloak admin credentials, SMTP password and private Docker registries
+  existingSecret: {{ store.existingSecret }}
+  {% endif %}
+
   # Keycloak configuration
   {% if store.standalone is defined and store.standalone %}
   keycloak:
     url: {{ store.keycloak.url }}
     realm: {{ store.keycloak.realm | default('vantage6') }}
     adminUsername: {{ store.keycloak.adminUsername | default('admin') }}
-    adminPassword: {{ yaml_sq(store.keycloak.adminPassword | default('admin')) }}
+    {{ secret_field('adminPassword', store.keycloak.adminPassword, 'Keycloak admin password', 'admin', has_secret_ref) }}
     adminClient: {{ store.keycloak.adminClient | default('backend-admin-client') }}
-    adminClientSecret: {{ yaml_sq(store.keycloak.adminClientSecret | default('myadminclientsecret')) }}
+    {{ secret_field('adminClientSecret', store.keycloak.adminClientSecret, 'Keycloak admin client secret', 'myadminclientsecret', has_secret_ref) }}
   {% endif %}
 
   {% if store.standalone is defined and store.standalone %}
@@ -203,7 +210,7 @@ store:
   # private algorithms to retrieve the digests.
   {% if store.private_docker_registries is defined %}
   private_docker_registries:
-    {% for registry in node.private_docker_registries %}
+    {% for registry in store.private_docker_registries %}
     - registry: {{ registry.registry }}
       username: {{ registry.username }}
       password: {{ yaml_sq(registry.password) }}
@@ -286,7 +293,7 @@ database:
   external: {{ database.external | default(false) }}
   {% if database.external is defined and database.external %}
   # the URI of the external database
-  uri: {{ database.uri | default('postgresql://vantage6:vantage6@localhost:5432/vantage6') }}
+  {{ secret_field('uri', database.uri, 'Database URI', 'postgresql://vantage6:vantage6@localhost:5432/vantage6', has_secret_ref) }}
   {% else %}
   # The image of the database
   image:
@@ -302,7 +309,7 @@ database:
   username: {{ database.username | default('vantage6') }}
 
   # The password of the database
-  password: {{ yaml_sq(database.password | default('vantage6')) }}
+  {{ secret_field('password', database.password, 'Database password', 'vantage6', has_secret_ref) }}
 
   # The name of the database
   name: {{ database.name | default('vantage6') }}

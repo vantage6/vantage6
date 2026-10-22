@@ -108,11 +108,15 @@ keycloak:
     permanentLockout: false
     failureFactor: 5
 
+    # Kubernetes secret with the 'admin-password' (of the vantage6 admin user),
+    # 'backend-client-secret' and, if the SMTP server requires authentication,
+    # 'smtp-password' keys. For development environments, you can instead set
+    # admin.password and backend_client_secret below.
+    existingSecret: realm-credentials
+
     # Define the vantage6 admin user. This user will be created in the realm.
     admin:
       username: admin
-      # In production, use a strong password here.
-      password: Admin123!
 
     # Whether to verify email on first login. This should only be enabled if an SMTP
     # server is configured to send emails.
@@ -132,10 +136,6 @@ keycloak:
       redirectUris:
         - "http://localhost:7600/*"
 
-    # Secret used for the backend admin client. Note that if this is defined, it will
-    # override the hub's global backend admin client secret.
-    backend_client_secret: myadminclientsecret
-
     # SMTP server configuration. This is used to send emails to users.
     smtpServer:
       host: your-smtp-server-hostname.org
@@ -149,7 +149,7 @@ keycloak:
       auth: true
       authType: basic           # always use 'basic' for username and password
       user: your-username       # your username (often the same as the email address)
-      password: your-password   # your password
+      # the password is stored in the 'smtp-password' key of the realm import secret
       # Optional settings for the reply-to address.
       replyTo: reply-to-email-address@your-domain.com
       replyToDisplayName: display-name-for-reply-to
@@ -162,9 +162,9 @@ database:
   host: your-database-hostname.org
   port: 5432
 
-  # Credentials and database name.
-  username: keycloak
-  password: keycloak
+  # Kubernetes secret with the 'username' and 'password' keys of the database user.
+  # For development environments, you can instead set username and password here.
+  existingSecret: keycloak-database-credentials
   name: keycloak
 
   # Development settings - only used if external is set to false.

@@ -1,11 +1,27 @@
+{% from "_yaml_macros.j2" import yaml_sq, secret_field with context %}
+{% set has_secret_ref = node.existingSecret is defined and node.existingSecret %}
 # override the chart name
 nameOverride: {{ nameOverride | default('vantage6-node') }}
+{# `namespace` is also a Jinja global, so check that it was set in the configuration #}
+{% if namespace is string and namespace %}
+# The namespace in which the node is deployed
+namespace: {{ namespace }}
+{% else %}
 # Optional, by default the Release.Namespace is used
 # namespace: vantage6-node
+{% endif %}
 node:
 
+  # The name of the node as registered in HQ (shown in the UI). The node uses it
+  # to authenticate, so it must match. It may differ from the configuration name.
   name: {{ node.name | default('put-your-node-name-here') }}
-  apiKey: {{ node.apiKey | default('put-your-api-key-here') }}
+  {{ secret_field('apiKey', node.apiKey, 'API key', 'put-your-api-key-here', has_secret_ref) }}
+  {% if has_secret_ref %}
+  # Kubernetes secret with the sensitive configuration of the node: the API key
+  # (V6_API_KEY) and the URI and environment variables of service-based databases
+  # (DATABASE_[LABEL]_URI, DATABASE_[LABEL]_[KEY])
+  existingSecret: {{ node.existingSecret }}
+  {% endif %}
 
   # When true, the node verifies at startup that algorithm network isolation is
   # enforced by the Kubernetes cluster (NetworkPolicies). Set to false for
@@ -171,7 +187,7 @@ node:
   # available to your node.
   {% if node.databases is defined %}
   databases:
-    {% if node.databases.fileBased is defined %}
+    {% if node.databases.fileBased %}
     fileBased:
     {% for db in node.databases.fileBased %}
     - name: {{ db.name }}
@@ -185,21 +201,31 @@ node:
       # - ro: bind-mount host path read-only into algorithm containers
       mount_mode: {{ db.mount_mode | default('copy') }}
     {% endfor %}
+    {% else %}
+    fileBased: []
     {% endif %}
-    {% if node.databases.serviceBased is defined %}
+    {% if node.databases.serviceBased %}
     serviceBased:
     {% for db in node.databases.serviceBased %}
     - name: {{ db.name }}
+      {% if db.uri is defined %}
       uri: {{ db.uri }}
+      {% endif %}
       type: {{ db.type }}
+      {% if db.env %}
       env:
         {% for key, value in db.env.items() %}
         {{ key }}: {{ value }}
         {% endfor %}
+      {% endif %}
     {% endfor %}
+    {% else %}
+    serviceBased: []
     {% endif %}
   {% else %}
-  databases: []
+  databases:
+    fileBased: []
+    serviceBased: []
   {% endif %}
 
   # Whether or not your node shares some configuration (e.g. which images are

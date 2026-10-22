@@ -69,6 +69,10 @@ spec:
           value: {{ default $internal.auth $hqKeycloak.url }}
         - name: KEYCLOAK_REALM
           value: {{ (default ($global.keycloak | default (dict)) .Values.hq.keycloak).realm }}
+        - name: KEYCLOAK_ADMIN_USERNAME
+          value: {{ (default ($global.keycloak | default (dict)) .Values.hq.keycloak).adminUsername | default "admin" | quote }}
+        - name: KEYCLOAK_ADMIN_CLIENT
+          value: {{ (default ($global.keycloak | default (dict)) .Values.hq.keycloak).adminClient | default "backend-admin-client" | quote }}
 {{- if and .Values.hq.dev .Values.hq.dev.store_address }}
         - name: LOCAL_STORE_URL
           value: {{ .Values.hq.dev.store_address | quote }}

@@ -1,3 +1,4 @@
+import re
 import sys
 from typing import Any
 from urllib.parse import urlparse
@@ -19,9 +20,19 @@ from vantage6.cli.auth.new import (
     global_auth_settings_questionaire,
 )
 from vantage6.cli.common.new import new
+from vantage6.cli.common.utils import store_credentials_in_kubernetes_secrets
 from vantage6.cli.context.hub import HubContext
 from vantage6.cli.globals import DEFAULT_API_SERVICE_SYSTEM_FOLDERS
 from vantage6.cli.hq.new import hq_configuration_questionaire
+from vantage6.cli.hub.utils.credentials import (
+    HubCredentials,
+    HubSecretNames,
+    build_hub_secrets,
+    extract_auth_credentials,
+    extract_hq_credentials,
+    extract_store_credentials,
+    hub_release_name,
+)
 from vantage6.cli.hub.utils.enum import AuthCredentials
 from vantage6.cli.k8s_config import (
     KubernetesConfig,
@@ -29,6 +40,12 @@ from vantage6.cli.k8s_config import (
     select_k8s_config,
 )
 from vantage6.cli.utils import prompt_config_name
+
+# One or more DNS labels separated by dots, e.g. 'mydomain.com' or 'localhost'
+DOMAIN_PATTERN = re.compile(
+    r"([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?",
+    re.IGNORECASE,
+)
 
 
 @click.command()
@@ -61,7 +78,8 @@ def cli_hub_new(
 
     This will create production-ready configurations for the vantage6 hub's components,
     i.e. HQ, auth, algorithm store, ui, as well as related services such as RabbitMQ
-    and Prometheus.
+    and Prometheus. Credentials are stored in Kubernetes secrets, which the
+    configuration refers to.
     """
     name = prompt_config_name(name)
 
@@ -76,6 +94,15 @@ def cli_hub_new(
     base_config = _get_base_config()
 
     global_hub_config = _create_hub_config(name, base_config, k8s_cfg)
+
+    # credentials are stored in Kubernetes secrets instead of in the configuration
+    secret_names = HubSecretNames.for_hub(name, system_folders)
+    keycloak_config = global_hub_config["keycloak"]
+    credentials = HubCredentials(
+        admin_password=keycloak_config.pop("adminPassword"),
+        admin_client_secret=keycloak_config.pop("adminClientSecret"),
+    )
+    keycloak_config["credentialsInSecrets"] = True
 
     # create authentication service configuration
     info("Now, let's setup the authentication service...")
@@ -98,7 +125,9 @@ def cli_hub_new(
         }
     }
     auth_config = new(
-        config_producing_func=auth_configuration_questionaire,
+        config_producing_func=lambda *args: extract_auth_credentials(
+            auth_configuration_questionaire(*args), credentials, secret_names
+        ),
         config_producing_func_args=(auth_name, k8s_cfg, auth_credentials, False),
         name=auth_name,
         system_folders=system_folders,
@@ -129,7 +158,9 @@ def cli_hub_new(
             "communityStoreApiPath": "/store",
         }
     hq_config = new(
-        config_producing_func=hq_configuration_questionaire,
+        config_producing_func=lambda *args: extract_hq_credentials(
+            hq_configuration_questionaire(*args), credentials, secret_names
+        ),
         config_producing_func_args=(hq_name, system_folders),
         name=hq_name,
         system_folders=system_folders,
@@ -152,34 +183,30 @@ def cli_hub_new(
                 "api_path": "/store",
             }
         }
-        if auth_config_dict.get("keycloak", {}).get("smtpServer") is not None:
+        # the auth configuration renders the SMTP settings in the realm import
+        auth_smtp = (
+            auth_config_dict.get("keycloak", {})
+            .get("realmImport", {})
+            .get("smtpServer")
+        )
+        if auth_smtp is not None:
             extra_config["store"]["smtpServer"] = {
-                "host": auth_config_dict["keycloak"]["smtpServer"]["host"],
-                "port": auth_config_dict["keycloak"]["smtpServer"]["port"],
-                "from": auth_config_dict["keycloak"]["smtpServer"]["from"],
+                key: auth_smtp[key]
+                for key in (
+                    "host",
+                    "port",
+                    "from",
+                    "user",
+                    "replyTo",
+                    "starttls",
+                    "ssl",
+                )
+                if auth_smtp.get(key) is not None
             }
-            if auth_config_dict["keycloak"]["smtpServer"].get("user") is not None:
-                extra_config["store"]["smtpServer"]["user"] = auth_config_dict[
-                    "keycloak"
-                ]["smtpServer"]["user"]
-            if auth_config_dict["keycloak"]["smtpServer"].get("password") is not None:
-                extra_config["store"]["smtpServer"]["password"] = auth_config_dict[
-                    "keycloak"
-                ]["smtpServer"]["password"]
-            if auth_config_dict["keycloak"]["smtpServer"].get("replyTo") is not None:
-                extra_config["store"]["smtpServer"]["replyTo"] = auth_config_dict[
-                    "keycloak"
-                ]["smtpServer"]["replyTo"]
-            if auth_config_dict["keycloak"]["smtpServer"].get("starttls") is not None:
-                extra_config["store"]["smtpServer"]["starttls"] = auth_config_dict[
-                    "keycloak"
-                ]["smtpServer"]["starttls"]
-            if auth_config_dict["keycloak"]["smtpServer"].get("ssl") is not None:
-                extra_config["store"]["smtpServer"]["ssl"] = auth_config_dict[
-                    "keycloak"
-                ]["smtpServer"]["ssl"]
         store_config = new(
-            config_producing_func=algo_store_configuration_questionaire,
+            config_producing_func=lambda *args: extract_store_credentials(
+                algo_store_configuration_questionaire(*args), credentials, secret_names
+            ),
             config_producing_func_args=(store_name, system_folders),
             name=store_name,
             system_folders=system_folders,
@@ -195,6 +222,17 @@ def cli_hub_new(
     }
     if store_config is not None:
         extra_configs_to_render["store_config"] = store_config
+
+    store_credentials_in_kubernetes_secrets(
+        k8s_cfg,
+        build_hub_secrets(
+            credentials,
+            secret_names,
+            hub_release_name(name, system_folders),
+            has_store=store_config is not None,
+        ),
+    )
+
     new(
         config_producing_func=lambda: global_hub_config,
         config_producing_func_args=(),
@@ -205,7 +243,7 @@ def cli_hub_new(
         extra_configs_to_render=extra_configs_to_render,
     )
 
-    _print_credentials_one_time(auth_credentials, global_hub_config["keycloak"])
+    _print_credentials_one_time(auth_credentials, credentials)
 
 
 def _get_base_config() -> dict[str, Any]:
@@ -231,10 +269,15 @@ def _get_base_config() -> dict[str, Any]:
     info("HQ:              https://hq.mydomain.com")
     info("UI:              https://portal.mydomain.com")
     info("Algorithm store: https://store.mydomain.com")
-    url_domain = q.text(
-        "On what domain will the services be reachable?",
-        default="vantage6.ai",
-    ).unsafe_ask()
+    url_domain = (
+        q.text(
+            "On what domain will the services be reachable?",
+            default="vantage6.ai",
+            validate=validate_domain,
+        )
+        .unsafe_ask()
+        .strip()
+    )
     base_config["hq_url"] = f"https://hq.{url_domain}"
     base_config["auth_url"] = f"https://auth.{url_domain}"
     base_config["ui_url"] = f"https://portal.{url_domain}"
@@ -255,6 +298,34 @@ def _get_base_config() -> dict[str, Any]:
         default="INFO",
     ).unsafe_ask()
     return base_config
+
+
+def validate_domain(domain: str) -> bool | str:
+    """
+    Check that a domain is a bare domain name, without scheme, port or path.
+
+    Parameters
+    ----------
+    domain: str
+        The domain entered by the user.
+
+    Returns
+    -------
+    bool | str
+        True if the domain is valid, otherwise a message explaining the problem.
+    """
+    domain = domain.strip()
+    if "://" in domain:
+        return (
+            "Enter only the domain, without 'http://' or 'https://', e.g. "
+            "'mydomain.com'"
+        )
+    if len(domain) > 253 or not DOMAIN_PATTERN.fullmatch(domain):
+        return (
+            f"'{domain}' is not a valid domain. Enter a domain name without port or "
+            "path, e.g. 'mydomain.com'"
+        )
+    return True
 
 
 def _create_hub_config(
@@ -350,7 +421,7 @@ def _create_hub_config(
 
 
 def _print_credentials_one_time(
-    credentials: dict[AuthCredentials, Any] | None, keycloak_config: dict
+    credentials: dict[AuthCredentials, Any] | None, hub_credentials: HubCredentials
 ) -> None:
     """
     Print the used credentials one time.
@@ -359,8 +430,8 @@ def _print_credentials_one_time(
     ----------
     credentials: dict[AuthCredentials, Any] | None
         Dictionary with the credentials for the authentication service.
-    keycloak_config: dict
-        Keycloak section of the auth configuration
+    hub_credentials: HubCredentials
+        Credentials of the hub, including those of the vantage6 admin user
     """
     if not credentials:
         return
@@ -379,6 +450,6 @@ def _print_credentials_one_time(
         info(f"{credential.description}: {value}")
     info("--------------------------------")
     info("You can login to vantage6 with the following credentials:")
-    info(f"Username: {keycloak_config.get('adminUser', 'admin')}")
-    info(f"Password: {keycloak_config['adminPassword']}")
+    info(f"Username: {hub_credentials.admin_username}")
+    info(f"Password: {hub_credentials.admin_password}")
     info("--------------------------------")

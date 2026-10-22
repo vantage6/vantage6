@@ -44,6 +44,10 @@ spec:
           value: {{ default $internal.auth $storeKeycloak.url }}
         - name: KEYCLOAK_REALM
           value: {{ (default ($global.keycloak | default (dict)) .Values.store.keycloak).realm }}
+        - name: KEYCLOAK_ADMIN_USERNAME
+          value: {{ (default ($global.keycloak | default (dict)) .Values.store.keycloak).adminUsername | default "admin" | quote }}
+        - name: KEYCLOAK_ADMIN_CLIENT
+          value: {{ (default ($global.keycloak | default (dict)) .Values.store.keycloak).adminClient | default "backend-admin-client" | quote }}
         - name: VANTAGE6_CONFIG_LOCATION
           value: /mnt/config.yaml
         - name: V6_PROXY_PORT

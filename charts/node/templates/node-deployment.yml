@@ -43,6 +43,11 @@ spec:
         envFrom:
         - secretRef:
             name: {{ .Release.Name }}-secrets
+        {{- if .Values.node.existingSecret }}
+        # listed last, so that its values take precedence
+        - secretRef:
+            name: {{ .Values.node.existingSecret }}
+        {{- end }}
         command: ["vnode-local", "start", "-c", "/app/config/config.yml"]
         volumeMounts:
         - name: task-files-root
