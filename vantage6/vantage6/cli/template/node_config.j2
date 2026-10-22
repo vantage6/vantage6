@@ -12,6 +12,8 @@ namespace: {{ namespace }}
 {% endif %}
 node:
 
+  # The name of the node as registered in HQ (shown in the UI). The node uses it
+  # to authenticate, so it must match. It may differ from the configuration name.
   name: {{ node.name | default('put-your-node-name-here') }}
   {{ secret_field('apiKey', node.apiKey, 'API key', 'put-your-api-key-here', has_secret_ref) }}
   {% if has_secret_ref %}

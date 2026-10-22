@@ -23,7 +23,7 @@ from vantage6.cli.configuration_manager import (
     NodeConfigurationManager,
 )
 from vantage6.cli.context.node import NodeContext
-from vantage6.cli.hub.new import cli_hub_new
+from vantage6.cli.hub.new import cli_hub_new, validate_domain
 from vantage6.cli.hub.utils.credentials import (
     HubCredentials,
     HubSecretNames,
@@ -234,6 +234,21 @@ class TestHubCredentials(unittest.TestCase):
 
 class TestHubWizard(unittest.TestCase):
     """Run `v6 hub new` with mocked questionnaires and Kubernetes."""
+
+    def test_validate_domain(self):
+        for domain in ("mydomain.com", "sub.my-domain.org", "localhost", " a.b "):
+            with self.subTest(domain=domain):
+                self.assertIs(validate_domain(domain), True)
+        for domain in (
+            "http://localhost",
+            "https://mydomain.com",
+            "mydomain.com/path",
+            "localhost:8080",
+            "-bad.com",
+            "",
+        ):
+            with self.subTest(domain=domain):
+                self.assertIsInstance(validate_domain(domain), str)
 
     @patch("vantage6.cli.hub.new.store_credentials_in_kubernetes_secrets")
     @patch("vantage6.cli.hub.new._print_credentials_one_time")

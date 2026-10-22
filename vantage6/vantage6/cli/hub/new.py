@@ -1,3 +1,4 @@
+import re
 import sys
 from typing import Any
 from urllib.parse import urlparse
@@ -39,6 +40,12 @@ from vantage6.cli.k8s_config import (
     select_k8s_config,
 )
 from vantage6.cli.utils import prompt_config_name
+
+# One or more DNS labels separated by dots, e.g. 'mydomain.com' or 'localhost'
+DOMAIN_PATTERN = re.compile(
+    r"([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?",
+    re.IGNORECASE,
+)
 
 
 @click.command()
@@ -262,10 +269,15 @@ def _get_base_config() -> dict[str, Any]:
     info("HQ:              https://hq.mydomain.com")
     info("UI:              https://portal.mydomain.com")
     info("Algorithm store: https://store.mydomain.com")
-    url_domain = q.text(
-        "On what domain will the services be reachable?",
-        default="vantage6.ai",
-    ).unsafe_ask()
+    url_domain = (
+        q.text(
+            "On what domain will the services be reachable?",
+            default="vantage6.ai",
+            validate=validate_domain,
+        )
+        .unsafe_ask()
+        .strip()
+    )
     base_config["hq_url"] = f"https://hq.{url_domain}"
     base_config["auth_url"] = f"https://auth.{url_domain}"
     base_config["ui_url"] = f"https://portal.{url_domain}"
@@ -286,6 +298,34 @@ def _get_base_config() -> dict[str, Any]:
         default="INFO",
     ).unsafe_ask()
     return base_config
+
+
+def validate_domain(domain: str) -> bool | str:
+    """
+    Check that a domain is a bare domain name, without scheme, port or path.
+
+    Parameters
+    ----------
+    domain: str
+        The domain entered by the user.
+
+    Returns
+    -------
+    bool | str
+        True if the domain is valid, otherwise a message explaining the problem.
+    """
+    domain = domain.strip()
+    if "://" in domain:
+        return (
+            "Enter only the domain, without 'http://' or 'https://', e.g. "
+            "'mydomain.com'"
+        )
+    if len(domain) > 253 or not DOMAIN_PATTERN.fullmatch(domain):
+        return (
+            f"'{domain}' is not a valid domain. Enter a domain name without port or "
+            "path, e.g. 'mydomain.com'"
+        )
+    return True
 
 
 def _create_hub_config(

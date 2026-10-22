@@ -4,7 +4,8 @@ namespace: vantage6-node
 
 node:
 
-  # The name of the node.
+  # The name of the node as registered in HQ (shown in the UI). The node uses it
+  # to authenticate, so it must match. It may differ from the configuration name.
   name: node-1
 
   # Kubernetes secret with the API key of the node (V6_API_KEY) and the URI and
