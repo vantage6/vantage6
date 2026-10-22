@@ -2,7 +2,6 @@
 name: Epic
 about: A functional goal that groups several stories and delivers a reviewable increment.
 title: "[EPIC] "
-labels: ["epic"]
 type: Epic
 ---
 
