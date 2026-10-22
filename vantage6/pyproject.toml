@@ -36,6 +36,13 @@ dependencies = [
     "vantage6-algorithm-tools==5.0.3",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "coverage==7.10.2",
+    "black",
+    "pre-commit",
+]
+
 [project.scripts]
 v6 = "vantage6.cli.cli:cli_complete"
 
