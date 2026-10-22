@@ -61,7 +61,7 @@ vantage6-node = { workspace = true }
 vantage6-hq = { workspace = true }
 vantage6-algorithm-store = { workspace = true }
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "coverage==7.10.2",
     "black",
