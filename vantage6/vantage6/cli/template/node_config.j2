@@ -185,7 +185,7 @@ node:
   # available to your node.
   {% if node.databases is defined %}
   databases:
-    {% if node.databases.fileBased is defined %}
+    {% if node.databases.fileBased %}
     fileBased:
     {% for db in node.databases.fileBased %}
     - name: {{ db.name }}
@@ -199,8 +199,10 @@ node:
       # - ro: bind-mount host path read-only into algorithm containers
       mount_mode: {{ db.mount_mode | default('copy') }}
     {% endfor %}
+    {% else %}
+    fileBased: []
     {% endif %}
-    {% if node.databases.serviceBased is defined %}
+    {% if node.databases.serviceBased %}
     serviceBased:
     {% for db in node.databases.serviceBased %}
     - name: {{ db.name }}
@@ -215,9 +217,13 @@ node:
         {% endfor %}
       {% endif %}
     {% endfor %}
+    {% else %}
+    serviceBased: []
     {% endif %}
   {% else %}
-  databases: []
+  databases:
+    fileBased: []
+    serviceBased: []
   {% endif %}
 
   # Whether or not your node shares some configuration (e.g. which images are

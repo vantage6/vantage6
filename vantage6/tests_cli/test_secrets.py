@@ -94,6 +94,38 @@ class TestTemplatesWithoutDefaultSecrets(unittest.TestCase):
         )
         self.assertEqual(rendered["namespace"], "ns1")
 
+    def test_node_database_lists_are_never_null(self):
+        # the node chart concatenates both lists, which fails if either is null
+        node = {
+            "apiKey": "key",
+            "keycloak": {},
+            "hq": {"url": "https://hq.example.org"},
+            "logging": {},
+            "encryption": {"enabled": False},
+            "policies": {},
+        }
+        file_db = {
+            "name": "default",
+            "uri": "/data/db.csv",
+            "type": "csv",
+            "volumePath": "/data",
+            "originalName": "db.csv",
+        }
+        cases = [
+            ({"fileBased": [], "serviceBased": []}, 0, 0),
+            ({"fileBased": [file_db], "serviceBased": []}, 1, 0),
+            (None, 0, 0),
+        ]
+        for databases, n_file, n_service in cases:
+            with self.subTest(databases=databases):
+                config = {"node": dict(node)}
+                if databases is not None:
+                    config["node"]["databases"] = databases
+                rendered = yaml.safe_load(_render(NodeConfigurationManager, config))
+                rendered_dbs = rendered["node"]["databases"]
+                self.assertEqual(len(rendered_dbs["fileBased"]), n_file)
+                self.assertEqual(len(rendered_dbs["serviceBased"]), n_service)
+
     def test_sandbox_uses_defaults(self):
         rendered = yaml.safe_load(
             _render(HQConfigurationManager, HQ_CONFIG, is_sandbox=True)
