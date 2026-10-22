@@ -45,13 +45,6 @@ dependencies = [
     "vantage6-common==5.0.3",
 ]
 
-[project.optional-dependencies]
-dev = [
-    "coverage==7.10.2",
-    "black",
-    "pre-commit",
-]
-
 [project.scripts]
 vhq-local = "vantage6.hq.cli.hq:cli_hq"
 

@@ -86,7 +86,7 @@ install:
 # Editable install of local workspace packages (uses uv.lock). Run `make lock` after
 # changing dependencies in any pyproject.toml.
 install-dev:
-	uv sync --extra dev --extra docs
+	uv sync --group docs
 
 # Install published wheels from PyPI (simulates end-user / post-release environment).
 install-pypi:
@@ -99,7 +99,7 @@ install-pypi:
 		"vantage6-backend-common==$(VERSION)" \
 		"vantage6-hq==$(VERSION)" \
 		"vantage6-algorithm-store==$(VERSION)"
-	uv pip install ".[dev,docs]"
+	uv pip install --group dev --group docs
 
 algorithm-base-image:
 	@echo "Building ${REGISTRY}/algorithm-base:${TAG}"
@@ -231,7 +231,7 @@ test:
 	coverage run --source=./vantage6-$(subst ,/,$(TEST_SUBPACKAGES)) --omit="utest.py","*.html","*.htm","*.txt","*.yml","*.yaml" utest.py $(TEST_ARGS)
 
 install-docs:
-	uv sync --extra docs
+	uv sync --group docs
 
 # the READTHEDOCS envvar is set for this target to circumvent a monkey patch
 # that would get stuck indefinitely when running the sphinx-autobuild package.

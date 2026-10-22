@@ -28,14 +28,6 @@ dependencies = [
     "schema==0.7.5",
 ]
 
-[project.optional-dependencies]
-dev = [
-    "coverage==7.10.2",
-    "black",
-    "pre-commit",
-    "ruff",
-]
-
 [tool.hatch.build.targets.wheel]
 packages = ["vantage6"]
 
