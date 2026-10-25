@@ -360,7 +360,7 @@ class VPNManager(DockerBaseManager):
         self.docker.containers.run(
             image=self.alpine_image,
             network=network,
-            cap_add="NET_ADMIN",
+            cap_add=["NET_ADMIN"],
             command=cmd,
             remove=True,
         )
@@ -642,7 +642,7 @@ class VPNManager(DockerBaseManager):
         self.docker.containers.run(
             image=self.network_config_image,
             network="host",
-            cap_add="NET_ADMIN",
+            cap_add=["NET_ADMIN"],
             command=cmd,
             remove=True,
         )
