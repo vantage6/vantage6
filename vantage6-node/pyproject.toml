@@ -23,7 +23,6 @@ dependencies = [
     "jinja2==3.1.6",
     "kubernetes==36.0.2",
     "nvidia-ml-py==12.535.133",
-    "parquet-tools==0.2.16",
     "psutil==7.0.0",
     "python-socketio==5.16.2",
     "requests==2.33.1",
