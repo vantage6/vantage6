@@ -32,6 +32,7 @@ setup(
     python_requires=">=3.10",
     install_requires=[
         "appdirs==1.4.4",
+        "certifi>=2026.10.23",
         "click==8.1.3",
         "colorama==0.4.6",
         "cryptography==46.0.7",
