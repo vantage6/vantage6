@@ -7,7 +7,7 @@ name = "vantage6-client"
 version = "5.0.3"
 description = "Vantage6 client library"
 readme = "README.md"
-license = {text = "MIT"}
+license = {text = "Apache-2.0"}
 authors = [
     {name = "Vantage6 Team"}
 ]
@@ -23,13 +23,6 @@ dependencies = [
     "python-keycloak==5.5.0",
     "rich==13.5.2",
     "vantage6-common==5.0.3",
-]
-
-[project.optional-dependencies]
-dev = [
-    "coverage==7.10.2",
-    "black",
-    "pre-commit",
 ]
 
 [tool.hatch.build.targets.wheel]

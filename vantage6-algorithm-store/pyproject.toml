@@ -7,7 +7,7 @@ name = "vantage6-algorithm-store"
 version = "5.0.3"
 description = "Vantage6 algorithm store"
 readme = "README.md"
-license = {text = "MIT"}
+license = {text = "Apache-2.0"}
 authors = [
     {name = "Vantage6 Team"}
 ]
@@ -32,13 +32,6 @@ dependencies = [
     "sqlalchemy==2.0.37",
     "vantage6-common==5.0.3",
     "vantage6==5.0.3",
-]
-
-[project.optional-dependencies]
-dev = [
-    "coverage==7.10.2",
-    "black",
-    "pre-commit",
 ]
 
 [tool.hatch.build.targets.wheel]

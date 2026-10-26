@@ -57,11 +57,19 @@ These containers are connected to containers at other nodes by a internal networ
 
 ### Requirements
 
-The **vantage6** infrastructure is delivered in Docker images. To run these images, you
-need to have [Docker](https://docs.docker.com/get-docker/) installed. To install the
-latest version of the vantage6 CLI, you need to have
-[Python](https://www.python.org/downloads/) v3.13. We recommend
-[uv](https://docs.astral.sh/uv/) for package management.
+The **vantage6** infrastructure runs on Kubernetes and is deployed with Helm charts.
+To run it, you need:
+
+- A Kubernetes environment. For local development we recommend
+  [MicroK8s](https://microk8s.io/docs/getting-started) or
+  [Docker Desktop with Kubernetes enabled](https://docs.docker.com/desktop/features/kubernetes/).
+  For production, use a Kubernetes cluster.
+- [kubectl](https://kubernetes.io/docs/tasks/tools/), configured for your cluster
+- [Helm](https://helm.sh/docs/intro/install/)
+- [Python](https://www.python.org/downloads/) v3.13 to install the vantage6 CLI. We
+  recommend [uv](https://docs.astral.sh/uv/) for package management.
+
+See the [documentation](https://docs.vantage6.ai) for the full requirements.
 
 Install the latest version of the vantage6 CLI by using:
 
