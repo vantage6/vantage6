@@ -63,7 +63,8 @@ class DefaultSocketNamespace(Namespace):
         db.Run | None
             The run, or None if it does not exist or does not belong to the node
         """
-        run = db.Run.get(run_id) if run_id is not None else None
+        is_valid_id = isinstance(run_id, int) and not isinstance(run_id, bool)
+        run = db.Run.get(run_id) if is_valid_id else None
         if (
             run is None
             or run.organization_id != node.organization_id

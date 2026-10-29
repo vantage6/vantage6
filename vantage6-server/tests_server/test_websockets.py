@@ -125,6 +125,15 @@ class TestSocketEventVerification(unittest.TestCase):
         )
         mock_emit.assert_not_called()
 
+    def test_status_change_malformed_run_id_is_ignored(self):
+        for run_id in ([self.run_a_id], {"id": self.run_a_id}, str(self.run_a_id)):
+            mock_emit = self._call(
+                "on_algorithm_status_change",
+                {"run_id": run_id, "status": TaskStatus.COMPLETED.value},
+                self.node_a_id,
+            )
+            mock_emit.assert_not_called()
+
     def test_status_change_invalid_status_is_ignored(self):
         mock_emit = self._call(
             "on_algorithm_status_change",
