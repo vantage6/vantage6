@@ -127,6 +127,16 @@ class TestSocketEventVerification(TestResourceBase):
         )
         mock_emit.assert_not_called()
 
+    def test_status_change_malformed_run_id_is_ignored(self):
+        run_id = self.run_a.id
+        for malformed_id in ([run_id], {"id": run_id}, str(run_id)):
+            mock_emit = self._call(
+                "on_algorithm_status_change",
+                {"run_id": malformed_id, "status": RunStatus.COMPLETED.value},
+                self.node_a,
+            )
+            mock_emit.assert_not_called()
+
     def test_status_change_invalid_status_is_ignored(self):
         mock_emit = self._call(
             "on_algorithm_status_change",
