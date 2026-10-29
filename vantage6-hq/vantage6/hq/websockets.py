@@ -3,8 +3,8 @@ import logging
 from socket import SocketIO
 
 import jwt
-from flask import request, session
-from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
+from flask import current_app, request, session
+from flask_jwt_extended import decode_token, get_jwt_identity, verify_jwt_in_request
 from flask_socketio import Namespace, emit, join_room, leave_room
 
 from vantage6.common import logger_name
@@ -48,7 +48,40 @@ class DefaultSocketNamespace(Namespace):
             )
         return session.type == "node"
 
-    def on_connect(self, _auth: dict | None = None) -> None:
+    @staticmethod
+    def _get_identity(auth_payload: dict | None) -> str:
+        """
+        Verify the JWT of a connecting client and return its identity.
+
+        The token is taken from the Socket.IO auth payload if it is present there.
+        Browsers cannot set headers on a websocket connection, so the UI sends its
+        token in the auth payload. Otherwise, the token is taken from the
+        Authorization header, which is what nodes use.
+
+        Parameters
+        ----------
+        auth_payload
+            Auth payload sent by the Socket.IO client, if any
+
+        Returns
+        -------
+        str
+            Identity (keycloak ID) of the client
+
+        Raises
+        ------
+        Exception
+            If the token is missing or invalid
+        """
+        token = auth_payload.get("token") if isinstance(auth_payload, dict) else None
+        if isinstance(token, str):
+            decoded_token = decode_token(token)
+            return decoded_token[current_app.config["JWT_IDENTITY_CLAIM"]]
+
+        verify_jwt_in_request()
+        return get_jwt_identity()
+
+    def on_connect(self, auth_payload: dict | None = None) -> None:
         """
         A new incoming connection request from a client.
 
@@ -61,10 +94,10 @@ class DefaultSocketNamespace(Namespace):
 
         Parameters
         ----------
-        _auth
-            Optional auth payload from the Socket.IO client (Flask-SocketIO 5.x
-            passes this on ``connect``). This is not used in this implementation but
-            required to prevent errors in calling this code.
+        auth_payload
+            Optional auth payload from the Socket.IO client. If it contains a
+            ``token``, that token is used to authenticate the client. Otherwise, the
+            token is read from the Authorization header.
 
         Note
         ----
@@ -75,7 +108,7 @@ class DefaultSocketNamespace(Namespace):
 
         # try to catch jwt authorization token.
         try:
-            verify_jwt_in_request()
+            identity = self._get_identity(auth_payload)
 
         except jwt.exceptions.ExpiredSignatureError:
             self.log.error("JWT has expired")
@@ -91,8 +124,7 @@ class DefaultSocketNamespace(Namespace):
             self.log.exception("Couldn't connect client! No or Invalid JWT token?")
             return
 
-        # get identity from token.
-        session.auth_id = get_jwt_identity()
+        session.auth_id = identity
         auth = db.Authenticatable.get_by_keycloak_id(session.auth_id)
         auth.status = AuthStatus.ONLINE.value
         auth.save()

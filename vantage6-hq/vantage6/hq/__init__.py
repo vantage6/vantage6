@@ -24,6 +24,7 @@ from http import HTTPStatus
 from pathlib import Path
 from threading import Thread
 
+from engineio.payload import Payload
 from flask import current_app
 from flask_principal import Identity, identity_changed
 from flask_socketio import SocketIO
@@ -38,6 +39,7 @@ from vantage6.common.exceptions import (
 from vantage6.common.globals import (
     DEFAULT_PROMETHEUS_EXPORTER_PORT,
     PING_INTERVAL_SECONDS,
+    SOCKETIO_MAX_DECODE_PACKETS,
     AuthStatus,
 )
 
@@ -173,6 +175,10 @@ class HQApp(Vantage6App):
         debug_mode = self.debug.get("socketio", False)
         if debug_mode:
             log.debug("SocketIO debug mode enabled")
+
+        # raise the number of packets accepted per HTTP long-polling payload, as
+        # clients may batch more messages than the engine.io default allows
+        Payload.max_decode_packets = SOCKETIO_MAX_DECODE_PACKETS
 
         cors_settings = self.ctx.config.get("cors_allowed_origins", "*")
         try:
