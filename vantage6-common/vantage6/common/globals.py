@@ -40,6 +40,13 @@ DEFAULT_DB_MOUNT_MODE = "copy"
 
 PING_INTERVAL_SECONDS = 60
 
+# Maximum number of packets that engine.io accepts in a single HTTP long-polling
+# payload. The library default (16) is too low: a polling client sends its whole
+# send queue in one request, and a payload above the limit is rejected entirely,
+# losing all messages in it. The total payload size is still bounded by engine.io's
+# max_http_buffer_size. Only relevant when the long-polling transport is used.
+SOCKETIO_MAX_DECODE_PACKETS = 128
+
 # Character to replace '=' with in encoded environment variables
 ENV_VAR_EQUALS_REPLACEMENT = "!"
 
