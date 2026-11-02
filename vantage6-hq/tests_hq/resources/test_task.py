@@ -215,6 +215,7 @@ class TestResources(TestResourceBase):
         task.save()
         res = Run(
             task=task,
+            organization=org,
             status=RunStatus.PENDING.value,
             action=AlgorithmStepType.CENTRAL_COMPUTE.value,
         )

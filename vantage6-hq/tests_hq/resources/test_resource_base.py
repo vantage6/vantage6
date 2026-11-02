@@ -259,7 +259,13 @@ class TestResourceBase(unittest.TestCase):
                 image="some-image",
                 collaboration=collaboration,
                 init_org=organization,
-                runs=[Run(status=RunStatus.PENDING.value, action=action.value)],
+                runs=[
+                    Run(
+                        organization=organization,
+                        status=RunStatus.PENDING.value,
+                        action=action.value,
+                    )
+                ],
             )
             task.save()
 

@@ -76,7 +76,9 @@ class ContainerToken(ServicesResources):
           400:
             description: Task does not exist or is already completed
           401:
-            description: Key request for invalid image or task
+            description: >-
+              Key request for invalid image or task, or node is not assigned to
+              execute the task
 
         tags: ["Authentication"]
         """
@@ -129,6 +131,24 @@ class ContainerToken(ServicesResources):
             )
             return {
                 "msg": "You are not within the collaboration"
+            }, HTTPStatus.UNAUTHORIZED
+
+        # check that the node's organization is actually assigned to execute this
+        # central compute task. A task may have multiple runs (one per assigned
+        # organization), so check against all of them rather than assuming a single
+        # run.
+        assigned_org_ids = {run.organization_id for run in db_task.runs}
+        if g.node.organization_id not in assigned_org_ids:
+            log.warning(
+                "Node %s attempts to generate key for task %s which is not "
+                "assigned to its organization (%s). Assigned organizations: %s",
+                g.node.id,
+                task_id,
+                g.node.organization_id,
+                assigned_org_ids,
+            )
+            return {
+                "msg": "You are not assigned to execute this task"
             }, HTTPStatus.UNAUTHORIZED
 
         # verify that task the token is requested for exists
