@@ -55,6 +55,8 @@ node:
 
   proxyPort: 7654
 
+  # If `production` is true, set `allowed_algorithms` and/or `allowed_algorithm_stores`,
+  # otherwise the node will not start.
   policies:
     require_algorithm_pull: true
 
@@ -70,6 +72,8 @@ node:
   share_config: true
 
   share_algorithm_logs: true
+
+  allow_http_polling: false
 
   prometheus:
     enabled: false

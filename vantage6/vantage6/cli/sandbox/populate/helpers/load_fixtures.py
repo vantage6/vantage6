@@ -79,7 +79,7 @@ def create_organizations(
 
 
 def create_collaborations(
-    client: Client, organizations: list[dict]
+    client: Client, organizations: list[dict], encrypted: bool = False
 ) -> tuple[list[dict], dict]:
     """
     Create collaborations. If the collaboration already exists, it is added to the
@@ -101,7 +101,7 @@ def create_collaborations(
         collab = client.collaboration.create(
             name=collab_name,
             organizations=[org["id"] for org in organizations],
-            encrypted=False,
+            encrypted=encrypted,
         )
         creation_details["created"].append({"name": collab_name, "id": collab["id"]})
     return collab, creation_details
@@ -362,6 +362,7 @@ def create_fixtures(
     return_as_dict: bool = False,
     node_config_creation_details: NodeConfigCreationDetails | None = None,
     clear_dev_folders: bool = False,
+    encrypted: bool = False,
 ) -> str | dict:
     """
     Create the fixtures for HQ.
@@ -380,6 +381,8 @@ def create_fixtures(
         will not be created.
     clear_dev_folders: bool
         Whether to clear the dev folders.
+    encrypted: bool
+        Whether to create an encrypted collaboration.
 
     Returns
     -------
@@ -412,7 +415,7 @@ def create_fixtures(
 
     # Create collaboration
     collaboration, creation_details["collaborations"] = create_collaborations(
-        client, organizations
+        client, organizations, encrypted=encrypted
     )
 
     # Create users

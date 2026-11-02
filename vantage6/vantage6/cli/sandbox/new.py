@@ -112,6 +112,13 @@ from vantage6.cli.utils import prompt_config_name
     help="Chart version to use. Ignored if --local-chart-dir is set.",
 )
 @click.option(
+    "--encrypted",
+    is_flag=True,
+    default=False,
+    help="Create an encrypted collaboration. A private key is generated for each node "
+    "and stored in a Kubernetes secret.",
+)
+@click.option(
     "--external-dbs",
     is_flag=True,
     default=False,
@@ -137,6 +144,7 @@ def cli_new_sandbox(
     chart_version: str | None,
     with_prometheus: bool,
     external_dbs: bool,
+    encrypted: bool,
 ) -> None:
     """
     Create a sandbox environment.
@@ -199,4 +207,5 @@ def cli_new_sandbox(
         custom_data_dir=data_dir,
         local_chart_dir=local_chart_dir,
         chart_version=chart_version,
+        encrypted=encrypted,
     )

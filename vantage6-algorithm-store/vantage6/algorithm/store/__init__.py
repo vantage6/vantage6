@@ -27,7 +27,7 @@ from flask_principal import Identity, identity_changed
 from vantage6.common import logger_name
 from vantage6.common.enum import StorePolicies
 from vantage6.common.exceptions import AuthenticationException
-from vantage6.common.globals import DEFAULT_API_PATH
+from vantage6.common.globals import DEFAULT_API_PATH, STORE_TOKEN_AUDIENCE
 
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 
@@ -75,23 +75,28 @@ class AlgorithmStoreApp(Vantage6App):
             static_folder=Path(__file__).parent / "static",
         )
 
-        # setup the permission manager for the API endpoints
-        self.permissions = PermissionManager(RESOURCES_PATH, RESOURCES, DefaultRole)
+        with DatabaseSessionManager.session_scope():
+            # setup the permission manager for the API endpoints
+            self.permissions = PermissionManager(RESOURCES_PATH, RESOURCES, DefaultRole)
 
-        # Load API resources
-        self.load_resources()
+            # Load API resources
+            self.load_resources()
 
-        # sync policies with the database
-        self.setup_policies(self.ctx.config)
+            # sync policies with the database
+            self.setup_policies(self.ctx.config)
 
-        if self.ctx.config.get("dev", {}).get("disable_review", False):
-            self.setup_disable_review()
+            if self.ctx.config.get("dev", {}).get("disable_review", False):
+                self.setup_disable_review()
 
         log.info("Initialization done")
 
     def configure_flask(self) -> None:
         """Configure the Flask settings of the vantage6 algorithm store."""
         self._configure_flask_base(DatabaseSessionManager)
+
+        # only accept Keycloak tokens issued for algorithm stores. Tokens for HQ are
+        # refused, so clients never have a reason to send them here.
+        self.app.config["JWT_DECODE_AUDIENCE"] = STORE_TOKEN_AUDIENCE
 
     def configure_api(self) -> None:
         """Define global API output and its structure."""
@@ -115,17 +120,18 @@ class AlgorithmStoreApp(Vantage6App):
             Returns
             -------
             db.User | str:
-                The user identity, or the keycloak id if it is a node that is
+                The user identity, or the keycloak id if a node or HQ is
                 authenticating.
 
             Raises
             ------
             AuthenticationException
-                If no store `User` is registered for this (non-node) identity.
+                If no store `User` is registered for this (non-node, non-HQ)
+                identity.
             """
             identity = jwt_headers["sub"]
 
-            if jwt_headers.get("vantage6_client_type") == "node":
+            if jwt_headers.get("vantage6_client_type") in ("node", "hq"):
                 return identity
 
             auth_identity = Identity(identity)
@@ -328,5 +334,10 @@ def run_store(config: str, system_folders: bool = True) -> AlgorithmStoreApp:
     ctx = AlgorithmStoreContext.from_external_config_file(
         config, system_folders, in_container=True
     )
-    Database().connect(uri=ctx.get_database_uri(), allow_drop_all=False)
+    Database().connect(
+        uri=ctx.get_database_uri(),
+        allow_drop_all=False,
+        pool_size=ctx.config.get("database_pool_size"),
+        max_overflow=ctx.config.get("database_max_overflow"),
+    )
     return AlgorithmStoreApp(ctx)

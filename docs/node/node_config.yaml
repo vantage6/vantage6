@@ -48,11 +48,9 @@ node:
 
   encryption:
     # Whether encryption is enabled or not. This should be the same as the `encrypted`
-    # setting of the collaboration to which this node belongs.
+    # setting on HQ of the collaboration to which this node belongs. If enabled, create
+    # the private key with `v6 node create-private-key`.
     enabled: false
-
-    # Location to the private key file. Required if encryption is enabled.
-    private_key: /path/to/private_key.pem
 
   # Whether kubernetes secrets should be created for the node. If set to False, it will
   # be expected that the secrets are already created. By default true.
@@ -85,12 +83,9 @@ node:
       originalName: olympic_athletes_2016.csv
       # OPTIONAL: controls how file/folder databases are exposed to algorithm
       # containers.
-      # - copy (default): copy file data into the node data volume
-      # - ro: bind-mount host path read-only into algorithm containers
-      # NOTE: For now, `ro` has tested support for Linux hosts only. On
-      # Windows/macOS hosts, use `copy` (default).
-      # Use `ro` only for file/folder-backed data sources.
-      mount_mode: copy
+      # - ro (default): bind-mount host path read-only into algorithm containers
+      # - copy: copy file data into the node data volume
+      mount_mode: ro
     # Service-based databases - these are databases that are running on the node
     # machine. They will be accessed using the URI.
     serviceBased:
@@ -132,19 +127,23 @@ node:
   # NOTE: It's recommented to set this to false when using sensitive data
   share_algorithm_logs: true
 
+  # Whether the node may fall back to HTTP long-polling for its socket connection
+  # with HQ. By default, the node only uses websockets, which is more stable. Only set
+  # this to true if your network does not support websocket connections. Default is
+  # false.
+  allow_http_polling: false
+
   # Define who is allowed to run which algorithms on this node.
   policies:
     # Control which algorithm images are allowed to run on this node. This is
-    # expected to be a valid regular expression. It's important to set this policy when
-    # using sensitive data to control which algorithms are allowed to run on the node.
+    # expected to be a valid regular expression. If `production` is true, you must set
+    # this and/or `allowed_algorithm_stores`, otherwise the node will not start.
     allowed_algorithms:
       - ^ghcr\.io/vantage6/algorithm/[a-zA-Z]+/[a-zA-Z]+$
       - ^myalgorithm\.ai/some-algorithm
 
     # It is also possible to allow all algorithms from a particular algorithm store. Set
-    # these stores here. They may be strings or regular expressions. If you don't
-    # specify this, algorithms from any store are allowed (unless other policies prevent
-    # this).
+    # these stores here. They may be strings or regular expressions.
     allowed_algorithm_stores:
       # allow all algorithms from the vantage6 community store
       - https://store.uluru.vantage6.ai

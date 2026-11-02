@@ -18,6 +18,8 @@ from vantage6.cli.context.hub import HubContext
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import CLICommandName
 from vantage6.cli.k8s_config import KubernetesConfig, select_k8s_config
+from vantage6.cli.node.common.private_key import KeyPolicy
+from vantage6.cli.node.create_private_key import create_and_store_private_key
 from vantage6.cli.sandbox.config.node import NodeDataset, NodeSandboxConfigManager
 from vantage6.cli.sandbox.populate import populate_hub_sandbox
 
@@ -82,6 +84,13 @@ from vantage6.cli.sandbox.populate import populate_hub_sandbox
     "on WSL because of mount issues for default directories. Only used if the "
     "--re-initialize flag is provided.",
 )
+@click.option(
+    "--encrypted",
+    is_flag=True,
+    default=False,
+    help="Create an encrypted collaboration, with a private key secret for each node. "
+    "Only used if the --re-initialize flag is provided.",
+)
 @click_insert_context(type_=InstanceType.HUB, is_sandbox=True)
 def cli_sandbox_start(
     ctx: HubContext,
@@ -95,6 +104,7 @@ def cli_sandbox_start(
     extra_node_config: Path | None,
     add_dataset: tuple[str, Path] | None,
     custom_data_dir: Path | None,
+    encrypted: bool,
 ) -> None:
     """
     Start a sandbox environment.
@@ -114,6 +124,7 @@ def cli_sandbox_start(
         custom_data_dir=custom_data_dir,
         local_chart_dir=local_chart_dir,
         chart_version=chart_version,
+        encrypted=encrypted,
     )
 
 
@@ -129,6 +140,7 @@ def execute_sandbox_start(
     custom_data_dir: Path | None = None,
     local_chart_dir: str | None = None,
     chart_version: str | None = None,
+    encrypted: bool = False,
 ) -> None:
     with_prometheus = (
         ctx.config.get("hq", {}).get("prometheus", {}).get("enabled", False)
@@ -162,6 +174,7 @@ def execute_sandbox_start(
             k8s_config=k8s_config,
             custom_data_dir=custom_data_dir,
             with_prometheus=with_prometheus,
+            encrypted=encrypted,
         )
     else:
         node_configs, _ = NodeContext.available_configurations(
@@ -201,12 +214,14 @@ def _initialize_sandbox(
     k8s_config: KubernetesConfig,
     custom_data_dir: Path | None,
     with_prometheus: bool,
+    encrypted: bool = False,
 ) -> list[str]:
     info("Populating vantage6 hub")
     node_details = populate_hub_sandbox(
         hq_url=hq_url,
         auth_url=f"{HTTP_LOCALHOST}:{Ports.SANDBOX_AUTH}",
         number_of_nodes=num_nodes,
+        encrypted=encrypted,
     )
 
     api_keys = [node["api_key"] for node in node_details]
@@ -233,10 +248,33 @@ def _initialize_sandbox(
         k8s_config=k8s_config,
         custom_data_dir=custom_data_dir,
         with_prometheus=with_prometheus,
+        encrypted=encrypted,
     )
     node_config_manager.generate_node_configs()
 
+    if encrypted:
+        _create_node_private_keys(node_config_manager.node_config_names, k8s_config)
+
     return node_config_manager.node_config_names
+
+
+def _create_node_private_keys(
+    node_config_names: list[str], k8s_config: KubernetesConfig
+) -> None:
+    """
+    Store a new private key in a Kubernetes secret for each sandbox node.
+
+    The public keys are not uploaded here: each node uploads its public key when it
+    starts, as its (new) organization has no public key at HQ yet.
+    """
+    info("Creating private keys for the nodes")
+    for node_config_name in node_config_names:
+        # contexts are singletons: clear the cache to get the context of this node
+        NodeContext._instances.pop(NodeContext, None)
+        node_ctx = NodeContext(node_config_name, system_folders=False, is_sandbox=True)
+        create_and_store_private_key(
+            node_ctx, k8s_config, key_policy=KeyPolicy.LOCAL_ONLY
+        )
 
 
 def _print_auth_credentials(hub_name: str) -> None:

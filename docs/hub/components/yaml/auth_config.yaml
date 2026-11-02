@@ -124,6 +124,8 @@ keycloak:
     # Public client configuration. The public client is used by users to authenticate
     # in the browser.
     publicClient:
+      # Name of the public client. If set, this overrides global.keycloak.publicClient.
+      # If neither is set, "public_client" is used.
       name: public_client
       # Redirect URIs are the URIs that Keycloak is allowed to redirect to after
       # authentication. This should normally be set to the UI URL. If you have
@@ -132,9 +134,10 @@ keycloak:
       redirectUris:
         - "http://localhost:7600/*"
 
-    # Secret used for the backend admin client. Note that if this is defined, it will
-    # override the hub's global backend admin client secret.
-    backend_client_secret: myadminclientsecret
+    # Secrets used for the HQ and store admin clients. If defined, these override the
+    # hub's global secrets.
+    hq_admin_client_secret: myadminclientsecret
+    store_admin_client_secret: mystoreadminclientsecret
 
     # SMTP server configuration. This is used to send emails to users.
     smtpServer:

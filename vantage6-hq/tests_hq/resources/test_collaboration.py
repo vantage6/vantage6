@@ -634,3 +634,21 @@ class TestResources(TestResourceBase):
         org2.delete()
         org3.delete()
         col.delete()
+
+    def test_view_collaboration_node_other_collaboration_of_same_organization(self):
+        org = Organization()
+        col = Collaboration(organizations=[org])
+        other_col = Collaboration(organizations=[org])
+        other_col.save()
+        node = self.create_node(organization=org, collaboration=col)
+
+        headers = self.login_node(node)
+
+        results = self.app.get(f"/api/collaboration/{col.id}", headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        results = self.app.get(f"/api/collaboration/{other_col.id}", headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        results = self.app.get("/api/collaboration", headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        self.assertEqual([c["id"] for c in results.json["data"]], [col.id])

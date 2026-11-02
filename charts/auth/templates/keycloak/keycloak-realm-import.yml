@@ -1,6 +1,11 @@
 {{- if and .Values.keycloak.realmImport (ne .Values.keycloak.realmImport.enabled false) }}
 {{- $global := .Values.global | default (dict) }}
 {{- $globalKeycloak := $global.keycloak | default (dict) }}
+{{- $hqAdminClientSecret := default $globalKeycloak.hqAdminClientSecret .Values.keycloak.realmImport.hq_admin_client_secret }}
+{{- $storeAdminClientSecret := default $globalKeycloak.storeAdminClientSecret .Values.keycloak.realmImport.store_admin_client_secret }}
+{{- $hqAdminClient := default "hq-admin-client" $globalKeycloak.hqAdminClient }}
+{{- $storeAdminClient := default "store-admin-client" $globalKeycloak.storeAdminClient }}
+{{- $publicClient := .Values.keycloak.realmImport.publicClient | default (dict) }}
 apiVersion: k8s.keycloak.org/v2beta1
 kind: KeycloakRealmImport
 metadata:
@@ -20,8 +25,8 @@ metadata:
     #
     # post-install only (deliberately not post-upgrade): re-creating this CR makes the
     # operator run a fresh import Job against an already-populated realm, which risks
-    # overwriting state created at runtime (e.g. users the backend adds via
-    # backend-admin-client). The realm is imported once, on install.
+    # overwriting state created at runtime (e.g. users HQ adds via its admin client).
+    # The realm is imported once, on install.
     #
     # before-hook-creation is Helm's default anyway; it's explicit here so it's clear that
     # a stale CR left over from a previous release is replaced on a fresh install.
@@ -150,9 +155,9 @@ spec:
         {{- end }}
         realmRoles:
           - default-roles-{{ .Values.keycloak.realmImport.realm | default "vantage6" }}
-      - username: service-account-backend-admin-client
+      - username: service-account-{{ $hqAdminClient }}
         enabled: true
-        serviceAccountClientId: backend-admin-client
+        serviceAccountClientId: {{ $hqAdminClient }}
         clientRoles:
           realm-management:
             - view-users
@@ -160,13 +165,24 @@ spec:
             - view-clients
             - manage-clients
             - create-client
+      {{- if $storeAdminClientSecret }}
+      - username: service-account-{{ $storeAdminClient }}
+        enabled: true
+        serviceAccountClientId: {{ $storeAdminClient }}
+        clientRoles:
+          realm-management:
+            - view-users
+      {{- end }}
+    # The audience client scopes and the client HQ uses to read from algorithm stores
+    # (hqStoreReaderClient) are created by HQ at startup.
+    # Defining clientScopes here would replace Keycloak's built-in scopes.
     clients:
-      - clientId: {{ default $globalKeycloak.publicClient .Values.keycloak.realmImport.publicClient.name }}
+      - clientId: {{ $publicClient.name | default $globalKeycloak.publicClient | default "public_client" }}
         publicClient: true
         attributes:
           oauth2.device.authorization.grant.enabled: "true"
         redirectUris:
-        {{- range .Values.keycloak.realmImport.publicClient.redirectUris }}
+        {{- range $publicClient.redirectUris }}
           - {{ . | quote }}
         {{- end }}
         # By setting webOrigins to "+", we allow the same origins as redirectUris.
@@ -183,13 +199,20 @@ spec:
               claim.name: vantage6_client_type
               claim.value: user
               access.token.claim: "true"
-      # create a client that will allow the backend to manage users and clients in
-      # keycloak.
-      - clientId: backend-admin-client
+      # create a client that will allow HQ to manage users and clients in keycloak.
+      - clientId: {{ $hqAdminClient }}
         publicClient: false
-        secret: {{ default $globalKeycloak.adminClientSecret .Values.keycloak.realmImport.backend_client_secret | quote }}
+        secret: {{ $hqAdminClientSecret | quote }}
         serviceAccountsEnabled: true
         standardFlowEnabled: false
+      {{- if $storeAdminClientSecret }}
+      # algorithm stores only need to look up users
+      - clientId: {{ $storeAdminClient }}
+        publicClient: false
+        secret: {{ $storeAdminClientSecret | quote }}
+        serviceAccountsEnabled: true
+        standardFlowEnabled: false
+      {{- end }}
     # Define organization_id as a user profile attribute using components (UserProfileProvider)
     # Unfortunately, this also requires redefining default user profile attributes: username, email, firstName, lastName.
     components:

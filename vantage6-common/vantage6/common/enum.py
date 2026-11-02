@@ -97,6 +97,13 @@ class DatabaseType(StrEnumBase):
         ]
 
 
+class DatabaseMountMode(StrEnumBase):
+    """Enum to represent how a file/folder database is mounted in algorithms"""
+
+    READ_ONLY = "ro"
+    COPY = "copy"
+
+
 class TaskStatus(StrEnumBase):
     """Enum to represent the status of a task"""
 
@@ -132,6 +139,8 @@ class RunStatus(StrEnumBase):
     PENDING = "pending"
     # Task is being started
     INITIALIZING = "initializing"
+    # The algorithm image is being pulled onto the node
+    PULLING_IMAGE = "pulling image"
     # Container started without exceptions
     ACTIVE = "active"
     # Container exited and had zero exit code
@@ -223,6 +232,7 @@ class RunStatus(StrEnumBase):
         return [
             cls.PENDING,
             cls.INITIALIZING,
+            cls.PULLING_IMAGE,
             cls.ACTIVE,
         ]
 

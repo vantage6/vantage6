@@ -71,6 +71,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         k8s_config: KubernetesConfig,
         custom_data_dir: Path | None,
         with_prometheus: bool = False,
+        encrypted: bool = False,
     ) -> None:
         super().__init__(hub_name, custom_data_dir)
         self.api_keys = api_keys
@@ -85,6 +86,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
             self.node_datasets = []
         self.k8s_config = k8s_config
         self.with_prometheus = with_prometheus
+        self.encrypted = encrypted
 
         self.node_configs = []
         self.node_config_names = []
@@ -309,8 +311,10 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                 },
             },
         }
-        if self.node_image:
-            config["node"]["image"] = self.node_image
+        config["node"].update(self._image_config(self.node_image, None))
+
+        if self.encrypted:
+            config["node"]["encryption"] = {"enabled": True}
 
         if self.with_prometheus:
             config["node"]["prometheus"] = {

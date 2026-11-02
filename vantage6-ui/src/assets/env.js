@@ -5,7 +5,6 @@
     // Environment variables
     window["env"]["hq_url"] = "https://uluru.vantage6.ai";
     window["env"]["api_path"] = "";
-    window["env"]["allowed_algorithm_stores"] = "*";
     window["env"]["auth_url"] = "https://auth.uluru.vantage6.ai";
     window["env"]["keycloak_realm"] = "vantage6";
     window["env"]["keycloak_client"] = "public_client";

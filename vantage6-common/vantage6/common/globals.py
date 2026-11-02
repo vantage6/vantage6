@@ -1,7 +1,7 @@
 from enum import IntEnum
 from pathlib import Path
 
-from vantage6.common.enum import StrEnumBase
+from vantage6.common.enum import DatabaseMountMode, StrEnumBase
 
 #
 #   PACKAGE GLOBALS
@@ -20,6 +20,14 @@ DEFAULT_NODE_IMAGE = (
 
 DEFAULT_NODE_IMAGE_WO_TAG = f"{DEFAULT_DOCKER_REGISTRY}/infrastructure/node"
 
+DEFAULT_HQ_IMAGE = f"{DEFAULT_DOCKER_REGISTRY}/infrastructure/hq:{MAIN_VERSION_NAME}"
+
+DEFAULT_STORE_IMAGE = (
+    f"{DEFAULT_DOCKER_REGISTRY}/infrastructure/algorithm-store:{MAIN_VERSION_NAME}"
+)
+
+DEFAULT_UI_IMAGE = f"{DEFAULT_DOCKER_REGISTRY}/infrastructure/ui:{MAIN_VERSION_NAME}"
+
 DEFAULT_ALPINE_IMAGE = f"{DEFAULT_DOCKER_REGISTRY}/infrastructure/alpine:latest"
 
 # CHART GLOBALS (Helm OCI in GHCR — see release workflow helm-charts job)
@@ -34,11 +42,17 @@ DATABASE_TYPES = ["csv", "parquet", "sql", "sparql", "excel", "other"]
 FILE_BASED_DATABASE_TYPES = ["csv", "parquet", "excel", "other"]
 SERVICE_BASED_DATABASE_TYPES = ["sql", "sparql", "other"]
 
-# Default when database.mount_mode is omitted. Keep "copy" unless default "ro"
-# behavior for non-file databases is explicitly handled.
-DEFAULT_DB_MOUNT_MODE = "copy"
+# Default when database.mount_mode is omitted. Only applies to file/folder databases.
+DEFAULT_DB_MOUNT_MODE = DatabaseMountMode.READ_ONLY
 
 PING_INTERVAL_SECONDS = 60
+
+# Maximum number of packets that engine.io accepts in a single HTTP long-polling
+# payload. The library default (16) is too low: a polling client sends its whole
+# send queue in one request, and a payload above the limit is rejected entirely,
+# losing all messages in it. The total payload size is still bounded by engine.io's
+# max_http_buffer_size. Only relevant when the long-polling transport is used.
+SOCKETIO_MAX_DECODE_PACKETS = 128
 
 # Character to replace '=' with in encoded environment variables
 ENV_VAR_EQUALS_REPLACEMENT = "!"
@@ -46,6 +60,20 @@ ENV_VAR_EQUALS_REPLACEMENT = "!"
 # default API path (for HQ and algorithm store)
 DEFAULT_API_PATH = "/api"
 DEFAULT_PROMETHEUS_EXPORTER_PORT = 7603
+
+# Keycloak token audiences. HQ only accepts tokens for HQ and algorithm stores only
+# tokens for stores, so a store cannot replay a token it receives at HQ.
+HQ_TOKEN_AUDIENCE = "vantage6-hq"
+STORE_TOKEN_AUDIENCE = "vantage6-store"
+# Keycloak client scopes that add the audiences above
+HQ_AUDIENCE_SCOPE = "vantage6-hq-audience"
+STORE_AUDIENCE_SCOPE = "vantage6-store-audience"
+# Default Keycloak client users log in with, for both HQ and algorithm stores
+DEFAULT_KEYCLOAK_PUBLIC_CLIENT = "public_client"
+
+# Default validity period (in hours) of a container token, before it expires
+# independent of the task's status.
+DEFAULT_CONTAINER_TOKEN_EXPIRES_HOURS = 168
 
 # Maximum interval to wait for requesting results from a task
 MAX_INTERVAL = 300
