@@ -54,7 +54,6 @@ class WizardTest(unittest.TestCase):
             # single algorithm level
             "DEBUG",  # level of logging
             True,  # Enable encryption
-            "privkey_Test.pem",  # path to private key file
         ]
         authenticate.side_effect = None
         config = node_configuration_questionaire(
@@ -76,7 +75,6 @@ class WizardTest(unittest.TestCase):
         nested_keys = [
             ["policies", NodePolicy.ALLOWED_ALGORITHMS.value],
             ["policies", NodePolicy.ALLOWED_ALGORITHM_STORES.value],
-            ["encryption", "private_key"],
             ["encryption", "enabled"],
             ["logging", "loggers"],
             ["databases", "fileBased"],
@@ -89,6 +87,8 @@ class WizardTest(unittest.TestCase):
                 current_config = current_config[key]
         assert len(config["node"]["databases"]["fileBased"]) == 0
         assert len(config["node"]["databases"]["serviceBased"]) == 1
+        # the private key lives in a Kubernetes secret, not in the configuration
+        self.assertNotIn("private_key", config["node"]["encryption"])
 
     @patch("vantage6.cli.node.new.error")
     @patch("vantage6.cli.node.new._get_allowed_algorithm_stores")

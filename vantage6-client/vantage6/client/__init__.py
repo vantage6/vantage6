@@ -9,7 +9,6 @@ import subprocess
 import sys
 import time
 import webbrowser
-from pathlib import Path
 
 import pyfiglet
 import requests
@@ -17,7 +16,7 @@ from keycloak import KeycloakAuthenticationError, KeycloakError, KeycloakOpenID
 
 from vantage6.common import WhoAmI
 from vantage6.common.client.client_base import ClientBase
-from vantage6.common.encryption import DummyCryptor, RSACryptor
+from vantage6.common.encryption import DummyCryptor
 from vantage6.common.enum import TaskDatabaseType
 from vantage6.common.globals import (
     APPNAME,
@@ -559,32 +558,6 @@ class UserClient(ClientBase):
             return self.parent.request(
                 "health", silent_on_connection_error=silent_on_connection_error
             )
-
-        def generate_private_key(self, file_: str | None = None) -> None:
-            """Generate new private key
-
-            Parameters
-            ----------
-            file_ : str, optional
-                Path where to store the private key, by default None
-            """
-            if not file_:
-                self.parent.log.info("--> Using current directory")
-                file_ = "private_key.pem"
-
-            if isinstance(file_, str):
-                file_ = Path(file_).absolute()
-
-            self.parent.log.info(f"--> Generating private key file: {file_}")
-            private_key = RSACryptor.create_new_rsa_key(file_)
-
-            self.parent.log.info("--> Assigning private key to client")
-            self.parent.cryptor.private_key = private_key
-
-            self.parent.log.info(
-                "--> Encrypting the client and uploading the public key"
-            )
-            self.parent.setup_encryption(file_)
 
     class Collaboration(ClientBase.SubClient):
         """Collection of collaboration requests"""

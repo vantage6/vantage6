@@ -17,9 +17,6 @@ data:
     allow_http_polling: {{ .Values.node.allow_http_polling | default false }}
     encryption:
       enabled: {{ .Values.node.encryption.enabled }}
-      {{- if .Values.node.encryption.enabled }}
-      private_key: {{ .Values.node.encryption.private_key }}
-      {{- end }}
     logging:
       backup_count: {{ .Values.node.logging.backup_count }}
       datefmt: {{ .Values.node.logging.datefmt | quote }}

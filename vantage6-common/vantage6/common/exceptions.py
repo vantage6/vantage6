@@ -7,6 +7,11 @@ class EncryptionMismatchError(Exception):
     encryption setting of the collaboration it belongs to."""
 
 
+class PublicKeyMismatchError(Exception):
+    """Exception to indicate that a private key does not belong to the public key
+    that HQ has for the organization."""
+
+
 class AlgorithmRetrievalError(Exception):
     """Exception to indicate that an algorithm could not be retrieved from an
     algorithm store."""

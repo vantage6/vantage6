@@ -12,6 +12,7 @@ from keycloak import KeycloakOpenID
 from vantage6.common.client.blob_storage import BlobStorageMixin
 from vantage6.common.encryption import DummyCryptor, RSACryptor
 from vantage6.common.enum import TaskStatus
+from vantage6.common.exceptions import PublicKeyMismatchError
 from vantage6.common.globals import (
     HQ_AUDIENCE_SCOPE,
     INTERVAL_MULTIPLIER,
@@ -357,6 +358,9 @@ class ClientBase(BlobStorageMixin):
         ------
         AssertionError
             If the client is not authenticated
+        PublicKeyMismatchError
+            If HQ has a public key for the organization that does not belong to the
+            private key
         """
         assert self._access_token, "Encryption can only be setup after authentication"
         assert self.whoami.organization_id, (
@@ -372,36 +376,29 @@ class ClientBase(BlobStorageMixin):
 
         cryptor = RSACryptor(private_key_file)
 
-        # check if the public-key is the same on HQ. If this is
-        # not the case, this node will not be able to read any messages
-        # that are send to him! If this is the case, the new public_key
-        # will be uploaded to HQ.
+        # Check that the private key belongs to the public key that HQ has for the
+        # organization. If HQ has no public key yet, upload it. If HQ has a different
+        # one, do not replace it: the organization's other nodes and users use the
+        # private key that belongs to it, and would no longer be able to decrypt data.
         organization = self.request(f"organization/{self.whoami.organization_id}")
         pub_key = organization.get("public_key")
-        upload_pub_key = False
 
-        if pub_key:
-            if cryptor.verify_public_key(pub_key):
-                self.log.info("Public key matches HQ's public key! Good to go!")
-
-            else:
-                self.log.critical(
-                    "Local public key does not match HQ's public key. "
-                    "You will not beable to read any messages that are intended "
-                    "for you!"
-                )
-                upload_pub_key = True
-        else:
-            upload_pub_key = True
-
-        # upload public key if required
-        if upload_pub_key:
+        if not pub_key:
             self.request(
                 f"organization/{self.whoami.organization_id}",
                 method="patch",
                 json={"public_key": cryptor.public_key_str},
             )
             self.log.info("The public key on HQ is updated!")
+        elif cryptor.verify_public_key(pub_key):
+            self.log.info("Public key matches HQ's public key! Good to go!")
+        else:
+            raise PublicKeyMismatchError(
+                "The private key does not belong to the public key that HQ has for "
+                "your organization. Use your organization's existing private key. "
+                "To replace the organization's keypair on purpose, use "
+                "'v6 node create-private-key --key-policy rotate_organization_key'."
+            )
 
         self.cryptor = cryptor
 

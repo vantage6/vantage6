@@ -1,7 +1,11 @@
+import sys
+
 import click
 import requests
+from kubernetes.client.exceptions import ApiException
+from urllib3.exceptions import HTTPError
 
-from vantage6.common import info, warning
+from vantage6.common import error, info, warning
 from vantage6.common.globals import (
     DEFAULT_NODE_IMAGE,
     DEFAULT_NODE_IMAGE_WO_TAG,
@@ -20,6 +24,10 @@ from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import ChartName, InfraComponentName
 from vantage6.cli.k8s_config import select_k8s_config
 from vantage6.cli.node.common import create_client
+from vantage6.cli.node.common.private_key import (
+    private_key_secret_exists,
+    private_key_secret_name,
+)
 
 
 @click.command()
@@ -57,6 +65,9 @@ def cli_node_start(
     prestart_checks(ctx, InstanceType.NODE, name, system_folders)
 
     k8s_config = select_k8s_config(context=context, namespace=namespace)
+
+    if ctx.config.get("node", {}).get("encryption", {}).get("enabled"):
+        _check_private_key_secret(ctx, k8s_config)
 
     create_directory_if_not_exists(ctx.log_dir)
     create_directory_if_not_exists(ctx.data_dir)
@@ -109,3 +120,29 @@ def cli_node_start(
             k8s_config=k8s_config,
             is_sandbox=ctx.is_sandbox,
         )
+
+
+def _check_private_key_secret(ctx: NodeContext, k8s_config) -> None:
+    """
+    Exit if encryption is enabled but the node's private key secret is missing.
+
+    The secret is mounted into the node by the Helm chart; without it the node pod
+    cannot start.
+    """
+    secret_name = private_key_secret_name(ctx)
+    try:
+        exists = private_key_secret_exists(ctx, k8s_config)
+    except (RuntimeError, ApiException, HTTPError) as exc:
+        warning(f"Could not check whether private key secret '{secret_name}' exists")
+        warning(str(exc))
+        return
+    if not exists:
+        error(
+            f"Encryption is enabled, but the private key secret '{secret_name}' does "
+            f"not exist in namespace '{k8s_config.namespace}'."
+        )
+        info(
+            "Create it with 'v6 node create-private-key', or use "
+            "'v6 node create-private-key --from-file <path>' to store an existing key."
+        )
+        sys.exit(1)

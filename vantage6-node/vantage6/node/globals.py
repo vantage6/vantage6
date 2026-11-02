@@ -27,6 +27,10 @@ K8S_EVENT_STREAM_LOOP_TIMEOUT = 120
 
 DATA_FOLDER = PACKAGE_FOLDER / APPNAME / "_data"
 
+# Location in the node container where the Helm chart mounts the node's private key,
+# from the `<release name>-private-key` secret created by `v6 node create-private-key`
+PRIVATE_KEY_MOUNT_PATH = Path("/app/encryption/private_key.pem")
+
 # constants for retrying node login
 SLEEP_BTWN_NODE_LOGIN_TRIES = 10  # retry every 10s
 TIME_LIMIT_RETRY_CONNECT_NODE = 60 * 60 * 24 * 7  # i.e. 1 week
