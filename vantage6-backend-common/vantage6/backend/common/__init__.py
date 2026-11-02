@@ -140,8 +140,7 @@ class Vantage6App:
         other_audiences = {HQ_TOKEN_AUDIENCE, STORE_TOKEN_AUDIENCE} - {own_audience}
 
         @self.jwt.token_verification_loader
-        # pylint: disable=unused-argument
-        def only_own_audience(jwt_header: dict, jwt_data: dict) -> bool:
+        def only_own_audience(_jwt_header: dict, jwt_data: dict) -> bool:
             audience = jwt_data.get("aud", [])
             if isinstance(audience, str):
                 audience = [audience]
@@ -158,8 +157,7 @@ class Vantage6App:
             return make_response({"msg": error}, HTTPStatus.UNAUTHORIZED)
 
         @self.jwt.token_verification_failed_loader
-        # pylint: disable=unused-argument
-        def token_verification_failed(jwt_header: dict, jwt_data: dict) -> Response:
+        def token_verification_failed(_jwt_header: dict, _jwt_data: dict) -> Response:
             return make_response(
                 {"msg": "Token is not valid for this service"},
                 HTTPStatus.UNAUTHORIZED,
