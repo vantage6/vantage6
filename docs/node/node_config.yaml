@@ -141,16 +141,14 @@ node:
   # Define who is allowed to run which algorithms on this node.
   policies:
     # Control which algorithm images are allowed to run on this node. This is
-    # expected to be a valid regular expression. It's important to set this policy when
-    # using sensitive data to control which algorithms are allowed to run on the node.
+    # expected to be a valid regular expression. If `production` is true, you must set
+    # this and/or `allowed_algorithm_stores`, otherwise the node will not start.
     allowed_algorithms:
       - ^ghcr\.io/vantage6/algorithm/[a-zA-Z]+/[a-zA-Z]+$
       - ^myalgorithm\.ai/some-algorithm
 
     # It is also possible to allow all algorithms from a particular algorithm store. Set
-    # these stores here. They may be strings or regular expressions. If you don't
-    # specify this, algorithms from any store are allowed (unless other policies prevent
-    # this).
+    # these stores here. They may be strings or regular expressions.
     allowed_algorithm_stores:
       # allow all algorithms from the vantage6 community store
       - https://store.uluru.vantage6.ai

@@ -9,7 +9,10 @@ from vantage6.cli.configuration_create import (
     select_configuration_questionnaire,
 )
 from vantage6.cli.hq.new import hq_configuration_questionaire
-from vantage6.cli.node.new import node_configuration_questionaire
+from vantage6.cli.node.new import (
+    _get_algorithm_policies,
+    node_configuration_questionaire,
+)
 
 module_path = "vantage6.cli.configuration_create"
 
@@ -41,7 +44,6 @@ class WizardTest(unittest.TestCase):
             FILE_BASED_DATABASE_TYPES[0],  # type of database
             False,  # don't add environment variables
             False,  # don't add another database
-            True,  # add algorithm policies
             True,  # add list of allowed_algorithms
             "some-image",  # algorithm image to whitelist
             False,  # don't add another algorithm image
@@ -87,6 +89,30 @@ class WizardTest(unittest.TestCase):
                 current_config = current_config[key]
         assert len(config["node"]["databases"]["fileBased"]) == 0
         assert len(config["node"]["databases"]["serviceBased"]) == 1
+
+    @patch("vantage6.cli.node.new.error")
+    @patch("vantage6.cli.node.new._get_allowed_algorithm_stores")
+    @patch("vantage6.cli.node.new._get_allowed_algorithms")
+    @patch("vantage6.cli.node.new.q")
+    def test_node_wizard_requires_algorithm_policy(
+        self, q, get_algorithms, get_stores, error
+    ):
+        """Check the node wizard asks again until an algorithm policy is given."""
+        q.confirm.return_value.unsafe_ask.side_effect = [
+            False,  # don't add list of allowed_algorithms
+            False,  # don't add algorithm stores
+            True,  # add list of allowed_algorithms (second attempt)
+            False,  # don't add algorithm stores (second attempt)
+        ]
+        get_algorithms.return_value = ["some-image"]
+
+        policies = _get_algorithm_policies()
+
+        self.assertEqual(
+            policies, {NodePolicy.ALLOWED_ALGORITHMS.value: ["some-image"]}
+        )
+        error.assert_called_once()
+        get_stores.assert_not_called()
 
     @patch("vantage6.cli.configuration_create.AppContext")
     @patch("vantage6.cli.configuration_create.q")

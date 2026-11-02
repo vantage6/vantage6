@@ -221,18 +221,7 @@ class ContainerManager:
         dict
             Dictionary with the policies
         """
-        policies = config.get("policies", {})
-        if not policies or (
-            not policies.get(NodePolicy.ALLOWED_ALGORITHMS.value)
-            and not policies.get(NodePolicy.ALLOWED_ALGORITHM_STORES.value)
-        ):
-            self.log.warning(
-                "No policies on allowed algorithms have been set for this node!"
-            )
-            self.log.warning(
-                "This means that all algorithms are allowed to run on this node."
-            )
-        return policies
+        return config.get("policies") or {}
 
     def _get_image_pull_policy(self) -> str:
         """
