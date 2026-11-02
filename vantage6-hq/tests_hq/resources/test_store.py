@@ -247,3 +247,35 @@ class TestResources(TestResourceBase):
         # cleanup
         org.delete()
         col.delete()
+
+    def test_view_store_node_other_collaboration_of_same_organization(self):
+        org = Organization()
+        col = Collaboration(organizations=[org])
+        other_col = Collaboration(organizations=[org])
+        store = AlgorithmStore(
+            name="own", url="http://own.com", api_path="/api", collaboration=col
+        )
+        other_store = AlgorithmStore(
+            name="other",
+            url="http://other.com",
+            api_path="/api",
+            collaboration=other_col,
+        )
+        global_store = AlgorithmStore(
+            name="global", url="http://global.com", api_path="/api"
+        )
+        store.save()
+        other_store.save()
+        global_store.save()
+        node = self.create_node(organization=org, collaboration=col)
+
+        headers = self.login_node(node)
+
+        results = self.app.get(f"/api/algorithmstore/{store.id}", headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        results = self.app.get(
+            f"/api/algorithmstore/{global_store.id}", headers=headers
+        )
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        results = self.app.get(f"/api/algorithmstore/{other_store.id}", headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)

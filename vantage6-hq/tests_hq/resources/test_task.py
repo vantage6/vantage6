@@ -221,7 +221,7 @@ class TestResources(TestResourceBase):
         )
         res.save()
 
-        headers = self.create_node_and_login(organization=org)
+        headers = self.create_node_and_login(organization=org, collaboration=col)
         results = self.app.get(f"/api/task/{task.id}", headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
@@ -797,3 +797,24 @@ class TestResources(TestResourceBase):
         self.assertEqual(child_run_1.status, RunStatus.KILLED.value)
         self.assertEqual(child_run_2.status, RunStatus.KILLED.value)
         self.assertEqual(child_run_done.status, RunStatus.COMPLETED.value)
+
+    def test_view_task_node_other_collaboration_of_same_organization(self):
+        org = Organization()
+        col = Collaboration(organizations=[org])
+        other_col = Collaboration(organizations=[org])
+        node = self.create_node(organization=org, collaboration=col)
+        task = Task(collaboration=col, init_org=org, image="some-image")
+        other_task = Task(collaboration=other_col, init_org=org, image="some-image")
+        task.save()
+        other_task.save()
+
+        headers = self.login_node(node)
+
+        result = self.app.get(f"/api/task/{task.id}", headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+        result = self.app.get(f"/api/task/{other_task.id}", headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
+        result = self.app.get("/api/task", headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+        self.assertEqual([t["id"] for t in result.json["data"]], [task.id])

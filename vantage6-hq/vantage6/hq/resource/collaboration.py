@@ -1,7 +1,7 @@
 import logging
 from http import HTTPStatus
 
-from flask import request
+from flask import g, request
 from flask_restful import Api
 from marshmallow import ValidationError
 from sqlalchemy import select
@@ -285,6 +285,8 @@ class Collaborations(CollaborationBase):
                 q = q.join(db.Organization, db.Collaboration.organizations).filter(
                     db.Collaboration.organizations.any(id=auth_org_id)
                 )
+                if g.node:
+                    q = q.filter(db.Collaboration.id == g.node.collaboration_id)
             else:
                 return {
                     "msg": "You lack the permission to do that!"
@@ -454,7 +456,9 @@ class Collaboration(CollaborationBase):
         # verify that the user/node organization is within the
         # collaboration
         ids = [org.id for org in collaboration.organizations]
-        if not self.r.v_glo.can() and not (self.r.v_org.can() and auth_org_id in ids):
+        if (
+            not self.r.v_glo.can() and not (self.r.v_org.can() and auth_org_id in ids)
+        ) or self.is_node_outside_its_collab(collaboration.id):
             return {
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
