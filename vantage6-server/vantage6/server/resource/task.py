@@ -334,7 +334,9 @@ class Tasks(TaskBase):
                 q = (
                     q.join(db.Collaboration)
                     .join(db.Organization)
-                    .filter(db.Collaboration.organizations.any(id=auth_org_id))
+                    .filter(
+                        db.Collaboration.id.in_(self.obtain_auth_collaboration_ids())
+                    )
                 )
             elif self.r.v_org.can():
                 q = q.join(db.Organization).filter(db.Task.init_org_id == auth_org_id)

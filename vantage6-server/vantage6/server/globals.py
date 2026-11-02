@@ -24,6 +24,9 @@ MIN_TOKEN_VALIDITY_SECONDS = 1800
 # Expiration time of refresh tokens
 REFRESH_TOKENS_EXPIRE_HOURS = 48
 
+# Expiration time of container tokens, independent of the task's status
+CONTAINER_TOKEN_EXPIRES_HOURS = 168
+
 # Minimum time in seconds that a refresh token must be valid *longer than* the
 # access token. This is to prevent the access token from expiring before the
 # refresh token.
