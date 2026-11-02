@@ -519,6 +519,179 @@ class TestResources(unittest.TestCase):
             org1.delete()
             org2.delete()
 
+    def _create_node_in_two_collaborations(self):
+        """
+        Create an organization that participates in two collaborations, and a
+        node of that organization in the first collaboration.
+        """
+        org = Organization(name=str(uuid.uuid1()))
+        col = Collaboration(name=str(uuid.uuid1()), organizations=[org])
+        other_col = Collaboration(name=str(uuid.uuid1()), organizations=[org])
+        other_col.save()
+        node, api_key = self.create_node(organization=org, collaboration=col)
+        return org, col, other_col, node, self.login_node(api_key)
+
+    def test_run_node_other_collaboration_of_same_organization(self):
+        org, col, other_col, _, headers = self._create_node_in_two_collaborations()
+        self.create_node(organization=org, collaboration=other_col)
+
+        task = Task(collaboration=col, init_org=org, image="some-image")
+        other_task = Task(collaboration=other_col, init_org=org, image="some-image")
+        run = Run(task=task, organization=org, status=TaskStatus.PENDING.value)
+        other_run = Run(
+            task=other_task, organization=org, status=TaskStatus.PENDING.value
+        )
+        run.save()
+        other_run.save()
+
+        # node cannot patch the run of its sibling node in another collaboration
+        response = self.app.patch(
+            f"/api/run/{other_run.id}",
+            headers=headers,
+            json={"status": TaskStatus.FAILED.value, "result": "injected"},
+        )
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
+        other_run = Run.get(other_run.id)
+        self.assertEqual(other_run.status, TaskStatus.PENDING.value)
+        self.assertIsNone(other_run.result)
+
+        # node can patch the run of its own collaboration
+        response = self.app.patch(
+            f"/api/run/{run.id}",
+            headers=headers,
+            json={"status": TaskStatus.ACTIVE.value},
+        )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+
+        # node cannot view the run of the other collaboration
+        response = self.app.get(f"/api/run/{other_run.id}", headers=headers)
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
+        response = self.app.get(f"/api/result/{other_run.id}", headers=headers)
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
+        response, json_data = self.paginated_list("/api/run", headers=headers)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        run_ids = [r["id"] for r in json_data]
+        self.assertIn(run.id, run_ids)
+        self.assertNotIn(other_run.id, run_ids)
+        response = self.app.get(
+            f"/api/run?collaboration_id={other_col.id}", headers=headers
+        )
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
+
+    def test_view_task_node_other_collaboration_of_same_organization(self):
+        org, col, other_col, _, headers = self._create_node_in_two_collaborations()
+        task = Task(collaboration=col, init_org=org, image="some-image")
+        other_task = Task(collaboration=other_col, init_org=org, image="some-image")
+        task.save()
+        other_task.save()
+
+        result = self.app.get(f"/api/task/{task.id}", headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+        result = self.app.get(f"/api/task/{other_task.id}", headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
+        result, json_data = self.paginated_list("/api/task", headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+        task_ids = [t["id"] for t in json_data]
+        self.assertIn(task.id, task_ids)
+        self.assertNotIn(other_task.id, task_ids)
+
+    def test_view_collaboration_node_other_collaboration_of_same_organization(self):
+        _, col, other_col, _, headers = self._create_node_in_two_collaborations()
+
+        results = self.app.get(f"/api/collaboration/{col.id}", headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        results = self.app.get(f"/api/collaboration/{other_col.id}", headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        results, json_data = self.paginated_list("/api/collaboration", headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        self.assertEqual([c["id"] for c in json_data], [col.id])
+
+    def test_view_study_node_other_collaboration_of_same_organization(self):
+        org, col, other_col, _, headers = self._create_node_in_two_collaborations()
+        study = Study(collaboration=col, organizations=[org])
+        other_study = Study(collaboration=other_col, organizations=[org])
+        study.save()
+        other_study.save()
+
+        results = self.app.get(f"/api/study/{study.id}", headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        results = self.app.get(f"/api/study/{other_study.id}", headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        results, json_data = self.paginated_list("/api/study", headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        self.assertEqual([s["id"] for s in json_data], [study.id])
+        results = self.app.get(
+            f"/api/study?collaboration_id={other_col.id}", headers=headers
+        )
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+    def test_node_other_collaboration_of_same_organization(self):
+        org, _, other_col, node, headers = self._create_node_in_two_collaborations()
+        sibling_node, _ = self.create_node(organization=org, collaboration=other_col)
+
+        # view
+        results = self.app.get(f"/api/node/{node.id}", headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        results = self.app.get(f"/api/node/{sibling_node.id}", headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+        results, json_data = self.paginated_list("/api/node", headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        self.assertEqual([n["id"] for n in json_data], [node.id])
+
+        # edit
+        results = self.app.patch(
+            f"/api/node/{sibling_node.id}", headers=headers, json={"name": "A"}
+        )
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+        self.assertNotEqual(Node.get(sibling_node.id).name, "A")
+
+    def test_view_organization_node_other_collaboration_of_same_organization(self):
+        org = Organization(name=str(uuid.uuid1()))
+        org2 = Organization(name=str(uuid.uuid1()))
+        org_other_col = Organization(name=str(uuid.uuid1()))
+        col = Collaboration(name=str(uuid.uuid1()), organizations=[org, org2])
+        other_col = Collaboration(
+            name=str(uuid.uuid1()), organizations=[org, org_other_col]
+        )
+        other_col.save()
+        headers = self.create_node_and_login(organization=org, collaboration=col)
+
+        results = self.app.get(f"/api/organization/{org2.id}", headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        results = self.app.get(f"/api/organization/{org_other_col.id}", headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        results, json_data = self.paginated_list("/api/organization", headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        self.assertEqual({o["id"] for o in json_data}, {org.id, org2.id})
+        results = self.app.get(
+            f"/api/organization?collaboration_id={other_col.id}", headers=headers
+        )
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+    def test_view_store_node_other_collaboration_of_same_organization(self):
+        _, col, other_col, _, headers = self._create_node_in_two_collaborations()
+        store = AlgorithmStore(name="own", url="http://own.com", collaboration=col)
+        other_store = AlgorithmStore(
+            name="other", url="http://other.com", collaboration=other_col
+        )
+        global_store = AlgorithmStore(name="global", url="http://global.com")
+        store.save()
+        other_store.save()
+        global_store.save()
+
+        results = self.app.get(f"/api/algorithmstore/{store.id}", headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        results = self.app.get(
+            f"/api/algorithmstore/{global_store.id}", headers=headers
+        )
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        results = self.app.get(f"/api/algorithmstore/{other_store.id}", headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
     def test_task_with_id(self):
         headers = self.login("root")
         result = self.app.get("/api/task/1", headers=headers)
@@ -3428,7 +3601,7 @@ class TestResources(unittest.TestCase):
         res = Run(task=task, organization=org, status=TaskStatus.PENDING)
         res.save()
 
-        headers = self.create_node_and_login(organization=org)
+        headers = self.create_node_and_login(organization=org, collaboration=col)
         results = self.app.get(f"/api/task/{task.id}", headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.OK)
 

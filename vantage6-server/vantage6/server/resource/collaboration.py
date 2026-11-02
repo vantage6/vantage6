@@ -283,6 +283,8 @@ class Collaborations(CollaborationBase):
                 q = q.join(db.Organization, db.Collaboration.organizations).filter(
                     db.Collaboration.organizations.any(id=auth_org_id)
                 )
+                if g.node:
+                    q = q.filter(db.Collaboration.id == g.node.collaboration_id)
             else:
                 return {
                     "msg": "You lack the permission to do that!"
@@ -449,6 +451,10 @@ class Collaboration(CollaborationBase):
                 return {
                     "msg": "You lack the permission to do that!"
                 }, HTTPStatus.UNAUTHORIZED
+        if self.is_node_outside_its_collab(collaboration.id):
+            return {
+                "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
 
         schema = self._select_schema()
 

@@ -133,6 +133,24 @@ class ServicesResources(BaseServicesResources):
         """
         return [col.id for col in obtain_auth_collaborations()]
 
+    @staticmethod
+    def is_node_outside_its_collab(collaboration_id: int | None) -> bool:
+        """
+        Check if the auth is a node and the collaboration is not its own.
+
+        Parameters
+        ----------
+        collaboration_id : int | None
+            Id of the collaboration that a resource belongs to
+
+        Returns
+        -------
+        bool
+            True if the auth is a node and the collaboration is not the node's
+            collaboration, False otherwise
+        """
+        return bool(g.node) and collaboration_id != g.node.collaboration_id
+
 
 # ------------------------------------------------------------------------------
 # Helper functions/decoraters ...
