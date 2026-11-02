@@ -547,17 +547,17 @@ class Node:
         # (usually < 5s) when the socket just (re)connected
         MAX_ATTEMPTS = 30
         retries = 0
-        while "/tasks" not in self.socketIO.namespaces and retries < MAX_ATTEMPTS:
+        while "/tasks" not in self.socketIO.namespaces:
+            if retries >= MAX_ATTEMPTS:
+                self.log.warning(
+                    "Not connected to /tasks namespace, skipping algorithm status "
+                    "change notification for run %s",
+                    run_id,
+                )
+                return
             retries += 1
             self.log.debug("Waiting for /tasks namespace to connect...")
             time.sleep(1)
-        if "/tasks" not in self.socketIO.namespaces:
-            self.log.warning(
-                "Not connected to /tasks namespace, skipping algorithm status change "
-                "notification for run %s",
-                run_id,
-            )
-            return
         self.log.debug("Connected to /tasks namespace")
 
         try:
