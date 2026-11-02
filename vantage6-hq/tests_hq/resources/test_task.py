@@ -1,11 +1,13 @@
 import logging
 from http import HTTPStatus
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from vantage6.common import logger_name
 from vantage6.common.enum import AlgorithmStepType, RunStatus, TaskStatus
+from vantage6.common.exceptions import AlgorithmRetrievalError
 
 from vantage6.hq.model import (
+    AlgorithmStore,
     Collaboration,
     Node,
     Organization,
@@ -16,12 +18,23 @@ from vantage6.hq.model import (
     Task,
 )
 from vantage6.hq.model.rule import Operation, Scope
+from vantage6.hq.resource.common.task_post_base import TaskPostBase
 from vantage6.hq.resource.event import kill_task
 
 from .test_resource_base import TestResourceBase
 
 logger = logger_name(__name__)
 log = logging.getLogger(logger)
+
+# algorithm as returned by the algorithm store
+STORE_ALGORITHM = {
+    "image": "some-image",
+    "digest": "sha256:1234",
+    "functions": [
+        {"name": "central", "step_type": AlgorithmStepType.CENTRAL_COMPUTE.value},
+        {"name": "partial", "step_type": AlgorithmStepType.FEDERATED_COMPUTE.value},
+    ],
+}
 
 
 class TestResources(TestResourceBase):
@@ -215,12 +228,13 @@ class TestResources(TestResourceBase):
         task.save()
         res = Run(
             task=task,
+            organization=org,
             status=RunStatus.PENDING.value,
             action=AlgorithmStepType.CENTRAL_COMPUTE.value,
         )
         res.save()
 
-        headers = self.create_node_and_login(organization=org)
+        headers = self.create_node_and_login(organization=org, collaboration=col)
         results = self.app.get(f"/api/task/{task.id}", headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
@@ -268,6 +282,7 @@ class TestResources(TestResourceBase):
             name="test_session_can_create",
             user_id=user_can_create.id,
             collaboration=col,
+            scope=Scope.COLLABORATION.value,
         )
         session_can_create.save()
         headers_can_create = self.login(user_can_create)
@@ -294,12 +309,12 @@ class TestResources(TestResourceBase):
 
         # test user outside the collaboration (need CREATE here too; auth runs before
         # org-membership validation)
-        task_json["session_id"] = session.id
         task_json["organizations"] = [{"id": org2.id}]
         results = self.app.post("/api/task", headers=headers_can_create, json=task_json)
         self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
 
         # user in the collaboration but still without any permissions
+        task_json["session_id"] = session.id
         task_json["organizations"] = [{"id": org.id}]
         results = self.app.post("/api/task", headers=headers, json=task_json)
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
@@ -331,7 +346,13 @@ class TestResources(TestResourceBase):
         # should *not* be allowed to create a task in a collaboration that
         # they're not a part of
         rule = Rule.get_by_("task", Scope.GLOBAL, Operation.CREATE)
-        headers = self.get_user_auth_header(rules=[rule])
+        user_global = self.create_user(rules=[rule])
+        session_global = Session(
+            name="session_global", user_id=user_global.id, collaboration=col
+        )
+        session_global.save()
+        headers = self.login(user_global)
+        task_json["session_id"] = session_global.id
         results = self.app.post("/api/task", headers=headers, json=task_json)
         self.assertEqual(results.status_code, HTTPStatus.FORBIDDEN)
 
@@ -341,6 +362,11 @@ class TestResources(TestResourceBase):
         col2.save()
         study = Study(organizations=[org], collaboration=col2)
         study.save()
+        session_col2 = Session(
+            name="session_col2", user_id=user_global.id, collaboration=col2
+        )
+        session_col2.save()
+        task_json["session_id"] = session_col2.id
         task_json["collaboration_id"] = col2.id
         task_json["organizations"] = [{"id": org2.id}]
         results = self.app.post("/api/task", headers=headers, json=task_json)
@@ -349,6 +375,8 @@ class TestResources(TestResourceBase):
         # cleanup
         # delete the 1 task that was created in this unit test
         Task.get()[::-1][0].delete()
+        session_col2.delete()
+        session_global.delete()
         session_outside_col.delete()
         session_can_create.delete()
         session.delete()
@@ -369,7 +397,9 @@ class TestResources(TestResourceBase):
         session = Session(name="test_session", user_id=user.id, collaboration=col)
         session.save()
 
-        parent_task = Task(collaboration=col, image="some-image", init_org=org)
+        parent_task = Task(
+            collaboration=col, image="some-image", init_org=org, session=session
+        )
         parent_task.save()
         parent_res = Run(
             organization=org,
@@ -456,6 +486,268 @@ class TestResources(TestResourceBase):
         col.delete()
         node2.delete()
         col2.delete()
+
+    def test_create_task_session_and_dataframe_validation(self):
+        org = Organization()
+        org.save()
+        col = Collaboration(organizations=[org], encrypted=False)
+        col.save()
+        node = Node(organization=org, collaboration=col)
+        node.save()
+        study = Study(organizations=[org], collaboration=col)
+        study.save()
+        study2 = Study(organizations=[org], collaboration=col)
+        study2.save()
+        other_col = Collaboration(organizations=[org], encrypted=False)
+        other_col.save()
+
+        rule_create = Rule.get_by_("task", Scope.COLLABORATION, Operation.CREATE)
+        user = self.create_user(organization=org, rules=[rule_create])
+        headers = self.login(user)
+        session = self.create_session(user=user, collaboration=col)
+        other_col_session = self.create_session(user=user, collaboration=other_col)
+        study_session = self.create_session(user=user, collaboration=col)
+        study_session.study = study
+        study_session.save()
+
+        task_json = {
+            "method": "dummy",
+            "image": "some-image",
+            "collaboration_id": col.id,
+            "organizations": [{"id": org.id}],
+            "session_id": session.id,
+            "action": AlgorithmStepType.FEDERATED_COMPUTE.value,
+        }
+
+        # session of another collaboration
+        task_json["session_id"] = other_col_session.id
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
+
+        # session of another study than the task
+        task_json["session_id"] = study_session.id
+        task_json["study_id"] = study2.id
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
+
+        # study session without study in the request is allowed
+        del task_json["study_id"]
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.CREATED)
+
+        # session of another user, scoped to that user
+        other_user = self.create_user(organization=org, rules=[rule_create])
+        other_session = self.create_session(user=other_user, collaboration=col)
+        task_json["session_id"] = other_session.id
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # allowed with permission to view sessions in the collaboration
+        rule_view_session = Rule.get_by_("session", Scope.COLLABORATION, Operation.VIEW)
+        headers_view = self.get_user_auth_header(
+            org, rules=[rule_create, rule_view_session]
+        )
+        results = self.app.post("/api/task", headers=headers_view, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.CREATED)
+
+        # allowed if the session is shared with the collaboration
+        other_session.scope = Scope.COLLABORATION.value
+        other_session.save()
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.CREATED)
+
+        # dataframes must exist and be part of the session of the task
+        task_json["session_id"] = session.id
+        df = self.create_dataframe(session=session, collaboration=col)
+        other_df = self.create_dataframe(session=other_session, collaboration=col)
+        task_json["databases"] = [[{"type": "dataframe", "dataframe_id": 9999}]]
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
+
+        task_json["databases"] = [[{"type": "dataframe", "dataframe_id": other_df.id}]]
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
+        self.assertIn("is not part of session", results.json["msg"])
+
+        # dataframe in the session passes this check (but is not extracted yet)
+        task_json["databases"] = [[{"type": "dataframe", "dataframe_id": df.id}]]
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
+        self.assertIn("not present for the following", results.json["msg"])
+
+        # source databases can only be used for data extraction
+        task_json["databases"] = [[{"type": "source", "label": "default"}]]
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
+        del task_json["databases"]
+
+        # top-level dataframe must be part of the session of the task
+        task_json["dataframe_id"] = other_df.id
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
+        del task_json["dataframe_id"]
+
+        # containers can only create tasks in the session of their parent task
+        parent_task = Task(
+            collaboration=col, image="some-image", init_org=org, session=session
+        )
+        parent_task.save()
+        Run(
+            organization=org,
+            task=parent_task,
+            status=RunStatus.PENDING.value,
+            action=AlgorithmStepType.CENTRAL_COMPUTE.value,
+        ).save()
+        container_headers = self.login_container(node=node, task=parent_task)
+        task_json["session_id"] = other_session.id
+        results = self.app.post("/api/task", headers=container_headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        task_json["session_id"] = session.id
+        results = self.app.post("/api/task", headers=container_headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.CREATED)
+
+        # cleanup
+        self.delete_tasks()
+        for df_ in (df, other_df):
+            df_.delete()
+        for session_ in (session, other_col_session, study_session, other_session):
+            session_.delete()
+        node.delete()
+        study.delete()
+        study2.delete()
+        col.delete()
+        other_col.delete()
+
+    @patch.object(TaskPostBase, "_get_algorithm_from_store")
+    def test_create_task_action_checked_against_store_as_user(self, mock_get_algo):
+        mock_get_algo.return_value = STORE_ALGORITHM
+        org = Organization()
+        col = Collaboration(organizations=[org], encrypted=False)
+        col.save()
+        node = Node(organization=org, collaboration=col)
+        node.save()
+        store = AlgorithmStore(
+            name="test", url="http://test.com", api_path="/api", collaboration=col
+        )
+        store.save()
+        rule = Rule.get_by_("task", Scope.COLLABORATION, Operation.CREATE)
+        user = self.create_user(organization=org, rules=[rule])
+        headers = self.login(user)
+        session = Session(name="test_session", user_id=user.id, collaboration=col)
+        session.save()
+
+        task_json = {
+            "method": "not-in-store",
+            "collaboration_id": col.id,
+            "organizations": [{"id": org.id}],
+            "image": "some-image",
+            "session_id": session.id,
+            "store_id": store.id,
+            "action": AlgorithmStepType.FEDERATED_COMPUTE.value,
+        }
+
+        # method that is not registered in the store
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
+
+        # action that does not match the store
+        task_json["method"] = "partial"
+        task_json["action"] = AlgorithmStepType.CENTRAL_COMPUTE.value
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
+
+        # action that matches the store
+        task_json["action"] = AlgorithmStepType.FEDERATED_COMPUTE.value
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.CREATED)
+
+        # no action given: the action from the store is used
+        task_json["method"] = "central"
+        del task_json["action"]
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.CREATED)
+        task = Task.get(results.json["id"])
+        self.assertEqual(task.runs[0].action, AlgorithmStepType.CENTRAL_COMPUTE.value)
+
+        # cleanup
+        self.delete_tasks()
+        session.delete()
+        store.delete()
+        node.delete()
+        org.delete()
+        col.delete()
+
+    @patch.object(TaskPostBase, "_get_algorithm_from_store")
+    def test_create_subtask_action_checked_against_store(self, mock_get_algo):
+        mock_get_algo.return_value = STORE_ALGORITHM
+        org = Organization()
+        col = Collaboration(organizations=[org], encrypted=False)
+        col.save()
+        store = AlgorithmStore(
+            name="test", url="http://test.com", api_path="/api", collaboration=col
+        )
+        store.save()
+        user = self.create_user()
+        session = Session(name="test_session", user_id=user.id, collaboration=col)
+        session.save()
+
+        parent_task = Task(
+            collaboration=col,
+            image="some-image",
+            init_org=org,
+            algorithm_store=store,
+            session=session,
+        )
+        parent_task.save()
+        Run(
+            organization=org,
+            task=parent_task,
+            status=RunStatus.PENDING.value,
+            action=AlgorithmStepType.CENTRAL_COMPUTE.value,
+        ).save()
+        headers = self.login_container(
+            collaboration=col, organization=org, task=parent_task
+        )
+
+        task_json = {
+            "method": "not-in-store",
+            "collaboration_id": col.id,
+            "organizations": [{"id": org.id}],
+            "image": "some-image",
+            "session_id": session.id,
+            "action": AlgorithmStepType.FEDERATED_COMPUTE.value,
+        }
+
+        # method that is not registered in the store
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
+
+        # the algorithm is looked up in the parent's store by the parent's image
+        mock_get_algo.assert_called_with(store=store, image=parent_task.image)
+
+        # action that does not match the store
+        task_json["method"] = "partial"
+        task_json["action"] = AlgorithmStepType.CENTRAL_COMPUTE.value
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
+
+        # action that matches the store
+        task_json["action"] = AlgorithmStepType.FEDERATED_COMPUTE.value
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.CREATED)
+
+        # algorithm cannot be retrieved from the store
+        mock_get_algo.side_effect = AlgorithmRetrievalError("store unavailable")
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
+
+        # cleanup
+        self.delete_tasks()
+        session.delete()
+        store.delete()
+        org.delete()
+        col.delete()
 
     def test_delete_task_permissions(self):
         # test non-existing task
@@ -796,3 +1088,24 @@ class TestResources(TestResourceBase):
         self.assertEqual(child_run_1.status, RunStatus.KILLED.value)
         self.assertEqual(child_run_2.status, RunStatus.KILLED.value)
         self.assertEqual(child_run_done.status, RunStatus.COMPLETED.value)
+
+    def test_view_task_node_other_collaboration_of_same_organization(self):
+        org = Organization()
+        col = Collaboration(organizations=[org])
+        other_col = Collaboration(organizations=[org])
+        node = self.create_node(organization=org, collaboration=col)
+        task = Task(collaboration=col, init_org=org, image="some-image")
+        other_task = Task(collaboration=other_col, init_org=org, image="some-image")
+        task.save()
+        other_task.save()
+
+        headers = self.login_node(node)
+
+        result = self.app.get(f"/api/task/{task.id}", headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+        result = self.app.get(f"/api/task/{other_task.id}", headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
+        result = self.app.get("/api/task", headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+        self.assertEqual([t["id"] for t in result.json["data"]], [task.id])

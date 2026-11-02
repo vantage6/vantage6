@@ -1,6 +1,52 @@
 Release notes
 =============
 
+5.0.4
+-----
+
+*Unreleased*
+
+- **Security**
+
+  - Algorithm stores no longer receive tokens that are valid at HQ. HQ and algorithm
+    stores now each only accept Keycloak tokens issued for them, HQ looks up
+    algorithms at a store with its own read-only token instead of the user's token,
+    tokens are only sent to algorithm stores that use the same Keycloak as HQ, and
+    algorithm stores get their own Keycloak client that can only look up users
+    (`GHSA-v995-8jhw-349w
+    <https://github.com/vantage6/vantage6/security/advisories/GHSA-v995-8jhw-349w>`_).
+    This is not fixed in version 4: there, only link algorithm stores that you trust
+    as much as your server.
+  - Tasks from an algorithm store are refused if their method is not registered in
+    the store, and subtasks are now also checked against the store
+    (`GHSA-4998-q23j-7w5r
+    <https://github.com/vantage6/vantage6/security/advisories/GHSA-4998-q23j-7w5r>`_).
+
+- **Upgrade notes**
+
+  - Existing 5.0.x hubs cannot be upgraded in place, as the Keycloak realm and the HQ
+    database changed: set up the hub again. Nodes, the UI and Python clients must
+    also use this version, as HQ and stores refuse tokens of older versions.
+  - Keycloak settings were renamed, and algorithm stores need their own client. In
+    your configuration:
+
+    - ``keycloak.adminClient`` → ``hqAdminClient``
+    - ``keycloak.adminClientSecret`` → ``hqAdminClientSecret``
+    - auth chart: ``keycloak.realmImport.backend_client_secret`` →
+      ``hq_admin_client_secret``
+    - UI: ``ui.keycloak.client`` → ``ui.keycloak.publicClient``
+    - new: ``storeAdminClientSecret``. A standalone store needs a
+      ``store-admin-client`` client in Keycloak with only the ``realm-management``
+      role ``view-users``.
+
+  - Mark the algorithm stores that use the same Keycloak as HQ with
+    ``uses_hq_keycloak: true`` in ``hq.algorithm_stores``, or with a ``PATCH`` to
+    ``/algorithmstore/<id>`` as a user with global collaboration edit permission.
+    Other stores receive no tokens, so only their public algorithms can be used.
+  - When a store restricts who may view algorithms, HQ no longer checks at task
+    creation whether the user may view the algorithm, only whether it is approved.
+  - HQ and algorithm stores respond to invalid tokens with 401 instead of 422 or 400.
+
 5.0.3
 -----
 

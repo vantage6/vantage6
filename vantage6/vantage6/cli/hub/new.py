@@ -123,6 +123,7 @@ def cli_hub_new(
                 "name": base_config["store_name"],
                 "url": base_config["store_url"],
                 "api_path": "/store",
+                "uses_hq_keycloak": True,
             }
         ]
         extra_config["ui"] = {
