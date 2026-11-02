@@ -11,9 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Ruff
-        run: pip install ruff
+      - name: Install uv
+        # pinned to: https://github.com/astral-sh/setup-uv/releases/tag/v10.3.2
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e
       - name: Run Ruff check
-        run: ruff check .
+        run: uvx ruff check .
       - name: Run Ruff format check
-        run: ruff format --check .
+        run: uvx ruff format --check .

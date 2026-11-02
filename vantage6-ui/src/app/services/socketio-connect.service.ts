@@ -16,23 +16,23 @@ export class SocketioConnectService {
   algoLogUpdate$: BehaviorSubject<AlgorithmLogMsg | null> = new BehaviorSubject<AlgorithmLogMsg | null>(null);
   socket: Socket | null = null;
 
-  private connecting = false;
-
   constructor(private tokenService: TokenService) {}
 
-  async connect() {
-    if (this.socket === null && !this.connecting) {
-      this.connecting = true;
-      const token = await this.tokenService.getHqToken();
+  connect() {
+    if (this.socket === null) {
       // connect to tasks namespace
       const namespace = '/tasks';
       this.socket = io(`${environment.hq_url}${namespace}`, {
         withCredentials: true,
-        extraHeaders: {
-          Authorization: `Bearer ${token}`
+        // Prefer websockets and only fall back to HTTP long-polling if they fail
+        transports: ['websocket', 'polling'],
+        tryAllTransports: true,
+        // Browsers cannot set headers on websocket connections, so the token is sent
+        // in the auth payload. It is read on each (re)connect so it is never stale.
+        auth: (cb) => {
+          this.tokenService.getHqToken().then((token) => cb({ token }));
         }
       });
-      this.connecting = false;
       this.subscribe();
     }
   }

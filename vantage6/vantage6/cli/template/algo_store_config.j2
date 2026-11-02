@@ -199,6 +199,20 @@ store:
       name: sqlalchemy.engine
     {% endif %}
 
+  # SQLAlchemy database connection pool settings. Optional; when omitted,
+  # SQLAlchemy's defaults are used (pool_size=5, max_overflow=10). Ignored for
+  # SQLite databases.
+  {% if store.database_pool_size is defined %}
+  database_pool_size: {{ store.database_pool_size }}
+  {% else %}
+  # database_pool_size: 5
+  {% endif %}
+  {% if store.database_max_overflow is defined %}
+  database_max_overflow: {{ store.database_max_overflow }}
+  {% else %}
+  # database_max_overflow: 10
+  {% endif %}
+
   # Specify private Docker registries so that the store can login and interact with
   # private algorithms to retrieve the digests.
   {% if store.private_docker_registries is defined %}

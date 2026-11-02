@@ -103,12 +103,18 @@ hq:
       name: sqlalchemy.engine
     {% endif %}
 
-  {% if hq.jwt is defined and hq.jwt.secret is defined %}
-  # Setting constant secret for the JWT token. This is not recommended for production
-  # environments.
   jwt:
+    {% if hq.jwt is defined and hq.jwt.secret is defined %}
+    # Setting constant secret for the JWT token. This is not recommended for production
+    # environments.
     secret: {{ hq.jwt.secret }}
-  {% endif %}
+    {% endif %}
+    # How long a container token (used by an algorithm container to call back into
+    # HQ while its task runs) remains valid, in hours, before it expires. This is a
+    # backstop only: a container token also stops working as soon as its task
+    # finishes, regardless of this setting. Increase it if your algorithms can run
+    # longer than this. Defaults to 168 hours (one week).
+    container_token_expires_hours: {{ hq.jwt.container_token_expires_hours | default(168) }}
 
   # Whether to forward ports using kubernetes or not. If set to false, the ports will
   # not be forwarded. You are then responsible yourself for forwarding the ports.
@@ -176,6 +182,23 @@ hq:
   {% endif %}
   {% if hq.runs_data_cleanup_include_args is not defined %}
   # runs_data_cleanup_include_args: false
+  {% endif %}
+
+  # SQLAlchemy database connection pool settings. Optional; when omitted,
+  # SQLAlchemy's defaults are used (pool_size=5, max_overflow=10). Ignored for
+  # SQLite. Size these so that (pool_size + max_overflow) * number_of_instances
+  # stays below the database's maximum number of connections.
+  {% if hq.database_pool_size is defined %}
+  database_pool_size: {{ hq.database_pool_size }}
+  {% endif %}
+  {% if hq.database_pool_size is not defined %}
+  # database_pool_size: 5
+  {% endif %}
+  {% if hq.database_max_overflow is defined %}
+  database_max_overflow: {{ hq.database_max_overflow }}
+  {% endif %}
+  {% if hq.database_max_overflow is not defined %}
+  # database_max_overflow: 10
   {% endif %}
 
   # set up with which origins HQ should allow CORS requests. The default

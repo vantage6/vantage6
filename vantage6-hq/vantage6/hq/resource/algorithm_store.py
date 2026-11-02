@@ -395,6 +395,12 @@ class AlgorithmStore(AlgorithmStoreBase):
                 return {
                     "msg": "You lack the permission to do that!"
                 }, HTTPStatus.UNAUTHORIZED
+        if algorithm_store.collaboration_id and self.is_node_outside_its_collab(
+            algorithm_store.collaboration_id
+        ):
+            return {
+                "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
 
         # Convert the Kubernetes URL to a localhost URL for the client
         self._convert_k8s_url_to_localhost(algorithm_store)

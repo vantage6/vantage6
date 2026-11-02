@@ -440,8 +440,8 @@ jobs:
           python-version: "3.13"
 
       - name: Install uv
-        run: |
-          pip install uv
+        # pinned to: https://github.com/astral-sh/setup-uv/releases/tag/v10.3.2
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e
 
       - name: Create virtual environment
         run: |

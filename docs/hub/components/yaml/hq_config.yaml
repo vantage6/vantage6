@@ -68,6 +68,13 @@ hq:
   jwt:
     secret: "super-secret-key-that-you-shouldnt-use-in-production"
 
+    # How long a container token (used by an algorithm container to call back into
+    # HQ while its task runs) remains valid, in hours, before it expires. This is a
+    # backstop only: a container token also stops working as soon as its task
+    # finishes, regardless of this setting. Increase it if your algorithms can run
+    # longer than this. Optional; defaults to 168 hours (one week).
+    container_token_expires_hours: 168
+
   # Cleanup settings: This is used to cleanup the database from old results.
   # Every hour, results older than the threshold for completed runs are deleted.
   # Disabled by default.
@@ -76,6 +83,17 @@ hq:
   runs_data_cleanup_days: 30
   # Whether to also delete the algorithm arguments of the runs. False by default.
   runs_data_cleanup_include_args: false
+
+  # SQLAlchemy database connection pool settings. Optional; when omitted,
+  # SQLAlchemy's defaults are used (pool_size=5, max_overflow=10). These are
+  # ignored for SQLite databases. Postgres accepts 100 connections by default,
+  # so when running multiple HQ instances against one database, size these so
+  # that (pool_size + max_overflow) * number_of_instances stays below that
+  # limit. database_pool_size is the number of persistent connections kept
+  # open; database_max_overflow is the number of extra connections allowed
+  # during demand spikes.
+  # database_pool_size: 5
+  # database_max_overflow: 10
 
   # Set up with which origins the server should allow CORS requests. The default
   # is to allow all origins. If you want to restrict this, you can specify a list
