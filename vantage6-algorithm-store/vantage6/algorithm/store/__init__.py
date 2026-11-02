@@ -24,7 +24,7 @@ import sqlalchemy
 from flask import current_app
 from flask_principal import Identity, identity_changed
 
-from vantage6.common import logger_name, validate_required_env_vars
+from vantage6.common import logger_name
 from vantage6.common.enum import StorePolicies
 from vantage6.common.exceptions import AuthenticationException
 from vantage6.common.globals import DEFAULT_API_PATH, STORE_TOKEN_AUDIENCE
@@ -43,7 +43,6 @@ from vantage6.algorithm.store.globals import (
     BACKEND_MODULE_NAME,
     RESOURCES,
     RESOURCES_PATH,
-    RequiredStoreEnvVars,
 )
 from vantage6.algorithm.store.link_algorithms import link_algorithms_from_config
 from vantage6.algorithm.store.model.base import Base, Database, DatabaseSessionManager
@@ -89,10 +88,6 @@ class AlgorithmStoreApp(Vantage6App):
             self.setup_disable_review()
 
         log.info("Initialization done")
-
-    def validate_required_env_vars(self) -> None:
-        """Validate that the required environment variables are set."""
-        validate_required_env_vars(RequiredStoreEnvVars)
 
     def configure_flask(self) -> None:
         """Configure the Flask settings of the vantage6 algorithm store."""

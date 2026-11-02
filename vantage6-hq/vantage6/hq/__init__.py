@@ -30,7 +30,11 @@ from flask_socketio import SocketIO
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
 
-from vantage6.common import logger_name, split_rabbitmq_uri
+from vantage6.common import (
+    logger_name,
+    split_rabbitmq_uri,
+    validate_required_env_vars,
+)
 from vantage6.common.exceptions import (
     AuthenticationException,
     SuperUserAlreadyExistsError,
@@ -47,10 +51,7 @@ from vantage6.cli.context.hq import HQContext
 
 from vantage6.backend.common import Vantage6App
 from vantage6.backend.common.auth import ensure_keycloak_token_setup
-from vantage6.backend.common.globals import (
-    DEFAULT_HQ_STORE_READER_KEYCLOAK_CLIENT,
-    RequiredBackendEnvVars,
-)
+from vantage6.backend.common.globals import DEFAULT_HQ_STORE_READER_KEYCLOAK_CLIENT
 from vantage6.backend.common.metrics import Metrics, start_prometheus_exporter
 from vantage6.backend.common.permission import RuleNeed
 
@@ -63,6 +64,7 @@ from vantage6.hq.globals import (
     HQ_STORE_READER_CLIENT_ENV_VAR,
     RESOURCES,
     RESOURCES_PATH,
+    RequiredHQEnvVars,
 )
 from vantage6.hq.model.base import Database, DatabaseSessionManager
 from vantage6.hq.permission import PermissionManager
@@ -214,6 +216,11 @@ class HQApp(Vantage6App):
 
         return socketio
 
+    def validate_required_env_vars(self) -> None:
+        """Validate that the required environment variables are set."""
+        super().validate_required_env_vars()
+        validate_required_env_vars(RequiredHQEnvVars)
+
     def configure_flask(self) -> None:
         """
         Configure the Flask settings of the vantage6 HQ.
@@ -347,7 +354,7 @@ class HQApp(Vantage6App):
         # Ensure root user and organization exist
         try:
             admin_user = db.User.get_by_username(
-                os.environ.get(RequiredBackendEnvVars.KEYCLOAK_ADMIN_USERNAME.value)
+                os.environ.get(RequiredHQEnvVars.KEYCLOAK_ADMIN_USERNAME.value)
             )
         except NoResultFound:
             log.warning("No root user found! Is this the first run?")
@@ -381,9 +388,7 @@ class HQApp(Vantage6App):
 
         This method is used when HQ is started for the first time.
         """
-        root_username = os.environ.get(
-            RequiredBackendEnvVars.KEYCLOAK_ADMIN_USERNAME.value
-        )
+        root_username = os.environ.get(RequiredHQEnvVars.KEYCLOAK_ADMIN_USERNAME.value)
         if not root_username:
             raise OSError("Required env var KEYCLOAK_ADMIN_USERNAME is not set")
 

@@ -27,19 +27,6 @@ RESOURCES = [
 RESOURCES_PATH = "vantage6.algorithm.store.resource"
 
 
-class RequiredStoreEnvVars(StrEnumBase):
-    """
-    Environment variables the algorithm store requires. Unlike HQ, the store does not
-    get the Keycloak admin user's credentials, and its Keycloak client can only look up
-    users.
-    """
-
-    KEYCLOAK_URL = "KEYCLOAK_URL"
-    KEYCLOAK_REALM = "KEYCLOAK_REALM"
-    KEYCLOAK_ADMIN_CLIENT = "KEYCLOAK_ADMIN_CLIENT"
-    KEYCLOAK_ADMIN_CLIENT_SECRET = "KEYCLOAK_ADMIN_CLIENT_SECRET"
-
-
 class ConditionalArgComparator(StrEnumBase):
     """Enum containing allowed comparators for conditional arguments"""
 

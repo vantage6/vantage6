@@ -23,11 +23,12 @@ DEFAULT_HQ_STORE_READER_KEYCLOAK_CLIENT = "hq-store-reader-client"
 
 
 class RequiredBackendEnvVars(StrEnumBase):
-    """Enum containing the required backend environment variables"""
+    """
+    Environment variables required by both HQ and the algorithm store. Each uses its
+    own Keycloak admin client.
+    """
 
     KEYCLOAK_URL = "KEYCLOAK_URL"
     KEYCLOAK_REALM = "KEYCLOAK_REALM"
-    KEYCLOAK_ADMIN_USERNAME = "KEYCLOAK_ADMIN_USERNAME"
-    KEYCLOAK_ADMIN_PASSWORD = "KEYCLOAK_ADMIN_PASSWORD"
     KEYCLOAK_ADMIN_CLIENT = "KEYCLOAK_ADMIN_CLIENT"
     KEYCLOAK_ADMIN_CLIENT_SECRET = "KEYCLOAK_ADMIN_CLIENT_SECRET"

@@ -25,6 +25,7 @@ log = logging.getLogger(module_name)
 # seconds before HQ's token for algorithm stores expires that it is renewed
 HQ_STORE_TOKEN_RENEWAL_MARGIN = 30
 
+
 class HQStoreToken:
     """
     The token HQ uses to call algorithm stores.
