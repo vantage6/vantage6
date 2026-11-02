@@ -1,19 +1,18 @@
-import logging
-import jwt
 import datetime as dt
+import logging
 
+import jwt
 from flask import request, session
 from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
-from flask_socketio import Namespace, emit, join_room, leave_room
-
+from flask_socketio import Namespace, disconnect, emit, join_room, leave_room
+from vantage6.backend.common.metrics import Metrics
 from vantage6.common import logger_name
 from vantage6.common.globals import AuthStatus
 from vantage6.common.task_status import has_task_failed
-from vantage6.backend.common.metrics import Metrics
 from vantage6.server import db
 from vantage6.server.model.authenticatable import Authenticatable
-from vantage6.server.model.rule import Operation, Scope
 from vantage6.server.model.base import DatabaseSessionManager
+from vantage6.server.model.rule import Operation, Scope
 
 ALL_NODES_ROOM = "all_nodes"
 
@@ -37,7 +36,7 @@ class DefaultSocketNamespace(Namespace):
 
     def _is_node(self) -> bool:
         if session.type != "node":
-            self.log.warn(
+            self.log.warning(
                 "Only nodes can send algorithm updates! "
                 f"{session.type} {session.auth_id} is not allowed."
             )
@@ -57,7 +56,8 @@ class DefaultSocketNamespace(Namespace):
 
         Note
         ----
-        Note that reconnecting clients are treated the same as new clients.
+        Note that reconnecting clients are treated the same as new clients. Clients
+        that fail to authenticate are disconnected.
 
         """
         self.log.info(f'Client connected: "{request.sid}"')
@@ -69,21 +69,30 @@ class DefaultSocketNamespace(Namespace):
         except jwt.exceptions.ExpiredSignatureError:
             self.log.error("JWT has expired")
             emit("expired_token", room=request.sid)
+            disconnect()
             return
 
         except jwt.exceptions.InvalidSignatureError:
             self.log.error("Invalid JWT signature")
             emit("invalid_token", room=request.sid)
+            disconnect()
             return
 
         except Exception as exc:
             self.log.error("Couldn't connect client! No or Invalid JWT token?")
             self.log.exception(exc)
+            disconnect()
             return
 
         # get identity from token.
-        session.auth_id = get_jwt_identity()
-        auth = db.Authenticatable.get(session.auth_id)
+        auth_id = get_jwt_identity()
+        auth = db.Authenticatable.get(auth_id)
+        if auth is None:
+            self.log.warning(f"No user or node found with id {auth_id}")
+            disconnect()
+            self.__cleanup()
+            return
+        session.auth_id = auth_id
         auth.status = AuthStatus.ONLINE.value
         auth.save()
 
@@ -129,8 +138,7 @@ class DefaultSocketNamespace(Namespace):
         session.rooms.append(ALL_NODES_ROOM)
         session.rooms.append(f"collaboration_{node.collaboration_id}")
         session.rooms.append(
-            f"collaboration_{node.collaboration_id}_organization_"
-            f"{node.organization_id}"
+            f"collaboration_{node.collaboration_id}_organization_{node.organization_id}"
         )
 
     @staticmethod
@@ -160,7 +168,7 @@ class DefaultSocketNamespace(Namespace):
             # relevant to their own node
             for collab in user.organization.collaborations:
                 session.rooms.append(
-                    f"collaboration_{collab.id}_organization_" f"{user.organization.id}"
+                    f"collaboration_{collab.id}_organization_{user.organization.id}"
                 )
 
     def on_disconnect(self) -> None:
@@ -348,7 +356,7 @@ class DefaultSocketNamespace(Namespace):
         """
         auth = db.Authenticatable.get(session.auth_id)
         auth.status = AuthStatus.ONLINE.value
-        auth.last_seen = dt.datetime.now(dt.timezone.utc)
+        auth.last_seen = dt.datetime.now(dt.UTC)
         auth.save()
 
     def __join_room_and_notify(self, room: str) -> None:
