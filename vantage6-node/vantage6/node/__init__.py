@@ -117,6 +117,9 @@ class Node:
 
         self.config = self.ctx.config
         self.debug: dict = self.config.get("debug", {})
+
+        self.check_algorithm_policies()
+
         self.queue = queue.Queue()
         self._using_encryption = None
 
@@ -223,6 +226,36 @@ class Node:
         t.start()
 
         self.log.info("Init complete")
+
+    def check_algorithm_policies(self) -> None:
+        """
+        Verify that the node restricts which algorithms are allowed to run.
+
+        When ``production`` is true (default), the node exits if neither the
+        ``allowed_algorithms`` nor the ``allowed_algorithm_stores`` policy is set.
+        Otherwise, all algorithms are allowed and a warning is logged.
+        """
+        policies = self.config.get("policies") or {}
+        if policies.get(NodePolicy.ALLOWED_ALGORITHMS) or policies.get(
+            NodePolicy.ALLOWED_ALGORITHM_STORES
+        ):
+            return
+
+        if self.config.get("production", True):
+            self.log.error(
+                "No policies on allowed algorithms have been set for this node. Nodes "
+                "with production=true require that you set the '%s' and/or '%s' "
+                "policy in the node configuration.",
+                NodePolicy.ALLOWED_ALGORITHMS.value,
+                NodePolicy.ALLOWED_ALGORITHM_STORES.value,
+            )
+            sys.exit(1)
+        self.log.warning(
+            "No policies on allowed algorithms have been set for this node!"
+        )
+        self.log.warning(
+            "This means that all algorithms are allowed to run on this node."
+        )
 
     def __metadata_worker(self) -> None:
         """

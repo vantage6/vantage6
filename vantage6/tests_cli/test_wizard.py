@@ -4,6 +4,7 @@ from pathlib import Path
 from unittest.mock import patch, MagicMock
 
 from vantage6.cli.configuration_wizard import (
+    _get_algorithm_policies,
     node_configuration_questionaire,
     server_configuration_questionaire,
     configuration_wizard,
@@ -38,7 +39,6 @@ class WizardTest(unittest.TestCase):
                 True,  # add a database
                 False,  # don't enable two-factor authentication
                 True,  # add VPN server
-                True,  # add algorithm policies
                 True,  # add single algorithms to allowed_algorithms
                 "some-image",  # algorithm image to whitelist
                 False,  # don't add another algorithm image
@@ -76,6 +76,28 @@ class WizardTest(unittest.TestCase):
             for key in nesting:
                 self.assertIn(key, current_config)
                 current_config = current_config[key]
+
+    @patch(f"{module_path}.error")
+    @patch(f"{module_path}._get_allowed_algorithm_stores")
+    @patch(f"{module_path}._get_allowed_algorithms")
+    @patch(f"{module_path}.q")
+    def test_node_wizard_requires_algorithm_policy(
+        self, q, get_algorithms, get_stores, error
+    ):
+        """Check the node wizard asks again until an algorithm policy is given."""
+        q.confirm.return_value.unsafe_ask.side_effect = [
+            False,  # don't add list of allowed_algorithms
+            False,  # don't add algorithm stores
+            True,  # add list of allowed_algorithms (second attempt)
+            False,  # don't add algorithm stores (second attempt)
+        ]
+        get_algorithms.return_value = ["some-image"]
+
+        policies = _get_algorithm_policies()
+
+        self.assertEqual(policies, {NodePolicy.ALLOWED_ALGORITHMS: ["some-image"]})
+        error.assert_called_once()
+        get_stores.assert_not_called()
 
     def test_server_wizard(self):
         with patch(f"{module_path}.q") as q:

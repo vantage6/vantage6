@@ -350,18 +350,7 @@ class DockerManager(DockerBaseManager):
         dict
             Dictionary with the policies
         """
-        policies = config.get("policies", {})
-        if not policies or (
-            not policies.get(NodePolicy.ALLOWED_ALGORITHMS)
-            and not policies.get(NodePolicy.ALLOWED_ALGORITHM_STORES)
-        ):
-            self.log.warning(
-                "No policies on allowed algorithms have been set for this node!"
-            )
-            self.log.warning(
-                "This means that all algorithms are allowed to run on this node."
-            )
-        return policies
+        return config.get("policies") or {}
 
     def create_volume(self, volume_name: str) -> None:
         """
