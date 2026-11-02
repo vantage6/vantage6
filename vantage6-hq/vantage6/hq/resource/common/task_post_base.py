@@ -22,6 +22,7 @@ from vantage6.backend.common.resource.error_handling import (
     BadRequestError,
     ForbiddenError,
     NotFoundError,
+    UnauthorizedError,
     handle_exceptions,
 )
 
@@ -31,6 +32,7 @@ from vantage6.hq.dataclass import CreateTaskDB
 from vantage6.hq.permission import (
     Operation as P,
     RuleCollection,
+    Scope as S,
 )
 from vantage6.hq.resource import ServicesResources
 from vantage6.hq.resource.common.input_schema import TaskInputSchema
@@ -102,7 +104,15 @@ class TaskPostBase(ServicesResources):
         ):
             return {"msg": "Container-token is not valid"}, HTTPStatus.UNAUTHORIZED
 
-        session = self._validate_session(data["session_id"])
+        session = self._validate_session(
+            data["session_id"],
+            collaboration,
+            study,
+            check_user_permission=rule_collection_to_check is not None,
+        )
+
+        if data.get("dataframe_id"):
+            self._validate_dataframe_in_session(data["dataframe_id"], session)
 
         organizations_json_list = data.get("organizations")
         org_ids = [org.get("id") for org in organizations_json_list]
@@ -167,11 +177,104 @@ class TaskPostBase(ServicesResources):
                 "Request body is incorrect: " + json.dumps(e.messages)
             ) from e
 
-    def _validate_session(self, session_id: int) -> db.Session:
+    def _validate_session(
+        self,
+        session_id: int,
+        collaboration: db.Collaboration,
+        study: db.Study | None,
+        check_user_permission: bool = True,
+    ) -> db.Session:
+        """
+        Check that the session exists, belongs to the collaboration (and study) of
+        the task, and may be used by the requesting user or container.
+
+        The user permission check can be skipped if the caller already checked that
+        the user may modify the session (e.g. the session endpoints).
+        """
         session = db.Session.get(session_id)
         if not session:
             raise NotFoundError(f"Session id={session_id} not found!")
+
+        if session.collaboration_id != collaboration.id:
+            raise BadRequestError(
+                f"Session id={session_id} is not part of collaboration "
+                f"id={collaboration.id}."
+            )
+
+        # A task on a study session may omit the study, and a task for a study may use
+        # a session of the whole collaboration, but the studies may not differ.
+        if study and session.study_id and session.study_id != study.id:
+            raise BadRequestError(
+                f"Session id={session_id} is not part of study id={study.id}."
+            )
+
+        if g.user and check_user_permission and not self.can_view_session(session):
+            raise UnauthorizedError(
+                f"You lack the permission to use session id={session_id}."
+            )
+
+        if g.container and session.id != g.container["session_id"]:
+            raise UnauthorizedError(
+                "Container can only create tasks in the session of its parent task."
+            )
+
         return session
+
+    @staticmethod
+    def _validate_dataframe_in_session(
+        dataframe_id: int, session: db.Session
+    ) -> db.Dataframe:
+        """Check that the dataframe exists and is part of the session of the task."""
+        df = db.Dataframe.get(dataframe_id)
+        if not df:
+            raise NotFoundError(f"Dataframe id={dataframe_id} not found!")
+        if df.session_id != session.id:
+            raise BadRequestError(
+                f"Dataframe id={dataframe_id} is not part of session id={session.id}."
+            )
+        return df
+
+    def can_view_session(self, session: db.Session) -> bool:
+        """
+        Check if the user can view the session.
+
+        Depending on the scope of the session, the user needs to have the correct
+        permissions. The user can view the session if:
+
+        - The user has global view permissions
+        - The user has collaboration view permissions or the session is scoped to the
+          collaboration AND the user is part of the collaboration of the session
+        - The user has organization view permissions or the session is scoped to the
+          organization AND the user is part of the organization of the session
+        - The user has own view permissions AND the user is the owner of the session
+
+        Note that viewing includes viewing both the sessions and the dataframes.
+
+        Parameters
+        ----------
+        session : db.Session
+            Session to check whether the user can view it
+
+        Returns
+        -------
+        bool
+            True if the user can view the session, False otherwise
+        """
+        rules: RuleCollection = self.permissions.session
+        if rules.v_glo.can():
+            return True
+
+        if (
+            rules.v_col.can() or session.scope == S.COLLABORATION
+        ) and session.collaboration_id in self.obtain_auth_collaboration_ids():
+            return True
+
+        if (
+            rules.v_org.can() or session.scope == S.ORGANIZATION
+        ) and session.owner.organization_id == self.obtain_organization_id():
+            return True
+
+        return bool(self.is_user() and session.user_id == g.user.id)
 
     def _validate_collaboration_and_study(
         self, data: dict
@@ -330,17 +433,21 @@ class TaskPostBase(ServicesResources):
         for database in [
             CreateTaskDB.from_dict(db_) for sublist in databases for db_ in sublist
         ]:
+            df = None
             # add last modification task to dependent tasks
             if database.type == TaskDatabaseType.DATAFRAME:
-                df = db.Dataframe.get(database.dataframe_id)
-                if not df:
-                    raise NotFoundError(f"Dataframe '{database.label}' not found!")
+                df = self._validate_dataframe_in_session(database.dataframe_id, session)
 
                 if not df.ready:
                     dependent_tasks.append(df.last_session_task)
 
             # If dataframe extraction is not ready for each org, don't create task
             if action != AlgorithmStepType.DATA_EXTRACTION:
+                if not df:
+                    raise BadRequestError(
+                        f"Database '{database.label}' is not a dataframe. Only data "
+                        "extraction tasks can use source databases."
+                    )
                 self._check_data_extract_ready_for_requested_orgs(df, org_ids)
             else:
                 self.__check_database_label_exists(

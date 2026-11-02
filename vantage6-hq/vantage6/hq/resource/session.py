@@ -151,47 +151,6 @@ class SessionBase(TaskPostBase):
         super().__init__(socketio, storage_adapter, mail, api, permissions, config)
         self.r: RuleCollection = getattr(self.permissions, module_name)
 
-    def can_view_session(self, session: db.Session) -> bool:
-        """
-        Check if the user can view the session.
-
-        Depending on the scope of the session, the user needs to have the correct
-        permissions. The user can view the session if:
-
-        - The user has global view permissions
-        - The user has collaboration view permissions or the session is scoped to the
-          collaboration AND the user is part of the collaboration of the session
-        - The user has organization view permissions or the session is scoped to the
-          organization AND the user is part of the organization of the session
-        - The user has own view permissions AND the user is the owner of the session
-
-        Note that viewing includes viewing both the sessions and the dataframes.
-
-        Parameters
-        ----------
-        session : db.Session
-            Session to check whether the user can view it
-
-        Returns
-        -------
-        bool
-            True if the user can view the session, False otherwise
-        """
-        if self.r.v_glo.can():
-            return True
-
-        if (
-            self.r.v_col.can() or session.scope == S.COLLABORATION
-        ) and session.collaboration_id in self.obtain_auth_collaboration_ids():
-            return True
-
-        if (
-            self.r.v_org.can() or session.scope == S.ORGANIZATION
-        ) and session.owner.organization_id == self.obtain_organization_id():
-            return True
-
-        return bool(self.is_user() and session.user_id == g.user.id)
-
     def can_edit_session(self, session: db.Session) -> bool:
         """
         Check if the user can edit the session.
