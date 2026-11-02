@@ -7,7 +7,7 @@ name = "vantage6"
 version = "5.0.3"
 description = "vantage6 command line interface"
 readme = "README.md"
-license = {text = "MIT"}
+license = {text = "Apache-2.0"}
 authors = [
     {name = "Vantage6 Team"}
 ]
@@ -34,13 +34,6 @@ dependencies = [
     "vantage6-common==5.0.3",
     "vantage6-client==5.0.3",
     "vantage6-algorithm-tools==5.0.3",
-]
-
-[project.optional-dependencies]
-dev = [
-    "coverage==7.10.2",
-    "black",
-    "pre-commit",
 ]
 
 [project.scripts]

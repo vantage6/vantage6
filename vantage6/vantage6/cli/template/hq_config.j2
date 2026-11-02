@@ -173,6 +173,23 @@ hq:
   # runs_data_cleanup_include_args: false
   {% endif %}
 
+  # SQLAlchemy database connection pool settings. Optional; when omitted,
+  # SQLAlchemy's defaults are used (pool_size=5, max_overflow=10). Ignored for
+  # SQLite. Size these so that (pool_size + max_overflow) * number_of_instances
+  # stays below the database's maximum number of connections.
+  {% if hq.database_pool_size is defined %}
+  database_pool_size: {{ hq.database_pool_size }}
+  {% endif %}
+  {% if hq.database_pool_size is not defined %}
+  # database_pool_size: 5
+  {% endif %}
+  {% if hq.database_max_overflow is defined %}
+  database_max_overflow: {{ hq.database_max_overflow }}
+  {% endif %}
+  {% if hq.database_max_overflow is not defined %}
+  # database_max_overflow: 10
+  {% endif %}
+
   # set up with which origins HQ should allow CORS requests. The default
   # is to allow all origins. If you want to restrict this, you can specify a list
   # of origins here.
