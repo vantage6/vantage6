@@ -93,7 +93,7 @@ def create_node_config_file(
         lstrip_blocks=True,
         autoescape=True,
     )
-    template = environment.get_template("node_config.j2")
+    template = environment.get_template("dev_node_config.j2")
 
     # TODO: make this name specific to the server it connects
     node_name = config["node_name"]
