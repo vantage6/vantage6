@@ -309,8 +309,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                 },
             },
         }
-        if self.node_image:
-            config["node"]["image"] = self.node_image
+        config["node"].update(self._image_config(self.node_image, None))
 
         if self.with_prometheus:
             config["node"]["prometheus"] = {

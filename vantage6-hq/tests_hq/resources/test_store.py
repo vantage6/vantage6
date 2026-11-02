@@ -77,6 +77,101 @@ class TestResources(TestResourceBase):
         for resource in AlgorithmStore.get():
             resource.delete()
 
+    @patch("vantage6.hq.algo_store_communication._check_algorithm_store_online")
+    def test_uses_hq_keycloak(self, mock_check_algorithm_store_online):
+        """Only global editors may mark a store as using HQ's Keycloak"""
+        mock_check_algorithm_store_online.return_value = True
+        org = Organization()
+        col = Collaboration(organizations=[org])
+        col.save()
+        other_col = Collaboration(organizations=[org])
+        other_col.save()
+        col_rule = Rule.get_by_("collaboration", Scope.COLLABORATION, Operation.EDIT)
+        col_headers = self.get_user_auth_header(organization=org, rules=[col_rule])
+        glo_rule = Rule.get_by_("collaboration", Scope.GLOBAL, Operation.EDIT)
+        glo_headers = self.get_user_auth_header(rules=[glo_rule])
+        record = {
+            "name": "test",
+            "algorithm_store_url": "http://test.com",
+            "collaboration_id": col.id,
+        }
+
+        # a collaboration admin cannot set it, but can add the store without it
+        rv = self.app.post(
+            "/api/algorithmstore",
+            headers=col_headers,
+            json=record | {"uses_hq_keycloak": True},
+        )
+        self.assertEqual(rv.status_code, HTTPStatus.UNAUTHORIZED)
+        rv = self.app.post("/api/algorithmstore", headers=col_headers, json=record)
+        self.assertEqual(rv.status_code, HTTPStatus.CREATED)
+        self.assertFalse(rv.json["uses_hq_keycloak"])
+        store_id = rv.json["id"]
+
+        rv = self.app.patch(
+            f"/api/algorithmstore/{store_id}",
+            headers=col_headers,
+            json={"uses_hq_keycloak": True},
+        )
+        self.assertEqual(rv.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # a global editor can set it
+        rv = self.app.patch(
+            f"/api/algorithmstore/{store_id}",
+            headers=glo_headers,
+            json={"uses_hq_keycloak": True},
+        )
+        self.assertEqual(rv.status_code, HTTPStatus.OK)
+        self.assertTrue(AlgorithmStore.get(store_id).uses_hq_keycloak)
+
+        # a new record of the same store copies it
+        rv = self.app.post(
+            "/api/algorithmstore",
+            headers=col_headers,
+            json=record | {"collaboration_id": other_col.id},
+        )
+        self.assertEqual(rv.status_code, HTTPStatus.CREATED)
+        self.assertTrue(rv.json["uses_hq_keycloak"])
+
+        # also when the store is made available to all collaborations, which replaces
+        # the records of the separate collaborations
+        rv = self.app.post(
+            "/api/algorithmstore",
+            headers=glo_headers,
+            json={k: v for k, v in record.items() if k != "collaboration_id"},
+        )
+        self.assertEqual(rv.status_code, HTTPStatus.CREATED)
+        self.assertTrue(rv.json["uses_hq_keycloak"])
+
+        # cleanup
+        for resource in AlgorithmStore.get():
+            resource.delete()
+        org.delete()
+        col.delete()
+        other_col.delete()
+
+    @patch("vantage6.hq.algo_store_communication._check_algorithm_store_online")
+    def test_couple_store_from_config(self, mock_check_algorithm_store_online):
+        """Stores in HQ's config get uses_hq_keycloak, also when already coupled"""
+        mock_check_algorithm_store_online.return_value = True
+        store = {"name": "own", "url": "http://own.store", "api_path": "/api"}
+
+        with patch.dict(
+            self.server.ctx.config,
+            {"algorithm_stores": [store | {"uses_hq_keycloak": True}]},
+        ):
+            self.server._couple_algorithm_stores()
+        (record,) = AlgorithmStore.get_by_url(store["url"], store["api_path"])
+        self.assertTrue(record.uses_hq_keycloak)
+
+        with patch.dict(self.server.ctx.config, {"algorithm_stores": [store]}):
+            self.server._couple_algorithm_stores()
+        (record,) = AlgorithmStore.get_by_url(store["url"], store["api_path"])
+        self.assertFalse(record.uses_hq_keycloak)
+
+        # cleanup
+        record.delete()
+
     def test_view_algorithm_store(self):
         """Test viewing algorithm store records"""
         # without permissions

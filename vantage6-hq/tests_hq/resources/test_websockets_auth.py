@@ -11,7 +11,12 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from engineio.payload import Payload
 
-from vantage6.common.globals import SOCKETIO_MAX_DECODE_PACKETS, AuthStatus
+from vantage6.common.globals import (
+    HQ_TOKEN_AUDIENCE,
+    SOCKETIO_MAX_DECODE_PACKETS,
+    STORE_TOKEN_AUDIENCE,
+    AuthStatus,
+)
 
 from vantage6.hq.model import Node, User
 
@@ -20,10 +25,17 @@ from .test_resource_base import MOCK_PRIVATE_KEY_PEM, TestResourceBase
 NAMESPACE = "/tasks"
 
 
-def _token(keycloak_id: str, client_type: str, exp: int = 9999999999, key=None):
+def _token(
+    keycloak_id: str,
+    client_type: str,
+    exp: int = 9999999999,
+    key=None,
+    audience: str | list[str] = HQ_TOKEN_AUDIENCE,
+):
     claims = {
         "sub": keycloak_id,
         "vantage6_client_type": client_type,
+        "aud": audience,
         "exp": exp,
         "iat": 0,
     }
@@ -94,6 +106,20 @@ class TestWebsocketAuth(TestResourceBase):
 
         self.assertIn("invalid_token", self._received_event_names(client))
         self.assertEqual(Node.get(node.id).status, AuthStatus.OFFLINE.value)
+
+    def test_token_for_other_audience_in_auth_payload(self):
+        user = self.create_user()
+        user.status = AuthStatus.OFFLINE.value
+        user.save()
+
+        for audience in (
+            STORE_TOKEN_AUDIENCE,
+            [HQ_TOKEN_AUDIENCE, STORE_TOKEN_AUDIENCE],
+        ):
+            self._connect(
+                auth={"token": _token(user.keycloak_id, "user", audience=audience)}
+            )
+            self.assertEqual(User.get(user.id).status, AuthStatus.OFFLINE.value)
 
     def test_no_token(self):
         node = self._create_offline_node()

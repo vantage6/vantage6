@@ -27,7 +27,7 @@ from flask_principal import Identity, identity_changed
 from vantage6.common import logger_name
 from vantage6.common.enum import StorePolicies
 from vantage6.common.exceptions import AuthenticationException
-from vantage6.common.globals import DEFAULT_API_PATH
+from vantage6.common.globals import DEFAULT_API_PATH, STORE_TOKEN_AUDIENCE
 
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 
@@ -94,6 +94,10 @@ class AlgorithmStoreApp(Vantage6App):
         """Configure the Flask settings of the vantage6 algorithm store."""
         self._configure_flask_base(DatabaseSessionManager)
 
+        # only accept Keycloak tokens issued for algorithm stores. Tokens for HQ are
+        # refused, so clients never have a reason to send them here.
+        self.app.config["JWT_DECODE_AUDIENCE"] = STORE_TOKEN_AUDIENCE
+
     def configure_api(self) -> None:
         """Define global API output and its structure."""
         self._configure_api_base(BaseHATEOASModelSchema, Base)
@@ -116,17 +120,18 @@ class AlgorithmStoreApp(Vantage6App):
             Returns
             -------
             db.User | str:
-                The user identity, or the keycloak id if it is a node that is
+                The user identity, or the keycloak id if a node or HQ is
                 authenticating.
 
             Raises
             ------
             AuthenticationException
-                If no store `User` is registered for this (non-node) identity.
+                If no store `User` is registered for this (non-node, non-HQ)
+                identity.
             """
             identity = jwt_headers["sub"]
 
-            if jwt_headers.get("vantage6_client_type") == "node":
+            if jwt_headers.get("vantage6_client_type") in ("node", "hq"):
                 return identity
 
             auth_identity = Identity(identity)

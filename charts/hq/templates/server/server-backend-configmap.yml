@@ -51,12 +51,16 @@ data:
       host_uri: {{ .Values.hq.dev.host_uri }}
       store_address: {{ .Values.hq.dev.store_address | default $internal.store }}
     {{- end }}
+    {{- $hqKeycloak := default ($global.keycloak | default (dict)) .Values.hq.keycloak }}
+    keycloak:
+      public_client: {{ $hqKeycloak.publicClient | default "public_client" }}
     {{- if .Values.hq.algorithm_stores }}
     algorithm_stores:
       {{- range .Values.hq.algorithm_stores }}
       - name: {{ .name }}
         url: {{ .url }}
         api_path: {{ .api_path }}
+        uses_hq_keycloak: {{ .uses_hq_keycloak | default false }}
       {{- end }}
     {{- end }}
     {{- if .Values.hq.runs_data_cleanup_days }}

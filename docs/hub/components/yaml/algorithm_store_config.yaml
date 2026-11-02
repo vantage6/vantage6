@@ -45,10 +45,11 @@ store:
   keycloak:
     url: https://my-vantage6-auth.org
     realm: vantage6
+    # Username of the store's root user
     adminUsername: admin
-    adminPassword: admin
-    adminClient: backend-admin-client
-    adminClientSecret: myadminclientsecret
+    # Keycloak client the store uses to look up users
+    storeAdminClient: store-admin-client
+    storeAdminClientSecret: mystoreadminclientsecret
 
   # The URI of the vantage6 HQ that provides the admin user that will be admin
   # user in the store on startup. Note that if set, this overrides the global HQ address

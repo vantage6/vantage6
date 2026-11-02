@@ -5,6 +5,7 @@ from socket import SocketIO
 import jwt
 from flask import current_app, request, session
 from flask_jwt_extended import decode_token, get_jwt_identity, verify_jwt_in_request
+from flask_jwt_extended.internal_utils import custom_verification_for_token
 from flask_socketio import Namespace, emit, join_room, leave_room
 
 from vantage6.common import logger_name
@@ -76,6 +77,13 @@ class DefaultSocketNamespace(Namespace):
         token = auth_payload.get("token") if isinstance(auth_payload, dict) else None
         if isinstance(token, str):
             decoded_token = decode_token(token)
+            # decode_token only checks the token's signature, expiry and audience. Like
+            # API requests, also refuse tokens that are valid at algorithm stores too
+            # (see Vantage6App._reject_tokens_for_other_audiences). This runs the
+            # app's token_verification_loader, as verify_jwt_in_request does.
+            custom_verification_for_token(
+                jwt.get_unverified_header(token), decoded_token
+            )
             return decoded_token[current_app.config["JWT_IDENTITY_CLAIM"]]
 
         verify_jwt_in_request()

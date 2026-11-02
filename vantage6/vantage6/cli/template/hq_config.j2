@@ -24,8 +24,9 @@ hq:
     realm: {{ hq.keycloak.realm | default('vantage6') }}
     adminUsername: {{ hq.keycloak.adminUsername | default('admin') }}
     adminPassword: {{ yaml_sq(hq.keycloak.adminPassword | default('admin')) }}
-    adminClient: {{ hq.keycloak.adminClient | default('backend-admin-client') }}
-    adminClientSecret: {{ yaml_sq(hq.keycloak.adminClientSecret | default('myadminclientsecret')) }}
+    hqAdminClient: {{ hq.keycloak.hqAdminClient | default('hq-admin-client') }}
+    hqAdminClientSecret: {{ yaml_sq(hq.keycloak.hqAdminClientSecret | default('myadminclientsecret')) }}
+    hqStoreReaderClient: {{ hq.keycloak.hqStoreReaderClient | default('hq-store-reader-client') }}
   {% endif %}
 
   internal:
@@ -146,18 +147,22 @@ hq:
   # If you want to couple algorithm stores to HQ on startup, you can add them here.
   # The name is used to identify the algorithm store in the HQ's database.
   # The url is the URL of the algorithm store's API.
+  # Set uses_hq_keycloak to true only if the store authenticates with the same
+  # Keycloak as HQ: only those stores are sent tokens.
   {% if hq.algorithm_stores is defined %}
   algorithm_stores:
     {% for store in hq.algorithm_stores %}
     - name: {{ store.name }}
       url: {{ store.url }}
       api_path: {{ store.api_path }}
+      uses_hq_keycloak: {{ store.uses_hq_keycloak | default(false) | lower }}
     {% endfor %}
   {% else %}
   # algorithm_stores:
   # - name: Local store
   #   url: http://localhost:7602/api
   #   api_path: /api
+  #   uses_hq_keycloak: true
   {% endif %}
 
   # Cleanup settings: This is used to cleanup the database from old results.
@@ -280,12 +285,12 @@ ui:
   # keycloak connection settings
   keycloak:
       realm: {{ ui.keycloak.realm | default('vantage6') }}
-      client: {{ ui.keycloak.client | default('public_client') }}
+      publicClient: {{ ui.keycloak.publicClient | default('public_client') }}
       publicUrl: {{ ui.keycloak.publicUrl | default('http://localhost:7680') }}
   {% endif %}
 
-  # Allowed algorithm stores for Bearer token inclusion (comma-separated URLs)
-  # Use "*" to allow all stores (less secure) or specify specific URLs, e.g.
+  # Algorithm stores the UI may connect to, for its Content-Security-Policy
+  # (space-separated URLs). Use "*" to allow all stores or specify specific URLs, e.g.
   # allowedAlgorithmStores: "http://localhost:7602 https://store.uluru.vantage6.ai"
   allowedAlgorithmStores: "{{ ui.allowedAlgorithmStores | default('*') }}"
   # Community algorithm store URL.

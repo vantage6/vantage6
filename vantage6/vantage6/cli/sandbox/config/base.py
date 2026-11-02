@@ -51,6 +51,32 @@ class BaseSandboxConfigManager:
                 return loaded
         return {}
 
+    @staticmethod
+    def _image_config(custom_image: str | None, default_image: str | None) -> dict:
+        """
+        Get the image configuration of a sandbox component.
+
+        Custom images are often only available locally, so they are only pulled if
+        they are not present yet. Default images are always pulled to get their latest
+        version.
+
+        Parameters
+        ----------
+        custom_image : str | None
+            Image provided by the user, if any.
+        default_image : str | None
+            Image to use if no custom image is provided. If None, the image is left to
+            the configuration template.
+
+        Returns
+        -------
+        dict
+            Configuration with the image and, for custom images, the pull policy.
+        """
+        if custom_image:
+            return {"image": custom_image, "imagePullPolicy": "IfNotPresent"}
+        return {"image": default_image} if default_image else {}
+
     def _create_and_get_data_dir(
         self,
         instance_type: InstanceType,

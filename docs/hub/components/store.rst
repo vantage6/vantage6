@@ -36,6 +36,12 @@ permission to modify all collaborations on the HQ. To link an algorithm store, g
 the collaboration settings page on the UI or use the Python client function
 ``client.store.create()``.
 
+.. warning::
+
+    In vantage6 version 4, algorithm stores receive users' tokens, which are also valid
+    at the vantage6 server. A store could use them to act as those users on the server.
+    Therefore, only link algorithm stores that you trust as much as your server.
+
 .. _algorithm-store-configure:
 
 Configuration options

@@ -1,6 +1,13 @@
 from pathlib import Path
 
-from vantage6.common.globals import HTTP_LOCALHOST, InstanceType, Ports
+from vantage6.common.globals import (
+    DEFAULT_HQ_IMAGE,
+    DEFAULT_STORE_IMAGE,
+    DEFAULT_UI_IMAGE,
+    HTTP_LOCALHOST,
+    InstanceType,
+    Ports,
+)
 
 from vantage6.cli.auth.new import parse_database_uri_to_config
 from vantage6.cli.common.new import new
@@ -198,12 +205,13 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
                 "internal": {
                     "port": Ports.SANDBOX_HQ.value,
                 },
-                "image": (self.hq_image or "ghcr.io/vantage6/infrastructure/hq:uluru"),
+                **self._image_config(self.hq_image, DEFAULT_HQ_IMAGE),
                 "algorithm_stores": [
                     {
                         "name": "Local store",
                         "url": store_address,
                         "api_path": "/store",
+                        "uses_hq_keycloak": True,
                     }
                 ],
                 "logging": {
@@ -242,7 +250,7 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
             ),
             "ui": {
                 "port": Ports.SANDBOX_UI.value,
-                "image": (self.ui_image or "ghcr.io/vantage6/infrastructure/ui:uluru"),
+                **self._image_config(self.ui_image, DEFAULT_UI_IMAGE),
             },
             "prometheus": prometheus_config,
         }
@@ -262,10 +270,9 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
         """Creates HQ configuration file (YAML)."""
 
         extra_config = self._read_extra_config_file(self.extra_hq_config)
-        if self.ui_image is not None:
-            ui_config = extra_config.get("ui", {}) if extra_config is not None else {}
-            ui_config["image"] = self.ui_image
-            extra_config["ui"] = ui_config
+        # the extra UI config replaces the UI config, so add the custom image to it
+        if "ui" in extra_config:
+            extra_config["ui"].update(self._image_config(self.ui_image, None))
 
         # Create the HQ config file
         self.hq_config = new(
@@ -320,10 +327,7 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
                     "level": "DEBUG",
                     "volumeHostPath": log_dir,
                 },
-                "image": (
-                    self.store_image
-                    or "ghcr.io/vantage6/infrastructure/algorithm-store:uluru"
-                ),
+                **self._image_config(self.store_image, DEFAULT_STORE_IMAGE),
                 "policies": {
                     "allowLocalhost": True,
                     "assignReviewOwnAlgorithm": True,

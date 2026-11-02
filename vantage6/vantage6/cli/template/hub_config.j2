@@ -64,16 +64,25 @@ global:
     # Name of the Keycloak realm used by vantage6.
     realm: {{ keycloak.realm | default('vantage6') }}
 
-    # Name of the client that is allowed to manage users/clients in the realm.
-    adminClient: {{ keycloak.adminClient | default('backend-admin-client') }}
+    # Name of the client HQ uses to manage users/clients in the realm.
+    hqAdminClient: {{ keycloak.hqAdminClient | default('hq-admin-client') }}
 
     # Name of the public client used by users (e.g. the portal).
     publicClient: {{ keycloak.publicClient | default('public_client') }}
+
+    # Name of the client HQ uses to read approved algorithms from algorithm stores.
+    hqStoreReaderClient: {{ keycloak.hqStoreReaderClient | default('hq-store-reader-client') }}
+
+    # Name of the client algorithm stores use to look up users.
+    storeAdminClient: {{ keycloak.storeAdminClient | default('store-admin-client') }}
 
     # Credentials for the Vantage6 admin user. For production deployments you
     # should override these with secure values, preferably from a secret.
     adminUsername: {{ keycloak.adminUsername | default('admin') }}
     adminPassword: {{ yaml_sq(keycloak.adminPassword | default('admin')) }}
 
-    # Secret for the admin client that is used by backend services.
-    adminClientSecret: {{ yaml_sq(keycloak.adminClientSecret | default('myadminclientsecret')) }}
+    # Secret for the admin client that is used by HQ.
+    hqAdminClientSecret: {{ yaml_sq(keycloak.hqAdminClientSecret | default('myadminclientsecret')) }}
+
+    # Secret for the client algorithm stores use to look up users.
+    storeAdminClientSecret: {{ yaml_sq(keycloak.storeAdminClientSecret | default('mystoreadminclientsecret')) }}

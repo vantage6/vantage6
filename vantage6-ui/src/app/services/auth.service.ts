@@ -51,10 +51,6 @@ export class AuthService {
     });
   }
 
-  getToken(): string | undefined {
-    return this.keycloak.token;
-  }
-
   authenticatedObservable(): Observable<boolean> {
     return this.authenticated$.asObservable();
   }

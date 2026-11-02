@@ -20,6 +20,14 @@ DEFAULT_NODE_IMAGE = (
 
 DEFAULT_NODE_IMAGE_WO_TAG = f"{DEFAULT_DOCKER_REGISTRY}/infrastructure/node"
 
+DEFAULT_HQ_IMAGE = f"{DEFAULT_DOCKER_REGISTRY}/infrastructure/hq:{MAIN_VERSION_NAME}"
+
+DEFAULT_STORE_IMAGE = (
+    f"{DEFAULT_DOCKER_REGISTRY}/infrastructure/algorithm-store:{MAIN_VERSION_NAME}"
+)
+
+DEFAULT_UI_IMAGE = f"{DEFAULT_DOCKER_REGISTRY}/infrastructure/ui:{MAIN_VERSION_NAME}"
+
 DEFAULT_ALPINE_IMAGE = f"{DEFAULT_DOCKER_REGISTRY}/infrastructure/alpine:latest"
 
 # CHART GLOBALS (Helm OCI in GHCR — see release workflow helm-charts job)
@@ -52,6 +60,16 @@ ENV_VAR_EQUALS_REPLACEMENT = "!"
 # default API path (for HQ and algorithm store)
 DEFAULT_API_PATH = "/api"
 DEFAULT_PROMETHEUS_EXPORTER_PORT = 7603
+
+# Keycloak token audiences. HQ only accepts tokens for HQ and algorithm stores only
+# tokens for stores, so a store cannot replay a token it receives at HQ.
+HQ_TOKEN_AUDIENCE = "vantage6-hq"
+STORE_TOKEN_AUDIENCE = "vantage6-store"
+# Keycloak client scopes that add the audiences above
+HQ_AUDIENCE_SCOPE = "vantage6-hq-audience"
+STORE_AUDIENCE_SCOPE = "vantage6-store-audience"
+# Default Keycloak client users log in with, for both HQ and algorithm stores
+DEFAULT_KEYCLOAK_PUBLIC_CLIENT = "public_client"
 
 # Default validity period (in hours) of a container token, before it expires
 # independent of the task's status.

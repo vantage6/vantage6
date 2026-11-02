@@ -31,14 +31,20 @@ from flask_socketio import SocketIO
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
 
-from vantage6.common import logger_name, split_rabbitmq_uri
+from vantage6.common import (
+    logger_name,
+    split_rabbitmq_uri,
+    validate_required_env_vars,
+)
 from vantage6.common.exceptions import (
     AuthenticationException,
     SuperUserAlreadyExistsError,
 )
 from vantage6.common.globals import (
     DEFAULT_CONTAINER_TOKEN_EXPIRES_HOURS,
+    DEFAULT_KEYCLOAK_PUBLIC_CLIENT,
     DEFAULT_PROMETHEUS_EXPORTER_PORT,
+    HQ_TOKEN_AUDIENCE,
     PING_INTERVAL_SECONDS,
     SOCKETIO_MAX_DECODE_PACKETS,
     AuthStatus,
@@ -47,7 +53,8 @@ from vantage6.common.globals import (
 from vantage6.cli.context.hq import HQContext
 
 from vantage6.backend.common import Vantage6App
-from vantage6.backend.common.globals import RequiredBackendEnvVars
+from vantage6.backend.common.auth import ensure_keycloak_audiences
+from vantage6.backend.common.globals import DEFAULT_HQ_STORE_READER_KEYCLOAK_CLIENT
 from vantage6.backend.common.metrics import Metrics, start_prometheus_exporter
 from vantage6.backend.common.permission import RuleNeed
 
@@ -57,8 +64,10 @@ from vantage6.hq.controller import cleanup
 from vantage6.hq.default_roles import DefaultRole, get_default_roles
 from vantage6.hq.globals import (
     HQ_MODULE_NAME,
+    HQ_STORE_READER_CLIENT_ENV_VAR,
     RESOURCES,
     RESOURCES_PATH,
+    RequiredHQEnvVars,
 )
 from vantage6.hq.model.base import Database, DatabaseSessionManager
 from vantage6.hq.permission import PermissionManager
@@ -216,6 +225,11 @@ class HQApp(Vantage6App):
 
         return socketio
 
+    def validate_required_env_vars(self) -> None:
+        """Validate that the required environment variables are set."""
+        super().validate_required_env_vars()
+        validate_required_env_vars(RequiredHQEnvVars)
+
     def configure_flask(self) -> None:
         """
         Configure the Flask settings of the vantage6 HQ.
@@ -227,6 +241,10 @@ class HQApp(Vantage6App):
         """
 
         self._configure_flask_base(DatabaseSessionManager)
+
+        # only accept Keycloak tokens issued for HQ, so that tokens for algorithm
+        # stores cannot be replayed here
+        self.app.config["JWT_DECODE_AUDIENCE"] = HQ_TOKEN_AUDIENCE
 
         # set JWT secret key to generate container tokens
         # ensure that jwt_secret_key is set in the config if it didn't exist yet - that
@@ -356,7 +374,7 @@ class HQApp(Vantage6App):
         # Ensure root user and organization exist
         try:
             admin_user = db.User.get_by_username(
-                os.environ.get(RequiredBackendEnvVars.KEYCLOAK_ADMIN_USERNAME.value)
+                os.environ.get(RequiredHQEnvVars.KEYCLOAK_ADMIN_USERNAME.value)
             )
         except NoResultFound:
             log.warning("No root user found! Is this the first run?")
@@ -369,15 +387,28 @@ class HQApp(Vantage6App):
         # done after the resources are loaded to ensure that rules are set up
         self._couple_algorithm_stores()
 
+    def ensure_keycloak_token_setup(self) -> None:
+        """
+        Ensure Keycloak issues separate tokens for HQ and for algorithm stores, so that
+        a store cannot use a token it receives at HQ.
+        """
+        keycloak_config = self.ctx.config.get("keycloak", {})
+        ensure_keycloak_audiences(
+            public_client=keycloak_config.get(
+                "public_client", DEFAULT_KEYCLOAK_PUBLIC_CLIENT
+            ),
+            hq_store_reader_client=os.environ.get(
+                HQ_STORE_READER_CLIENT_ENV_VAR, DEFAULT_HQ_STORE_READER_KEYCLOAK_CLIENT
+            ),
+        )
+
     def _create_super_user(self) -> None:
         """
         Create the super user.
 
         This method is used when HQ is started for the first time.
         """
-        root_username = os.environ.get(
-            RequiredBackendEnvVars.KEYCLOAK_ADMIN_USERNAME.value
-        )
+        root_username = os.environ.get(RequiredHQEnvVars.KEYCLOAK_ADMIN_USERNAME.value)
         if not root_username:
             raise OSError("Required env var KEYCLOAK_ADMIN_USERNAME is not set")
 
@@ -484,6 +515,7 @@ class HQApp(Vantage6App):
                         "Algorithm store %s has no api_path, skipping coupling", name
                     )
                     continue
+                uses_hq_keycloak = bool(store.get("uses_hq_keycloak", False))
                 store = db.AlgorithmStore.get_by_url(url, api_path)
                 if not store:
                     response, status = add_algorithm_store_to_database(
@@ -491,6 +523,7 @@ class HQApp(Vantage6App):
                             "name": name,
                             "algorithm_store_url": url,
                             "api_path": api_path,
+                            "uses_hq_keycloak": uses_hq_keycloak,
                         },
                     )
                     if status == HTTPStatus.CREATED:
@@ -511,6 +544,9 @@ class HQApp(Vantage6App):
                         "Algorithm store '%s' at %s is already coupled to HQ",
                         name,
                         url,
+                    )
+                    db.AlgorithmStore.set_uses_hq_keycloak(
+                        url, api_path, uses_hq_keycloak
                     )
 
 

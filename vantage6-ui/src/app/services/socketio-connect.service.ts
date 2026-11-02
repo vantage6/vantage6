@@ -4,7 +4,7 @@ import { io, Socket } from 'socket.io-client';
 
 import { environment } from 'src/environments/environment';
 import { AlgorithmLogMsg, AlgorithmStatusChangeMsg, NewTaskMsg, NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
-import { AuthService } from './auth.service';
+import { TokenService } from './token.service';
 
 @Injectable({
   providedIn: 'root'
@@ -16,7 +16,7 @@ export class SocketioConnectService {
   algoLogUpdate$: BehaviorSubject<AlgorithmLogMsg | null> = new BehaviorSubject<AlgorithmLogMsg | null>(null);
   socket: Socket | null = null;
 
-  constructor(private authService: AuthService) {}
+  constructor(private tokenService: TokenService) {}
 
   connect() {
     if (this.socket === null) {
@@ -29,7 +29,9 @@ export class SocketioConnectService {
         tryAllTransports: true,
         // Browsers cannot set headers on websocket connections, so the token is sent
         // in the auth payload. It is read on each (re)connect so it is never stale.
-        auth: (cb) => cb({ token: this.authService.getToken() })
+        auth: (cb) => {
+          this.tokenService.getHqToken().then((token) => cb({ token }));
+        }
       });
       this.subscribe();
     }

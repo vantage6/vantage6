@@ -17,7 +17,7 @@ from flask_socketio import SocketIO
 from werkzeug.utils import cached_property
 
 from vantage6.common.enum import AlgorithmStepType, RunStatus
-from vantage6.common.globals import InstanceType
+from vantage6.common.globals import HQ_TOKEN_AUDIENCE, InstanceType
 
 from vantage6.backend.common.test_context import TestContext
 
@@ -152,7 +152,9 @@ class TestResourceBase(unittest.TestCase):
         for task in Task.get():
             task.delete()
 
-    def login(self, user: User | None = None):
+    def login(
+        self, user: User | None = None, audience: str | list[str] = HQ_TOKEN_AUDIENCE
+    ):
         if user is None:
             user = self.create_user()
 
@@ -160,6 +162,7 @@ class TestResourceBase(unittest.TestCase):
         mock_claims = {
             "sub": user.keycloak_id,
             "vantage6_client_type": "user",
+            "aud": audience,
             "exp": 9999999999,
             "iat": 0,
         }
@@ -222,6 +225,7 @@ class TestResourceBase(unittest.TestCase):
         mock_claims = {
             "sub": node.keycloak_id,
             "vantage6_client_type": "node",
+            "aud": HQ_TOKEN_AUDIENCE,
             "exp": 9999999999,
             "iat": 0,
         }

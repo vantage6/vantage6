@@ -4,7 +4,7 @@ import logging
 import uuid
 from http import HTTPStatus
 
-from flask import g, request, url_for
+from flask import g, url_for
 from marshmallow import ValidationError
 from sqlalchemy import select
 
@@ -27,7 +27,7 @@ from vantage6.backend.common.resource.error_handling import (
 )
 
 from vantage6.hq import db
-from vantage6.hq.algo_store_communication import request_algo_store
+from vantage6.hq.algo_store_communication import HQStoreToken, request_algo_store
 from vantage6.hq.dataclass import CreateTaskDB
 from vantage6.hq.permission import (
     Operation as P,
@@ -854,7 +854,8 @@ class TaskPostBase(ServicesResources):
     ) -> AlgorithmStepType:
         """
         Check if the action of the task matches the action in the algorithm store. If
-        no action is provided, use the action from the algorithm store.
+        no action is provided, use the action from the algorithm store. If the
+        algorithm is from a store, the method must be registered there.
 
         Parameters
         ----------
@@ -881,9 +882,12 @@ class TaskPostBase(ServicesResources):
             algo_func = next(
                 (f for f in algorithm["functions"] if f["name"] == method), None
             )
-            store_action = (
-                AlgorithmStepType(algo_func["step_type"]) if algo_func else None
-            )
+            if not algo_func:
+                raise BadRequestError(
+                    f"Method '{method}' is not registered for this algorithm in the "
+                    "algorithm store."
+                )
+            store_action = AlgorithmStepType(algo_func["step_type"])
 
         if action and store_action and action != store_action:
             raise BadRequestError(
@@ -960,6 +964,16 @@ class TaskPostBase(ServicesResources):
             parent = db.Task.get(g.container["task_id"])
             store = parent.algorithm_store
             image_with_hash = parent.image
+            # look up the algorithm so that the subtask's method and action are checked
+            # against the store, just like those of tasks created by users
+            if store:
+                try:
+                    algorithm = self._get_algorithm_from_store(
+                        store=store, image=image_with_hash
+                    )
+                except Exception as e:
+                    log.exception("Error while getting algorithm from store")
+                    raise BadRequestError(str(e)) from e
 
         return image_with_hash, store, algorithm
 
@@ -988,13 +1002,21 @@ class TaskPostBase(ServicesResources):
         Exception
             If the algorithm cannot be retrieved from the store.
         """
+        # HQ's own token, never the user's: the store must not receive a token it
+        # could use at HQ, and HQ must not be able to act as the user there. Stores
+        # that use another Keycloak get no token at all.
+        headers = (
+            {"Authorization": f"Bearer {HQStoreToken.get()}"}
+            if store.uses_hq_keycloak
+            else {}
+        )
         # get the algorithm from the store
         response, status_code = request_algo_store(
             algo_store_url=f"{store.url}{store.api_path}",
             endpoint="algorithm",
             method="GET",
             params={"image": image},
-            headers={"Authorization": request.headers["Authorization"]},
+            headers=headers,
         )
         if status_code != HTTPStatus.OK:
             raise AlgorithmRetrievalError(

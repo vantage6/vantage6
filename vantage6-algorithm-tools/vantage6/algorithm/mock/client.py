@@ -40,7 +40,9 @@ class MockBaseClient:
             "_download_run_data_from_hq",
             "_fetch_and_decrypt_run_data",
             "_multi_page_request",
+            "_obtain_client_credentials_tokens",
             "_refresh_token",
+            "_store_access_token",
             "_upload_run_data_to_hq",
             "AlgorithmStoreSubClientBase",
             "auth_url",
@@ -60,6 +62,7 @@ class MockBaseClient:
             "hq_url",
             "session_id",
             "setup_encryption",
+            "store_headers",
             "store_id",
             "study_id",
             "token",
@@ -511,6 +514,7 @@ class MockUserClient(MockBaseClient):
         self.set_missing_attributes(
             [
                 "_get_logger",
+                "_obtain_tokens_per_audience",
                 "auth_client",
                 "auth_realm",
                 "authenticate_service_account",
