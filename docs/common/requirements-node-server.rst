@@ -41,10 +41,10 @@ native to your OS and/or distribution.
     We recommend you install vantage6 in a new, clean Python (Conda)
     environment.
 
-    We develop and test vantage6 on Python 3.10, 3.11, 3.12 and 3.13. The
-    official server, node and algorithm store images are built on Python 3.13;
-    the algorithm base image stays on Python 3.10. Lower versions (3.8 or 3.9)
-    are not supported.
+    We develop and test vantage6 on Python 3.13; Python 3.10 and higher are
+    supported. The official server, node and algorithm store images are built
+    on Python 3.13; the algorithm base image stays on Python 3.10. Lower
+    versions (3.8 or 3.9) are not supported.
 
 .. warning::
     Note that Python 3.10 is only used in vantage6 versions 3.8.0 and higher.
