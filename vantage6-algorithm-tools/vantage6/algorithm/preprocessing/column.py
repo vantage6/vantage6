@@ -10,6 +10,7 @@ from vantage6.algorithm.tools.error_handling import handle_data_errors
 from vantage6.algorithm.tools.exceptions import UserInputError
 
 from vantage6.algorithm.decorator.action import preprocessing
+from vantage6.algorithm.preprocessing.expression import evaluate_expression
 
 
 @handle_data_errors
@@ -68,7 +69,14 @@ def assign_column(df: pd.DataFrame, column_name: str, expression: str) -> pd.Dat
     column_name : str
         The name of the new column.
     expression : str
-        The expression used to create the new column.
+        The expression used to create the new column, e.g. ``weight / (height *
+        height)``. Supported are column names, numbers, strings, ``True``, ``False``,
+        ``None``, the operators ``+ - * / // %`` (only ``+`` for text), comparisons
+        (``== != < <= > >=``), ``in``/``not in`` a list of constants,
+        ``and or not & | ~`` and the functions
+        ``abs, sqrt, log, log2, log10, exp, floor, ceil, round``. Other functions,
+        attribute access, indexing and ``**`` are not supported. The expression may
+        be at most 250 characters long.
 
     Returns
     -------
@@ -92,7 +100,7 @@ def assign_column(df: pd.DataFrame, column_name: str, expression: str) -> pd.Dat
     if column_name in df.columns:
         raise UserInputError(f"Column '{column_name}' already exists.")
 
-    df[column_name] = df.eval(expression)
+    df[column_name] = evaluate_expression(df, expression)
     return df
 
 
@@ -111,7 +119,14 @@ def redefine_column(
     column_name : str
         The name of the existing column to modify.
     expression : str
-        The expression used to modify the existing column.
+        The expression used to modify the existing column, e.g. ``round(age / 10)``.
+        Supported are column names, numbers, strings, ``True``, ``False``, ``None``,
+        the operators ``+ - * / // %`` (only ``+`` for text), comparisons
+        (``== != < <= > >=``), ``in``/``not in`` a list of constants,
+        ``and or not & | ~`` and the functions
+        ``abs, sqrt, log, log2, log10, exp, floor, ceil, round``. Other functions,
+        attribute access, indexing and ``**`` are not supported. The expression may
+        be at most 250 characters long.
 
     Returns
     -------
@@ -136,7 +151,7 @@ def redefine_column(
     if column_name not in df.columns:
         raise UserInputError(f"Column '{column_name}' does not exist.")
 
-    df[column_name] = df.eval(expression)
+    df[column_name] = evaluate_expression(df, expression)
     return df
 
 

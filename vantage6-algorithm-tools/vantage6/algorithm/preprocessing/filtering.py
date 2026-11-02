@@ -6,25 +6,31 @@ pandas DataFrames, such as selecting and filtering rows and columns.
 import pandas as pd
 
 from vantage6.algorithm.tools.error_handling import handle_data_errors
+from vantage6.algorithm.tools.exceptions import UserInputError
 
 from vantage6.algorithm.decorator.action import preprocessing
+from vantage6.algorithm.preprocessing.expression import evaluate_expression
 
 
 @handle_data_errors
 @preprocessing
 def select_rows(df: pd.DataFrame, query: str) -> pd.DataFrame:
     """
-    Select rows from the data based on a query. It uses the
-    pandas.DataFrame.query function to filter the data.
-
-    See the documentation of that function for more information on the query syntax.
+    Select the rows of the data for which the query is true.
 
     Parameters
     ----------
     df : pd.DataFrame
         The data to filter.
     query : str
-        The query string to filter on.
+        The condition that rows must meet, e.g. ``age >= 18 and sex == 'F'``.
+        Supported are column names, numbers, strings, ``True``, ``False``, ``None``,
+        the operators ``+ - * / // %`` (only ``+`` for text), comparisons
+        (``== != < <= > >=``), ``in``/``not in`` a list of constants,
+        ``and or not & | ~`` and the functions
+        ``abs, sqrt, log, log2, log10, exp, floor, ceil, round``. Other functions,
+        attribute access, indexing and ``**`` are not supported. The query may be at
+        most 250 characters long.
 
     Returns
     -------
@@ -73,9 +79,15 @@ def select_rows(df: pd.DataFrame, query: str) -> pd.DataFrame:
     3  4   9  14
     4  5  10  15
 
-    for more examples, see the documentation of pandas.DataFrame.query
+    >>> select_rows(df, "a in [1, 5]")
+       a   b   c
+    0  1   6  11
+    4  5  10  15
     """
-    return df.query(query)
+    mask = evaluate_expression(df, query)
+    if not isinstance(mask, pd.Series) or not pd.api.types.is_bool_dtype(mask):
+        raise UserInputError("The query must evaluate to true or false for each row.")
+    return df[mask]
 
 
 @handle_data_errors
