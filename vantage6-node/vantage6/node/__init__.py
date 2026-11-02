@@ -35,9 +35,11 @@ from threading import Thread
 import psutil
 import pynvml
 import requests.exceptions
+from engineio.payload import Payload
 from gevent.pywsgi import WSGIServer
 from keycloak import KeycloakAuthenticationError
 from socketio import Client as SocketIO
+from socketio.exceptions import BadNamespaceError
 
 from vantage6.common import logger_name, validate_required_env_vars
 from vantage6.common.client.node_client import NodeClient
@@ -45,6 +47,7 @@ from vantage6.common.enum import AlgorithmStepType, RunStatus, TaskStatusQueryOp
 from vantage6.common.exceptions import EncryptionMismatchError
 from vantage6.common.globals import (
     PING_INTERVAL_SECONDS,
+    SOCKETIO_MAX_DECODE_PACKETS,
     NodeConfigKey,
     NodePolicy,
     RequiredNodeEnvVars,
@@ -471,6 +474,9 @@ class Node:
                     },
                 )
 
+        task_id = task["id"]
+        parent_id = get_parent_id(task)
+
         # Run the container. This adds the created container/task to the list
         # __docker.active_tasks
         run_status: RunStatus = self.k8s_container_manager.run(
@@ -482,11 +488,35 @@ class Node:
             session_id=task["session"]["id"],
             token=token,
             databases_to_use=task.get("databases", []),
+            on_status_change=lambda status: self.__report_run_status(
+                run_id, task_id, parent_id, status
+            ),
         )
 
+        self.__report_run_status(run_id, task_id, parent_id, run_status)
+
+    def __report_run_status(
+        self, run_id: int, task_id: int, parent_id: int | None, status: RunStatus
+    ) -> None:
+        """
+        Report a status of an algorithm run to HQ.
+
+        Used for both intermediate statuses and the final one.
+
+        Parameters
+        ----------
+        run_id : int
+            Run ID
+        task_id : int
+            Task ID
+        parent_id : int | None
+            ID of the parent task, if any
+        status : RunStatus
+            Status of the algorithm run
+        """
         # save task status to HQ
-        update = {"status": run_status.value}
-        if run_status == RunStatus.NOT_ALLOWED:
+        update = {"status": status.value}
+        if status == RunStatus.NOT_ALLOWED:
             # set finished_at to now, so that the task is not picked up again
             # (as the task is not started at all, unlike other crashes, it will
             # never finish and hence not be set to finished)
@@ -496,9 +526,7 @@ class Node:
         # send socket event to alert everyone of task status change. In case the
         # namespace is not connected, the socket notification will not be sent to other
         # nodes, but the task will still be processed
-        self.__emit_algorithm_status_change(
-            task["id"], run_id, get_parent_id(task), run_status
-        )
+        self.__emit_algorithm_status_change(task_id, run_id, parent_id, status)
 
     def __emit_algorithm_status_change(
         self, task_id: int, run_id: int, parent_id: int | None, status: RunStatus
@@ -521,25 +549,40 @@ class Node:
         # (usually < 5s) when the socket just (re)connected
         MAX_ATTEMPTS = 30
         retries = 0
-        while "/tasks" not in self.socketIO.namespaces and retries < MAX_ATTEMPTS:
+        while "/tasks" not in self.socketIO.namespaces:
+            if retries >= MAX_ATTEMPTS:
+                self.log.warning(
+                    "Not connected to /tasks namespace, skipping algorithm status "
+                    "change notification for run %s",
+                    run_id,
+                )
+                return
             retries += 1
             self.log.debug("Waiting for /tasks namespace to connect...")
             time.sleep(1)
         self.log.debug("Connected to /tasks namespace")
 
-        self.socketIO.emit(
-            "algorithm_status_change",
-            data={
-                "node_id": self.client.whoami.id_,
-                "status": status.value,
-                "run_id": run_id,
-                "task_id": task_id,
-                "collaboration_id": self.client.collaboration_id,
-                "organization_id": self.client.whoami.organization_id,
-                "parent_id": parent_id,
-            },
-            namespace="/tasks",
-        )
+        try:
+            self.socketIO.emit(
+                "algorithm_status_change",
+                data={
+                    "node_id": self.client.whoami.id_,
+                    "status": status.value,
+                    "run_id": run_id,
+                    "task_id": task_id,
+                    "collaboration_id": self.client.collaboration_id,
+                    "organization_id": self.client.whoami.organization_id,
+                    "parent_id": parent_id,
+                },
+                namespace="/tasks",
+            )
+        except BadNamespaceError:
+            # the namespace may have disconnected between the check above and the emit
+            self.log.warning(
+                "Lost connection to /tasks namespace, skipping algorithm status change "
+                "notification for run %s",
+                run_id,
+            )
 
     def __send_updates_finished_tasks(self) -> None:
         """
@@ -697,20 +740,41 @@ class Node:
         self.socketIO.register_namespace(NodeTaskNamespace("/tasks"))
         NodeTaskNamespace.node_worker_ref = self
 
+        allow_http_polling = self.config.get("allow_http_polling", False)
+        Payload.max_decode_packets = SOCKETIO_MAX_DECODE_PACKETS
+        if allow_http_polling:
+            self.log.info(
+                "HTTP long-polling is allowed in the configuration for the socket "
+                "connection"
+            )
+        else:
+            self.log.info(
+                "Forcing websocket transport for the socket connection (default)"
+            )
+
         self.socketIO.connect(
             url=self.client.hq_url,
             headers=self.client.headers,
             wait=False,
+            transports=None if allow_http_polling else ["websocket"],
         )
 
         # Log the outcome
         i = 0
         while not self.socketIO.connected:
             if i > TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET:
-                self.log.critical(
-                    "Could not connect to the websocket channels, do you have a "
-                    "slow connection?"
-                )
+                if allow_http_polling:
+                    self.log.critical(
+                        "Could not connect to the websocket channels, does the node "
+                        "have a slow internet connection?"
+                    )
+                else:
+                    self.log.critical(
+                        "Could not connect to the websocket channels. If your "
+                        "network does not support websocket connections, set "
+                        "`allow_http_polling: true` in the node configuration to "
+                        "fall back to HTTP long-polling."
+                    )
                 sys.exit(1)
             self.log.debug("Waiting for socket connection...")
             time.sleep(1)

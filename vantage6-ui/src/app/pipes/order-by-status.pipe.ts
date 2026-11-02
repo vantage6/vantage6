@@ -9,6 +9,7 @@ export enum RunStatus {
   NoDockerImage = 'non-existing Docker image',
   Failed = 'failed',
   Active = 'active',
+  PullingImage = 'pulling image',
   Initializing = 'initializing',
   Pending = 'pending',
   Completed = 'completed',

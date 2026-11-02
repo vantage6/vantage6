@@ -71,5 +71,7 @@ node:
 
   share_algorithm_logs: true
 
+  allow_http_polling: false
+
   prometheus:
     enabled: false

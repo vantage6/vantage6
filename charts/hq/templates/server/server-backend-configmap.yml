@@ -15,6 +15,7 @@ data:
     {{- if and .Values.hq.jwt .Values.hq.jwt.secret }}
     jwt_secret_key: {{ .Values.hq.jwt.secret }}
     {{- end }}
+    jwt_container_token_expires_hours: {{ (.Values.hq.jwt).container_token_expires_hours | default 168 }}
     logging:
       backup_count: {{ .Values.hq.logging.backup_count }}
       datefmt: {{ .Values.hq.logging.datefmt | quote }}
@@ -63,6 +64,12 @@ data:
     {{- end }}
     {{- if .Values.hq.runs_data_cleanup_include_args }}
     runs_data_cleanup_include_args: {{ .Values.hq.runs_data_cleanup_include_args }}
+    {{- end }}
+    {{- if hasKey .Values.hq "database_pool_size" }}
+    database_pool_size: {{ .Values.hq.database_pool_size }}
+    {{- end }}
+    {{- if hasKey .Values.hq "database_max_overflow" }}
+    database_max_overflow: {{ .Values.hq.database_max_overflow }}
     {{- end }}
     {{- if and .Values.prometheus .Values.prometheus.enabled }}
     prometheus:

@@ -213,6 +213,11 @@ node:
   # NOTE: It's recommented to set this to false when using sensitive data
   share_algorithm_logs: {{ node.share_algorithm_logs | default(true) }}
 
+  # Whether the node may fall back to HTTP long-polling for its socket connection
+  # with HQ. By default, only websockets are used, which is more stable. Only set
+  # this to true if your network does not support websocket connections.
+  allow_http_polling: {{ node.allow_http_polling | default(false) }}
+
   # Define who is allowed to run which algorithms on this node.
   {% if node.policies is defined %}
   policies:
