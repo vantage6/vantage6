@@ -383,6 +383,12 @@ class AlgorithmStore(AlgorithmStoreBase):
                 return {
                     "msg": "You lack the permission to do that!"
                 }, HTTPStatus.UNAUTHORIZED
+        if algorithm_store.collaboration_id and self.is_node_outside_its_collab(
+            algorithm_store.collaboration_id
+        ):
+            return {
+                "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
 
         return (
             algorithm_store_schema.dump(algorithm_store, many=False),

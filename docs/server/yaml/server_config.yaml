@@ -120,6 +120,13 @@ email_token_validity_minutes: 60
 token_expires_hours: 6
 refresh_token_expires_hours: 48
 
+# set how long a container token (used by an algorithm container to call back
+# into the server while its task runs) is valid, in hours. This is a backstop
+# only: a container token also stops working as soon as its task finishes,
+# regardless of this setting. Increase it if your algorithms can run longer
+# than this. Optional; defaults to 168 hours (one week).
+container_token_expires_hours: 168
+
 # a worker will run every hour and delete results from completed runs that are
 # older than the number of days specified here. Disabled by default.
 # Careful! Make sure you have regular backups of your database before enabling

@@ -58,7 +58,7 @@ setup(
         "vantage6.cli": [
             "__build__",
             "rabbitmq/rabbitmq.config",
-            "template/node_config.j2",
+            "template/dev_node_config.j2",
             "template/server_config.j2",
             "template/server_import_config.j2",
             "template/algo_store_config.j2",

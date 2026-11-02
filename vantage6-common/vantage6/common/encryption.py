@@ -469,7 +469,8 @@ class RSACryptor(CryptorBase):
     @staticmethod
     def create_new_rsa_key(path: Path) -> rsa.RSAPrivateKey:
         """
-        Creates a new RSA key for E2EE.
+        Creates a new RSA key for E2EE and writes it to a file that only the owner
+        can read and write.
 
         Parameters
         ----------
@@ -485,13 +486,19 @@ class RSACryptor(CryptorBase):
             backend=default_backend(), key_size=4096, public_exponent=65537
         )
 
-        path.write_bytes(
-            private_key.private_bytes(
-                encoding=serialization.Encoding.PEM,
-                format=serialization.PrivateFormat.TraditionalOpenSSL,
-                encryption_algorithm=serialization.NoEncryption(),
+        # create the file with owner-only permissions from the start, so the key is
+        # never readable by other users, regardless of the umask
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "wb") as f:
+            f.write(
+                private_key.private_bytes(
+                    encoding=serialization.Encoding.PEM,
+                    format=serialization.PrivateFormat.TraditionalOpenSSL,
+                    encryption_algorithm=serialization.NoEncryption(),
+                )
             )
-        )
+        # O_CREAT's mode is not applied to files that already existed
+        os.chmod(path, 0o600)
         return private_key
 
     @property
