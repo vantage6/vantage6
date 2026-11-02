@@ -20,6 +20,14 @@ DEFAULT_NODE_IMAGE = (
 
 DEFAULT_NODE_IMAGE_WO_TAG = f"{DEFAULT_DOCKER_REGISTRY}/infrastructure/node"
 
+DEFAULT_HQ_IMAGE = f"{DEFAULT_DOCKER_REGISTRY}/infrastructure/hq:{MAIN_VERSION_NAME}"
+
+DEFAULT_STORE_IMAGE = (
+    f"{DEFAULT_DOCKER_REGISTRY}/infrastructure/algorithm-store:{MAIN_VERSION_NAME}"
+)
+
+DEFAULT_UI_IMAGE = f"{DEFAULT_DOCKER_REGISTRY}/infrastructure/ui:{MAIN_VERSION_NAME}"
+
 DEFAULT_ALPINE_IMAGE = f"{DEFAULT_DOCKER_REGISTRY}/infrastructure/alpine:latest"
 
 # CHART GLOBALS (Helm OCI in GHCR — see release workflow helm-charts job)

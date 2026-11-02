@@ -1,6 +1,13 @@
 from pathlib import Path
 
-from vantage6.common.globals import HTTP_LOCALHOST, InstanceType, Ports
+from vantage6.common.globals import (
+    DEFAULT_HQ_IMAGE,
+    DEFAULT_STORE_IMAGE,
+    DEFAULT_UI_IMAGE,
+    HTTP_LOCALHOST,
+    InstanceType,
+    Ports,
+)
 
 from vantage6.cli.auth.new import parse_database_uri_to_config
 from vantage6.cli.common.new import new
@@ -198,9 +205,7 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
                 "internal": {
                     "port": Ports.SANDBOX_HQ.value,
                 },
-                **self._image_config(
-                    self.hq_image, "ghcr.io/vantage6/infrastructure/hq:uluru"
-                ),
+                **self._image_config(self.hq_image, DEFAULT_HQ_IMAGE),
                 "algorithm_stores": [
                     {
                         "name": "Local store",
@@ -245,9 +250,7 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
             ),
             "ui": {
                 "port": Ports.SANDBOX_UI.value,
-                **self._image_config(
-                    self.ui_image, "ghcr.io/vantage6/infrastructure/ui:uluru"
-                ),
+                **self._image_config(self.ui_image, DEFAULT_UI_IMAGE),
             },
             "prometheus": prometheus_config,
         }
@@ -324,10 +327,7 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
                     "level": "DEBUG",
                     "volumeHostPath": log_dir,
                 },
-                **self._image_config(
-                    self.store_image,
-                    "ghcr.io/vantage6/infrastructure/algorithm-store:uluru",
-                ),
+                **self._image_config(self.store_image, DEFAULT_STORE_IMAGE),
                 "policies": {
                     "allowLocalhost": True,
                     "assignReviewOwnAlgorithm": True,
