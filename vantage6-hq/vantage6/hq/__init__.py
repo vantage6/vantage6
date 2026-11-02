@@ -174,8 +174,8 @@ class HQApp(Vantage6App):
         if debug_mode:
             log.debug("SocketIO debug mode enabled")
 
-        # raise the number of packets accepted per HTTP long-polling payload, as
-        # clients may batch more messages than the engine.io default allows
+        # Only relevant for HTTP long-polling payload, clients may batch more
+        # messages than the engine.io default allows
         Payload.max_decode_packets = SOCKETIO_MAX_DECODE_PACKETS
 
         cors_settings = self.ctx.config.get("cors_allowed_origins", "*")

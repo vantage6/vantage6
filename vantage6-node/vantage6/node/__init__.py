@@ -727,9 +727,14 @@ class Node:
         allow_http_polling = self.config.get("allow_http_polling", False)
         Payload.max_decode_packets = SOCKETIO_MAX_DECODE_PACKETS
         if allow_http_polling:
-            self.log.info("HTTP long-polling is allowed for the socket connection")
+            self.log.info(
+                "HTTP long-polling is allowed in the configuration for the socket "
+                "connection"
+            )
         else:
-            self.log.info("Using the websocket transport for the socket connection")
+            self.log.info(
+                "Forcing websocket transport for the socket connection (default)"
+            )
 
         self.socketIO.connect(
             url=self.client.hq_url,
@@ -744,8 +749,8 @@ class Node:
             if i > TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET:
                 if allow_http_polling:
                     self.log.critical(
-                        "Could not connect to the websocket channels, do you have a "
-                        "slow connection?"
+                        "Could not connect to the websocket channels, does the node "
+                        "have a slow internet connection?"
                     )
                 else:
                     self.log.critical(
