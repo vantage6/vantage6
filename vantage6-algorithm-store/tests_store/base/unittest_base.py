@@ -9,7 +9,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
-from vantage6.common.globals import InstanceType
+from vantage6.common.globals import STORE_TOKEN_AUDIENCE, InstanceType
 
 from vantage6.backend.common import test_context
 
@@ -53,8 +53,6 @@ class TestResources(unittest.TestCase):
         # set required environment variables *before* creating the app
         os.environ["KEYCLOAK_URL"] = "dummy-keycloak-url"
         os.environ["KEYCLOAK_REALM"] = "dummy-keycloak-realm"
-        os.environ["KEYCLOAK_ADMIN_USERNAME"] = "dummy-keycloak-admin-username"
-        os.environ["KEYCLOAK_ADMIN_PASSWORD"] = "dummy-keycloak-admin-password"
         os.environ["KEYCLOAK_ADMIN_CLIENT"] = "dummy-keycloak-admin-client"
         os.environ["KEYCLOAK_ADMIN_CLIENT_SECRET"] = (
             "dummy-keycloak-admin-client-secret"
@@ -150,11 +148,20 @@ class TestResources(unittest.TestCase):
             )
             new_role.save()
 
-    def login_node(self) -> dict:
+    def login_node(
+        self, client_type: str = "node", audience: str = STORE_TOKEN_AUDIENCE
+    ) -> dict:
         """
         Build headers with a real node JWT (mirrors vantage6-hq's `login_node` test
         helper), for testing endpoints that recognize nodes via the
         `vantage6_client_type` claim rather than a registered store `User`.
+
+        Parameters
+        ----------
+        client_type : str
+            Value of the `vantage6_client_type` claim, e.g. "node" or "hq"
+        audience : str
+            Audience of the token
 
         Returns
         -------
@@ -163,7 +170,8 @@ class TestResources(unittest.TestCase):
         """
         mock_claims = {
             "sub": str(uuid1()),
-            "vantage6_client_type": "node",
+            "vantage6_client_type": client_type,
+            "aud": audience,
             "exp": 9999999999,
             "iat": 0,
         }

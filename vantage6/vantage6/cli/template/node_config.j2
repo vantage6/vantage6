@@ -173,9 +173,9 @@ node:
       originalName: {{ db.originalName }}
       # OPTIONAL: controls how file/folder databases are exposed to algorithm
       # containers.
-      # - copy (default): copy file data into the node data volume
-      # - ro: bind-mount host path read-only into algorithm containers
-      mount_mode: {{ db.mount_mode | default('copy') }}
+      # - ro (default): bind-mount host path read-only into algorithm containers
+      # - copy: copy file data into the node data volume
+      mount_mode: {{ db.mount_mode | default('ro') }}
     {% endfor %}
     {% endif %}
     {% if node.databases.serviceBased is defined %}
@@ -205,12 +205,17 @@ node:
   # NOTE: It's recommented to set this to false when using sensitive data
   share_algorithm_logs: {{ node.share_algorithm_logs | default(true) }}
 
+  # Whether the node may fall back to HTTP long-polling for its socket connection
+  # with HQ. By default, only websockets are used, which is more stable. Only set
+  # this to true if your network does not support websocket connections.
+  allow_http_polling: {{ node.allow_http_polling | default(false) }}
+
   # Define who is allowed to run which algorithms on this node.
   {% if node.policies is defined %}
   policies:
     # Control which algorithm images are allowed to run on this node. This is
-    # expected to be a valid regular expression. If you don't specify this, all algorithm
-    # images are allowed to run on this node (unless other policies restrict this).
+    # expected to be a valid regular expression. If `production` is true, you must set
+    # this and/or `allowed_algorithm_stores`, otherwise the node will not start.
     {% if node.policies.allowed_algorithms is defined %}
     allowed_algorithms:
       {% for algo in node.policies.allowed_algorithms %}
@@ -223,8 +228,7 @@ node:
     {% endif %}
 
     # It is also possible to allow all algorithms from particular algorithm stores. Set
-    # these stores here. They may be strings or regular expressions. If you don't specify
-    # this, algorithms from any store are allowed (unless other policies prevent this).
+    # these stores here. They may be strings or regular expressions.
     {% if node.policies.allowed_algorithm_stores is defined %}
     allowed_algorithm_stores:
       {% for store in node.policies.allowed_algorithm_stores %}
@@ -277,15 +281,14 @@ node:
   {% else %}
   policies:
     # Control which algorithm images are allowed to run on this node. This is
-    # expected to be a valid regular expression. If you don't specify this, all algorithm
-    # images are allowed to run on this node (unless other policies restrict this).
+    # expected to be a valid regular expression. If `production` is true, you must set
+    # this and/or `allowed_algorithm_stores`, otherwise the node will not start.
     # allowed_algorithms:
     #   - ^ghcr\.io/vantage6/algorithm/[a-zA-Z]+/[a-zA-Z]+
     #   - ^myalgorithm\.ai/some-algorithm
 
     # It is also possible to allow all algorithms from particular algorithm stores. Set
-    # these stores here. They may be strings or regular expressions. If you don't specify
-    # this, algorithms from any store are allowed (unless other policies prevent this).
+    # these stores here. They may be strings or regular expressions.
     # allowed_algorithm_stores:
     #   # allow all algorithms from the vantage6 community store
     #   - https://store.uluru.vantage6.ai

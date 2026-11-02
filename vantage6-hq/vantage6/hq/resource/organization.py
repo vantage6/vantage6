@@ -241,13 +241,7 @@ class Organizations(OrganizationBase):
         if self.r.v_glo.can():
             pass  # don't apply filters
         elif self.r.v_col.can():
-            # obtain collaborations your organization participates in
-            collabs = g.session.scalars(
-                select(db.Collaboration).filter(
-                    db.Collaboration.organizations.any(id=auth_org.id)
-                )
-            ).all()
-            g.session.commit()
+            collabs = self.obtain_auth_collaborations()
 
             # filter orgs in own collaborations, and add own organization in
             # case this organization does not participate in any collaborations

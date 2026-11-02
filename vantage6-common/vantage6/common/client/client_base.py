@@ -7,14 +7,17 @@ from collections.abc import Callable
 from pathlib import Path
 
 import requests
+from keycloak import KeycloakOpenID
 
 from vantage6.common.client.blob_storage import BlobStorageMixin
 from vantage6.common.encryption import DummyCryptor, RSACryptor
 from vantage6.common.enum import TaskStatus
 from vantage6.common.exceptions import PublicKeyMismatchError
 from vantage6.common.globals import (
+    HQ_AUDIENCE_SCOPE,
     INTERVAL_MULTIPLIER,
     MAX_INTERVAL,
+    STORE_AUDIENCE_SCOPE,
     STRING_ENCODING,
 )
 
@@ -97,9 +100,11 @@ class ClientBase(BlobStorageMixin):
         self.__hq_url = hq_url
         self.__auth_url = auth_url
 
-        # tokens
+        # tokens. HQ and algorithm stores each get their own token, so that a store
+        # never receives a token it could use at HQ.
         self._access_token = None
         self._refresh_token = None
+        self._store_access_token = None
 
         self.cryptor = None
         self.whoami = None
@@ -129,6 +134,23 @@ class ClientBase(BlobStorageMixin):
         """
         if self._access_token:
             return {"Authorization": "Bearer " + self._access_token}
+        else:
+            return {}
+
+    @property
+    def store_headers(self) -> dict:
+        """
+        Headers that are sent with each request to an algorithm store. This includes
+        the token for algorithm stores, but only if the selected store authenticates
+        with the same Keycloak as HQ.
+
+        Returns
+        -------
+        dict
+            Headers
+        """
+        if self._store_access_token and self.store.uses_hq_keycloak:
+            return {"Authorization": "Bearer " + self._store_access_token}
         else:
             return {}
 
@@ -257,7 +279,8 @@ class ClientBase(BlobStorageMixin):
         self.log.debug(f"Making request: {method.upper()} | {url} | {params}")
 
         # add additional headers if any are given
-        headers = self.headers if headers is None else headers | self.headers
+        auth_headers = self.store_headers if is_for_algorithm_store else self.headers
+        headers = (headers or {}) | auth_headers
 
         timeout_attempts = 0
         while True:
@@ -391,6 +414,23 @@ class ClientBase(BlobStorageMixin):
         Depending on the type of entity authenticating, this may use a refresh token
         """
         return
+
+    def _obtain_client_credentials_tokens(self, kc_openid: KeycloakOpenID) -> None:
+        """
+        Get a token for HQ and a token for algorithm stores with the client
+        credentials of a node or service account.
+
+        Parameters
+        ----------
+        kc_openid : KeycloakOpenID
+            Keycloak client of the node or service account
+        """
+        self._access_token = kc_openid.token(
+            grant_type="client_credentials", scope=HQ_AUDIENCE_SCOPE
+        )["access_token"]
+        self._store_access_token = kc_openid.token(
+            grant_type="client_credentials", scope=STORE_AUDIENCE_SCOPE
+        )["access_token"]
 
     def _fetch_and_decrypt_run_data(
         self,
@@ -653,6 +693,8 @@ class ClientBase(BlobStorageMixin):
             super().__init__(parent)
             self.url = None
             self.store_id = None
+            # only stores that authenticate with the same Keycloak as HQ get a token
+            self.uses_hq_keycloak = False
 
         def get(self, id_: int) -> dict:
             """
@@ -680,6 +722,7 @@ class ClientBase(BlobStorageMixin):
             try:
                 self.url = f"{store['url']}{store['api_path']}"
                 self.store_id = id_
+                self.uses_hq_keycloak = bool(store.get("uses_hq_keycloak"))
             except KeyError:
                 self.parent.log.error("Algorithm store URL could not be set.")
             return store

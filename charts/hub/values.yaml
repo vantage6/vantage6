@@ -33,8 +33,10 @@ global:
   keycloak:
     url: ""
     realm: "vantage6"
-    adminClient: "backend-admin-client"
+    hqAdminClient: "hq-admin-client"
     publicClient: "public_client"
+    hqStoreReaderClient: "hq-store-reader-client"
+    storeAdminClient: "store-admin-client"
   urls:
     external:
       auth: ""

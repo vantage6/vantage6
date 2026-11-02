@@ -311,9 +311,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                 },
             },
         }
-        if self.node_image:
-            config["node"]["image"] = self.node_image
-            config["node"]["imagePullPolicy"] = "IfNotPresent"
+        config["node"].update(self._image_config(self.node_image, None))
 
         if self.encrypted:
             config["node"]["encryption"] = {"enabled": True}

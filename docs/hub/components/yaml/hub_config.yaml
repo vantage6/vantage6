@@ -53,11 +53,14 @@ global:
   keycloak:
     url: https://auth.vantage6.org
     realm: vantage6
-    adminClient: backend-admin-client
+    hqAdminClient: hq-admin-client
     publicClient: public_client
+    hqStoreReaderClient: hq-store-reader-client
+    storeAdminClient: store-admin-client
     adminUsername: admin
     adminPassword: change-me
-    adminClientSecret: change-me-too
+    hqAdminClientSecret: change-me-too
+    storeAdminClientSecret: change-me-three
 
   # Optional shared node name for local-storage based volumes (logs, prometheus).
   # If set, HQ and Store can inherit this when they use hostPath PVs.

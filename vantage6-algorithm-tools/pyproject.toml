@@ -7,7 +7,7 @@ name = "vantage6-algorithm-tools"
 version = "5.0.3"
 description = "Vantage6 algorithm tools"
 readme = "README.md"
-license = {text = "MIT"}
+license = {text = "Apache-2.0"}
 authors = [
     {name = "Vantage6 Team"}
 ]
@@ -23,18 +23,11 @@ dependencies = [
     # running SQL queries on a postgres database.
     "psycopg2-binary==2.9.10",
     "pyarrow>=16.1.0",
-    "pyjwt==2.13.0",
+    "pyjwt==2.15.1",
     "pyfiglet==1.0.4",
     "SPARQLWrapper>=2.0.0",
     "sqlalchemy>=1.4.46",
     "vantage6-common==5.0.3",
-]
-
-[project.optional-dependencies]
-dev = [
-    "coverage==7.10.2",
-    "black",
-    "pre-commit",
 ]
 
 [tool.hatch.build.targets.wheel]

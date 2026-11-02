@@ -3,6 +3,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from kubernetes import client as k8s_client
 
+from vantage6.common.globals import NodePolicy
+
 from vantage6.node import Node
 from vantage6.node.k8s.network_isolation import (
     _probe_pod_reached_target,
@@ -69,10 +71,13 @@ class TestValidateAlgorithmIsolation:
         assert "verified" in message
 
 
+_ALGORITHM_POLICY = {NodePolicy.ALLOWED_ALGORITHMS.value: ["^some/image$"]}
+
+
 class TestNodeProductionGating:
     def test_production_true_exits_on_isolation_failure(self):
         ctx = MagicMock()
-        ctx.config = {"production": True}
+        ctx.config = {"production": True, "policies": _ALGORITHM_POLICY}
 
         with (
             patch("vantage6.node.validate_required_env_vars"),
@@ -84,7 +89,9 @@ class TestNodeProductionGating:
                 False,
                 "probe failed",
             )
-            with patch("vantage6.node.exit", side_effect=SystemExit(1)) as mock_exit:
+            with patch(
+                "vantage6.node.sys.exit", side_effect=SystemExit(1)
+            ) as mock_exit:
                 with (
                     patch.object(Node, "_setup_node_client", return_value=MagicMock()),
                     pytest.raises(SystemExit),
@@ -94,7 +101,11 @@ class TestNodeProductionGating:
 
     def test_production_false_warns_on_isolation_failure(self, caplog):
         ctx = MagicMock()
-        ctx.config = {"production": False, "debug": {}}
+        ctx.config = {
+            "production": False,
+            "debug": {},
+            "policies": _ALGORITHM_POLICY,
+        }
 
         def _connect_socket(self):
             self.socketIO = MagicMock()
@@ -109,7 +120,7 @@ class TestNodeProductionGating:
                 False,
                 "probe failed",
             )
-            with patch("vantage6.node.exit") as mock_exit:
+            with patch("vantage6.node.sys.exit") as mock_exit:
                 with (
                     patch.object(Node, "_setup_node_client", return_value=MagicMock()),
                     patch.object(Node, "authenticate"),
