@@ -64,7 +64,6 @@ from vantage6.node.globals import (
 )
 from vantage6.common.client.node_client import NodeClient
 from vantage6.node import proxy_server
-from vantage6.node.util import get_parent_id
 from vantage6.node.docker.docker_manager import DockerManager
 from vantage6.node.docker.utils import login_to_registries
 from vantage6.node.docker.vpn_manager import VPNManager
@@ -549,15 +548,7 @@ class Node:
         # send socket event to alert everyone of task status change
         self.socketIO.emit(
             "algorithm_status_change",
-            data={
-                "node_id": self.client.whoami.id_,
-                "status": task_status,
-                "run_id": task_incl_run["id"],
-                "task_id": task["id"],
-                "collaboration_id": self.client.collaboration_id,
-                "organization_id": self.client.whoami.organization_id,
-                "parent_id": get_parent_id(task),
-            },
+            data={"run_id": task_incl_run["id"], "status": task_status},
             namespace="/tasks",
         )
 
@@ -611,15 +602,7 @@ class Node:
                 # notify socket channel of algorithm status change
                 self.socketIO.emit(
                     "algorithm_status_change",
-                    data={
-                        "node_id": self.client.whoami.id_,
-                        "status": results.status,
-                        "run_id": results.run_id,
-                        "task_id": results.task_id,
-                        "collaboration_id": self.client.collaboration_id,
-                        "organization_id": self.client.whoami.organization_id,
-                        "parent_id": results.parent_id,
-                    },
+                    data={"run_id": results.run_id, "status": results.status},
                     namespace="/tasks",
                 )
 
