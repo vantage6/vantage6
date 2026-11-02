@@ -797,15 +797,18 @@ class Node:
             if i > TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET:
                 if allow_http_polling:
                     self.log.critical(
-                        "Could not connect to the websocket channels, does the node "
-                        "have a slow internet connection?"
+                        "Could not connect to the websocket channels. Either the "
+                        "connection is slow, or HQ refused the connection because "
+                        "the node could not be authenticated (check the HQ logs)."
                     )
                 else:
                     self.log.critical(
-                        "Could not connect to the websocket channels. If your "
-                        "network does not support websocket connections, set "
-                        "`allow_http_polling: true` in the node configuration to "
-                        "fall back to HTTP long-polling."
+                        "Could not connect to the websocket channels. HQ may have "
+                        "refused the connection because the node could not be "
+                        "authenticated (check the HQ logs). If your network does not "
+                        "support websocket connections, set `allow_http_polling: "
+                        "true` in the node configuration to fall back to HTTP "
+                        "long-polling."
                     )
                 sys.exit(1)
             self.log.debug("Waiting for socket connection...")

@@ -6,7 +6,7 @@ import jwt
 from flask import current_app, request, session
 from flask_jwt_extended import decode_token, get_jwt_identity, verify_jwt_in_request
 from flask_jwt_extended.internal_utils import custom_verification_for_token
-from flask_socketio import Namespace, emit, join_room, leave_room
+from flask_socketio import Namespace, disconnect, emit, join_room, leave_room
 
 from vantage6.common import logger_name
 from vantage6.common.enum import RunStatus
@@ -109,7 +109,8 @@ class DefaultSocketNamespace(Namespace):
 
         Note
         ----
-        Note that reconnecting clients are treated the same as new clients.
+        Note that reconnecting clients are treated the same as new clients. Clients
+        that fail to authenticate are disconnected.
 
         """
         self.log.info(f'Client connected: "{request.sid}"')
@@ -121,19 +122,26 @@ class DefaultSocketNamespace(Namespace):
         except jwt.exceptions.ExpiredSignatureError:
             self.log.error("JWT has expired")
             emit("expired_token", room=request.sid)
+            disconnect()
             return
 
         except jwt.exceptions.InvalidSignatureError:
             self.log.error("Invalid JWT signature")
             emit("invalid_token", room=request.sid)
+            disconnect()
             return
 
         except Exception:
             self.log.exception("Couldn't connect client! No or Invalid JWT token?")
+            disconnect()
             return
 
+        auth = db.Authenticatable.get_by_keycloak_id(identity)
+        if auth is None:
+            self.log.warning("No user or node found for keycloak id %s", identity)
+            disconnect()
+            return
         session.auth_id = identity
-        auth = db.Authenticatable.get_by_keycloak_id(session.auth_id)
         auth.status = AuthStatus.ONLINE.value
         auth.save()
 

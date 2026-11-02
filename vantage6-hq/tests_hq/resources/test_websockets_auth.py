@@ -88,7 +88,7 @@ class TestWebsocketAuth(TestResourceBase):
 
         client = self._connect(auth={"token": _token(node.keycloak_id, "node", exp=1)})
 
-        self.assertIn("expired_token", self._received_event_names(client))
+        self.assertFalse(client.is_connected(NAMESPACE))
         self.assertEqual(Node.get(node.id).status, AuthStatus.OFFLINE.value)
 
     def test_token_with_invalid_signature_in_auth_payload(self):
@@ -104,7 +104,7 @@ class TestWebsocketAuth(TestResourceBase):
             auth={"token": _token(node.keycloak_id, "node", key=other_key_pem)}
         )
 
-        self.assertIn("invalid_token", self._received_event_names(client))
+        self.assertFalse(client.is_connected(NAMESPACE))
         self.assertEqual(Node.get(node.id).status, AuthStatus.OFFLINE.value)
 
     def test_token_for_other_audience_in_auth_payload(self):
@@ -116,9 +116,10 @@ class TestWebsocketAuth(TestResourceBase):
             STORE_TOKEN_AUDIENCE,
             [HQ_TOKEN_AUDIENCE, STORE_TOKEN_AUDIENCE],
         ):
-            self._connect(
+            client = self._connect(
                 auth={"token": _token(user.keycloak_id, "user", audience=audience)}
             )
+            self.assertFalse(client.is_connected(NAMESPACE))
             self.assertEqual(User.get(user.id).status, AuthStatus.OFFLINE.value)
 
     def test_no_token(self):
@@ -126,7 +127,7 @@ class TestWebsocketAuth(TestResourceBase):
 
         client = self._connect()
 
-        self.assertNotIn("sync", self._received_event_names(client))
+        self.assertFalse(client.is_connected(NAMESPACE))
         self.assertEqual(Node.get(node.id).status, AuthStatus.OFFLINE.value)
 
     def test_max_decode_packets_raised(self):
