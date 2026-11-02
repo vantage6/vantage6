@@ -290,9 +290,7 @@ def _ensure_audience_scopes(keycloak_admin: KeycloakAdmin) -> None:
         )
 
 
-def ensure_keycloak_token_setup(
-    public_client: str, hq_store_reader_client: str
-) -> None:
+def ensure_keycloak_audiences(public_client: str, hq_store_reader_client: str) -> None:
     """
     Make sure the Keycloak realm issues separate tokens for HQ and for algorithm
     stores. It is safe to run on every start.

@@ -35,7 +35,7 @@ def main() -> None:
     app.ensure_db_initialized()
     print("HQ database initialized")
     app.ensure_keycloak_token_setup()
-    print("Keycloak token setup verified")
+    print("Ensured Keycloak token setup")
 
 
 if __name__ == "__main__":

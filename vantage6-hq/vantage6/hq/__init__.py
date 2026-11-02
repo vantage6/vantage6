@@ -50,7 +50,7 @@ from vantage6.common.globals import (
 from vantage6.cli.context.hq import HQContext
 
 from vantage6.backend.common import Vantage6App
-from vantage6.backend.common.auth import ensure_keycloak_token_setup
+from vantage6.backend.common.auth import ensure_keycloak_audiences
 from vantage6.backend.common.globals import DEFAULT_HQ_STORE_READER_KEYCLOAK_CLIENT
 from vantage6.backend.common.metrics import Metrics, start_prometheus_exporter
 from vantage6.backend.common.permission import RuleNeed
@@ -373,7 +373,7 @@ class HQApp(Vantage6App):
         a store cannot use a token it receives at HQ.
         """
         keycloak_config = self.ctx.config.get("keycloak", {})
-        ensure_keycloak_token_setup(
+        ensure_keycloak_audiences(
             public_client=keycloak_config.get(
                 "public_client", DEFAULT_KEYCLOAK_PUBLIC_CLIENT
             ),
