@@ -12,17 +12,13 @@ class TestEmitAlgorithmStatusChange(unittest.TestCase):
     def setUp(self):
         self.node = Node.__new__(Node)
         self.node.log = Mock()
-        self.node.client = Mock()
-        self.node.client.whoami.id_ = 1
-        self.node.client.whoami.organization_id = 2
-        self.node.client.collaboration_id = 3
         self.node.socketIO = Mock()
         self.node.socketIO.namespaces = {"/tasks": "sid"}
 
     def _emit(self):
         with patch("vantage6.node.time.sleep"):
             self.node._Node__emit_algorithm_status_change(
-                task_id=10, run_id=20, parent_id=None, status=RunStatus.ACTIVE
+                run_id=20, status=RunStatus.ACTIVE
             )
 
     def test_emit_when_connected(self):
@@ -30,15 +26,7 @@ class TestEmitAlgorithmStatusChange(unittest.TestCase):
 
         self.node.socketIO.emit.assert_called_once_with(
             "algorithm_status_change",
-            data={
-                "node_id": 1,
-                "status": RunStatus.ACTIVE.value,
-                "run_id": 20,
-                "task_id": 10,
-                "collaboration_id": 3,
-                "organization_id": 2,
-                "parent_id": None,
-            },
+            data={"run_id": 20, "status": RunStatus.ACTIVE.value},
             namespace="/tasks",
         )
         self.node.log.warning.assert_not_called()
