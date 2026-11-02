@@ -7,6 +7,7 @@ import random
 import string
 import yaml
 import datetime
+import os
 import time
 
 from http import HTTPStatus
@@ -28,6 +29,7 @@ from vantage6.server import ServerApp
 from vantage6.server.default_roles import DefaultRole
 from vantage6.backend.common import session
 from vantage6.server.resource.event import kill_task
+from vantage6.server.resource.recover import _handle_password_recovery
 from vantage6.server.model import (
     Rule,
     Role,
@@ -267,6 +269,27 @@ class TestResources(unittest.TestCase):
             tokens = self.app.post("/api/token/user", json=self.credentials[type_]).json
             self.assertIn("access_token", tokens)
             self.assertIn("refresh_token", tokens)
+
+    def test_validate_node_token(self):
+        """Test /api/token/node/validate"""
+        node, api_key = self.create_node()
+        headers = self.login_node(api_key)
+
+        # a valid node token is accepted, and its identity is returned
+        rv = self.app.post("/api/token/node/validate", headers=headers)
+        self.assertEqual(rv.status_code, HTTPStatus.OK)
+        self.assertEqual(rv.json["node_id"], node.id)
+        self.assertEqual(rv.json["name"], node.name)
+        self.assertEqual(rv.json["organization_id"], node.organization_id)
+
+        # a user token is not a node token, and is rejected here
+        user_headers = self.create_user_and_login()
+        rv = self.app.post("/api/token/node/validate", headers=user_headers)
+        self.assertNotEqual(rv.status_code, HTTPStatus.OK)
+
+        # no token at all is rejected
+        rv = self.app.post("/api/token/node/validate")
+        self.assertNotEqual(rv.status_code, HTTPStatus.OK)
 
     def test_organization(self):
         rule = Rule.get_by_("organization", Scope.GLOBAL, Operation.VIEW)
@@ -605,6 +628,75 @@ class TestResources(unittest.TestCase):
     def test_reset_password_missing_error(self, send_email):
         result = self.app.post("/api/recover/lost", json={})
         self.assertEqual(result.status_code, 400)
+
+    @patch("vantage6.backend.common.mail_service.MailService.send_email")
+    def test_reset_password_can_be_requested_multiple_times(self, send_email):
+        """Regression test for a bug where a second password reset request
+        raised `TypeError: can't compare offset-naive and offset-aware
+        datetimes`, because `last_email_recover_password_sent` is stored in
+        a naive DateTime column and comes back naive after a DB round trip
+        (session commit expires the object), while it was compared against
+        an aware `datetime.now(timezone.utc)`.
+
+        `_handle_password_recovery` is normally scheduled via
+        `gevent.spawn_later`, so it never actually runs within the request/
+        response cycle exercised by `test_reset_password` above. Calling it
+        directly here is what makes the bug reproducible in a test.
+        """
+        user = self.create_user()
+        config = {"smtp": {"email_from": "test@vantage6.ai"}}
+
+        # first request: no throttle timestamp set yet, email should be sent
+        # and `user.last_email_recover_password_sent` persisted to the DB
+        _handle_password_recovery(
+            self.server.app, user.username, None, config, self.server.mail
+        )
+        self.assertEqual(send_email.call_count, 1)
+
+        # second request straight away: must not raise, and must be
+        # throttled (no additional email sent)
+        _handle_password_recovery(
+            self.server.app, user.username, None, config, self.server.mail
+        )
+        self.assertEqual(send_email.call_count, 1)
+
+    @unittest.skipUnless(
+        hasattr(time, "tzset"), "time.tzset is unavailable on this platform"
+    )
+    @patch("vantage6.backend.common.mail_service.MailService.send_email")
+    def test_reset_password_throttle_holds_on_a_non_utc_server(self, send_email):
+        """The throttle must not depend on the server's local timezone.
+
+        ``last_email_recover_password_sent`` is a naive column whose value is
+        UTC. Attaching that zone is correct; converting with ``astimezone``
+        treats the value as local time and shifts it by the local offset,
+        which moves the timestamp into the past on a server ahead of UTC and
+        lets every request through. CI runs in UTC, where the offset is zero
+        and the two are indistinguishable, so pin a non-UTC zone here.
+        """
+        user = self.create_user()
+        config = {"smtp": {"email_from": "test@vantage6.ai"}}
+
+        original_tz = os.environ.get("TZ")
+        # a DST-free zone whose offset (+9) is far larger than the 60-minute
+        # throttle window, so the shifted comparison fails unambiguously
+        os.environ["TZ"] = "Asia/Tokyo"
+        time.tzset()
+        try:
+            _handle_password_recovery(
+                self.server.app, user.username, None, config, self.server.mail
+            )
+            _handle_password_recovery(
+                self.server.app, user.username, None, config, self.server.mail
+            )
+        finally:
+            if original_tz is None:
+                del os.environ["TZ"]
+            else:
+                os.environ["TZ"] = original_tz
+            time.tzset()
+
+        self.assertEqual(send_email.call_count, 1)
 
     @patch("vantage6.server.resource.recover.decode_token")
     def test_recover_password(self, decode_token):
@@ -3201,6 +3293,17 @@ class TestResources(unittest.TestCase):
         results = self.app.get(f"/api/task/{task.id}", headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
+        # collaboration permission should not extend to a task in a
+        # different collaboration, even if the task's initiator (org2) is
+        # also a member of `col`
+        org_c = Organization()
+        col_bc = Collaboration(organizations=[org2, org_c])
+        task_bc = Task(name="cross-collab", collaboration=col_bc, init_org=org2)
+        task_bc.save()
+        headers = self.create_user_and_login(org, rules=[rule])
+        results = self.app.get(f"/api/task/{task_bc.id}", headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
         # test user with org permissions with id from another org
         headers = self.create_user_and_login(rules=[rule])
         results = self.app.get(f"/api/task/{task.id}", headers=headers)
@@ -3306,10 +3409,13 @@ class TestResources(unittest.TestCase):
         # cleanup
         task.delete()
         task2.delete()
+        task_bc.delete()
         user.delete()
         org.delete()
         org2.delete()
+        org_c.delete()
         col.delete()
+        col_bc.delete()
 
     def test_view_task_permissions_as_node_and_container(self):
         # test node with id
@@ -3654,7 +3760,20 @@ class TestResources(unittest.TestCase):
         run_id = run.id  # cannot access this after deletion
         results = self.app.delete(f"/api/task/{task.id}", headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.OK)
-        self.assertIsNone(Task.get(run_id))
+        self.assertIsNone(Run.get(run_id))
+
+        # collaboration permission should not extend to a task in a
+        # different collaboration, even if the task's initiator (org2) is
+        # also a member of `col`
+        org_c = Organization()
+        col_bc = Collaboration(organizations=[org2, org_c])
+        task_bc = Task(collaboration=col_bc, init_org=org2)
+        task_bc.save()
+        headers = self.create_user_and_login(
+            org, rules=[Rule.get_by_("task", Scope.COLLABORATION, Operation.DELETE)]
+        )
+        results = self.app.delete(f"/api/task/{task_bc.id}", headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
         # test permission to delete tasks of own organization - other
         # organization should fail
@@ -3687,9 +3806,12 @@ class TestResources(unittest.TestCase):
 
         # cleanup
         user.delete()
+        task_bc.delete()
         org.delete()
         org2.delete()
+        org_c.delete()
         col.delete()
+        col_bc.delete()
 
     def test_view_task_result_permissions_as_user(self):
         # non-existing task
@@ -3718,6 +3840,21 @@ class TestResources(unittest.TestCase):
         headers = self.create_user_and_login(org, [rule])
         result = self.app.get(f"/api/run?task_id={task.id}", headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
+
+        # collaboration permission should not extend to a run whose task is
+        # in a different collaboration, even if the task's initiator (org2)
+        # is also a member of `col`
+        org_c = Organization()
+        col_bc = Collaboration(organizations=[org2, org_c])
+        task_bc = Task(collaboration=col_bc, init_org=org2)
+        task_bc.save()
+        res_bc = Run(task=task_bc, organization=org2)
+        res_bc.save()
+        headers = self.create_user_and_login(org, [rule])
+        result = self.app.get(f"/api/run/{res_bc.id}", headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+        result = self.app.get(f"/api/run?task_id={task_bc.id}", headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
         # test with global permission
         rule = Rule.get_by_("run", Scope.GLOBAL, Operation.VIEW)
@@ -3781,11 +3918,15 @@ class TestResources(unittest.TestCase):
         node.delete()
         task.delete()
         task2.delete()
+        task_bc.delete()
         res.delete()
         res2.delete()
+        res_bc.delete()
         org.delete()
         org2.delete()
+        org_c.delete()
         col.delete()
+        col_bc.delete()
 
     def test_view_task_run_permissions_as_container(self):
         # test if container can

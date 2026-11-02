@@ -7,14 +7,11 @@ from vantage6.client.subclients.store.policy import PolicySubClient
 from vantage6.common.client.client_base import ClientBase
 
 
-class AlgorithmStoreSubClient(ClientBase.SubClient):
+class AlgorithmStoreSubClient(ClientBase.AlgorithmStoreSubClientBase):
     """Subclient for the algorithm store."""
 
     def __init__(self, parent: ClientBase):
         super().__init__(parent)
-        self.url = None
-        self.store_id = None
-
         self.base_client = self.parent
 
         self.role = StoreRoleSubClient(self)
@@ -22,28 +19,6 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
         self.user = StoreUserSubClient(self)
         self.policy = PolicySubClient(self)
         self.review = ReviewSubClient(self)
-
-    def set(self, id_: int) -> dict:
-        """ "
-        Set the algorithm store to use for the client.
-
-        Parameters
-        ----------
-        id_ : int
-            The id of the algorithm store.
-
-        Returns
-        -------
-        dict
-            The algorithm store.
-        """
-        store = self.get(id_)
-        try:
-            self.url = f"{store['url']}/api"
-            self.store_id = id_
-        except KeyError:
-            self.parent.log.error("Algorithm store URL could not be set.")
-        return store
 
     @post_filtering(iterable=False)
     def get(self, id_: int) -> dict:

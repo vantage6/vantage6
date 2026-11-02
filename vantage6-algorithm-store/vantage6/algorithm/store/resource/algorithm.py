@@ -181,7 +181,7 @@ class AlgorithmBaseResource(AlgorithmStoreResources):
 class Algorithms(AlgorithmBaseResource):
     """Resource for /algorithm"""
 
-    @with_permission_to_view_algorithms()
+    @with_permission_to_view_algorithms(allow_node=True)
     def get(self):
         """List algorithms
         ---
@@ -191,6 +191,12 @@ class Algorithms(AlgorithmBaseResource):
           By default, only approved algorithms are returned. To get non-approved
           algorithms, set the 'awaiting_reviewer_assignment', 'under_review' or
           'invalidated' parameter to True.
+
+          Nodes are always allowed to list approved algorithms here (e.g. filtered by
+          'image'), regardless of this store's algorithm_view policy - this lets a node
+          independently verify that an image is a registered, approved algorithm for
+          its own allowed_algorithm_stores policy. Nodes cannot use the non-approved
+          filters above.
 
         parameters:
           - in: query
@@ -970,6 +976,12 @@ class Algorithm(AlgorithmBaseResource):
         algorithm = db_Algorithm.get(id)
         if not algorithm:
             return {"msg": "Algorithm not found"}, HTTPStatus.NOT_FOUND
+
+        # only the algorithm's own developer may edit it
+        if algorithm.developer_id != g.user.id:
+            return {
+                "msg": "You can only edit algorithms you submitted yourself."
+            }, HTTPStatus.FORBIDDEN
 
         data = request.get_json()
 
