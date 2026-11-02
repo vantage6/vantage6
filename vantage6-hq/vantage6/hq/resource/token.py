@@ -2,6 +2,7 @@
 Resources below '/<api_base>/token'
 """
 
+import datetime as dt
 import logging
 from http import HTTPStatus
 
@@ -191,7 +192,13 @@ class ContainerToken(ServicesResources):
         }
 
         token = jwt.encode(
-            {"sub": container}, self.config["jwt_secret_key"], algorithm="HS256"
+            {
+                "sub": container,
+                "exp": dt.datetime.now(dt.UTC)
+                + dt.timedelta(hours=self.config["jwt_container_token_expires_hours"]),
+            },
+            self.config["jwt_secret_key"],
+            algorithm="HS256",
         )
 
         return {"container_token": token}, HTTPStatus.OK

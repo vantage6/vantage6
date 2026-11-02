@@ -37,6 +37,7 @@ from vantage6.common.exceptions import (
     SuperUserAlreadyExistsError,
 )
 from vantage6.common.globals import (
+    DEFAULT_CONTAINER_TOKEN_EXPIRES_HOURS,
     DEFAULT_PROMETHEUS_EXPORTER_PORT,
     PING_INTERVAL_SECONDS,
     SOCKETIO_MAX_DECODE_PACKETS,
@@ -233,6 +234,17 @@ class HQApp(Vantage6App):
         self.app.config["jwt_secret_key"] = self.ctx.config.setdefault(
             "jwt_secret_key", str(uuid.uuid4())
         )
+
+        # How long a container token is valid for (hours) before it expires,
+        # independent of task status.
+        self.ctx.config.setdefault(
+            "jwt_container_token_expires_hours", DEFAULT_CONTAINER_TOKEN_EXPIRES_HOURS
+        )
+
+        @self.app.errorhandler(AuthenticationException)
+        def authentication_error(error: AuthenticationException):
+            log.warning("Authentication failed: %s", error)
+            return {"msg": str(error)}, HTTPStatus.UNAUTHORIZED
 
         # PyJWT 2.10+ enforces that `sub` is a string. Vantage6 historically
         # used non-string subjects (e.g. ints and container dicts), which

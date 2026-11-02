@@ -64,6 +64,13 @@ hq:
   jwt:
     secret: "super-secret-key-that-you-shouldnt-use-in-production"
 
+    # How long a container token (used by an algorithm container to call back into
+    # HQ while its task runs) remains valid, in hours, before it expires. This is a
+    # backstop only: a container token also stops working as soon as its task
+    # finishes, regardless of this setting. Increase it if your algorithms can run
+    # longer than this. Optional; defaults to 168 hours (one week).
+    container_token_expires_hours: 168
+
   # Cleanup settings: This is used to cleanup the database from old results.
   # Every hour, results older than the threshold for completed runs are deleted.
   # Disabled by default.
