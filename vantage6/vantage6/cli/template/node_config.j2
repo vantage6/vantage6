@@ -181,9 +181,9 @@ node:
       originalName: {{ db.originalName }}
       # OPTIONAL: controls how file/folder databases are exposed to algorithm
       # containers.
-      # - copy (default): copy file data into the node data volume
-      # - ro: bind-mount host path read-only into algorithm containers
-      mount_mode: {{ db.mount_mode | default('copy') }}
+      # - ro (default): bind-mount host path read-only into algorithm containers
+      # - copy: copy file data into the node data volume
+      mount_mode: {{ db.mount_mode | default('ro') }}
     {% endfor %}
     {% endif %}
     {% if node.databases.serviceBased is defined %}

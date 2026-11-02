@@ -1,9 +1,12 @@
 import logging
 import os
+import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from vantage6.common.globals import NodePolicy
+from vantage6.common.enum import AlgorithmStepType, TaskDatabaseType
+from vantage6.common.globals import ContainerEnvNames, NodePolicy
 
 from vantage6.node.k8s.container_manager import ContainerManager
 
@@ -213,6 +216,156 @@ class TestGetImagePullPolicy:
     def test_require_algorithm_pull_absent_defaults_to_always(self):
         manager = self._manager_with_policies({})
         assert manager._get_image_pull_policy() == "Always"
+
+
+class TestDatabaseMountMode(unittest.TestCase):
+    """
+    Tests that the configured database mount mode is applied to algorithm pods
+    (GHSA-27gf-8rcw-jqgh): 'ro' (default) databases are mounted read-only and file
+    databases in 'copy' mode are copied, so algorithms never get write access to the
+    original.
+    """
+
+    HOST_DATA_DIR = "/host/tasks"
+
+    def setUp(self):
+        tmp_dir = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp_dir.cleanup)
+        self.db_dir = Path(tmp_dir.name) / "databases"
+        self.tasks_dir = Path(tmp_dir.name) / "tasks"
+        self.db_dir.mkdir()
+        (self.db_dir / "file_db.csv").write_text("a,b\n1,2\n")
+        (self.db_dir / "dir_db.parquet").mkdir()
+
+        for name, value in [
+            ("DATABASE_BASE_PATH", str(self.db_dir)),
+            ("TASK_FILES_ROOT", str(self.tasks_dir)),
+        ]:
+            patcher = patch(f"vantage6.node.k8s.container_manager.{name}", value)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+        self.manager = ContainerManager.__new__(ContainerManager)
+        self.manager.log = _get_null_logger()
+        self.manager.host_data_dir = self.HOST_DATA_DIR
+
+    def _get_databases(self, env: dict) -> dict:
+        with patch.dict(os.environ, env, clear=True):
+            return self.manager._get_database_metadata()
+
+    @staticmethod
+    def _file_db_env(mount_mode: str | None = None) -> dict:
+        env = {
+            "DATABASE_LABELS": "file_db",
+            "DATABASE_FILE_DB_URI": "/data/file_db.csv",
+            "DATABASE_FILE_DB_TYPE": "csv",
+        }
+        if mount_mode is not None:
+            env["DATABASE_FILE_DB_MOUNT_MODE"] = mount_mode
+        return env
+
+    def test_read_only_file_is_not_copied(self):
+        db = self._get_databases(self._file_db_env("ro"))["file_db"]
+
+        self.assertEqual(db.mount_mode, "ro")
+        self.assertEqual(db.uri, "/data/file_db.csv")
+        self.assertEqual(db.local_uri, str(self.db_dir / "file_db.csv"))
+        self.assertFalse((self.tasks_dir / "databases").exists())
+
+    def test_mount_mode_defaults_to_read_only(self):
+        db = self._get_databases(self._file_db_env())["file_db"]
+
+        self.assertEqual(db.mount_mode, "ro")
+        self.assertEqual(db.uri, "/data/file_db.csv")
+        self.assertFalse((self.tasks_dir / "databases").exists())
+
+    def test_copy_mode_copies_file(self):
+        db = self._get_databases(self._file_db_env("copy"))["file_db"]
+
+        self.assertEqual(db.mount_mode, "copy")
+        self.assertEqual(db.uri, f"{self.HOST_DATA_DIR}/databases/file_db.csv")
+        self.assertEqual(db.local_uri, str(self.db_dir / "file_db.csv"))
+        self.assertEqual(
+            (self.tasks_dir / "databases" / "file_db.csv").read_text(), "a,b\n1,2\n"
+        )
+
+    def test_mount_mode_is_case_insensitive(self):
+        db = self._get_databases(self._file_db_env("RO"))["file_db"]
+        self.assertEqual(db.mount_mode, "ro")
+
+    def test_copy_mode_directory_is_not_copied(self):
+        env = {
+            "DATABASE_LABELS": "dir_db",
+            "DATABASE_DIR_DB_URI": "/data/dir_db",
+            "DATABASE_DIR_DB_TYPE": "parquet",
+            "DATABASE_DIR_DB_MOUNT_MODE": "copy",
+        }
+        db = self._get_databases(env)["dir_db"]
+
+        self.assertEqual(db.mount_mode, "copy")
+        self.assertEqual(db.uri, "/data/dir_db")
+        self.assertFalse((self.tasks_dir / "databases").exists())
+
+    def test_invalid_mount_mode_raises(self):
+        with self.assertRaises(ValueError):
+            self._get_databases(self._file_db_env("rw"))
+
+    def test_mount_mode_not_passed_to_algorithm_env(self):
+        env = self._file_db_env("ro")
+        env["DATABASE_FILE_DB_SOME_KEY"] = "some_value"
+        db = self._get_databases(env)["file_db"]
+
+        self.assertEqual(db.env, {"SOME_KEY": "some_value"})
+
+    def _create_extraction_mounts(self, env: dict, label: str):
+        self.manager.databases = self._get_databases(env)
+        run_io = MagicMock()
+        run_io.action = AlgorithmStepType.DATA_EXTRACTION
+        run_io.run_id = 1
+        run_io.create_files.return_value = ("1/input", "1/output")
+        run_io.session_file_manager.session_folder = "session"
+        run_io.session_file_manager.session_state_file_name = "state.parquet"
+        databases_to_use = [{"label": label, "type": TaskDatabaseType.SOURCE}]
+
+        with patch.object(self.manager, "_validate_source_database"):
+            return self.manager._create_volume_mounts(run_io, b"", databases_to_use)
+
+    def _get_extraction_db_mount(self, mount_mode: str):
+        volumes, vol_mounts, _, _ = self._create_extraction_mounts(
+            self._file_db_env(mount_mode), "file_db"
+        )
+
+        volume = next(v for v in volumes if v.name == "task-1-db-file_db")
+        vol_mount = next(m for m in vol_mounts if m.name == "task-1-db-file_db")
+        return volume, vol_mount
+
+    def test_read_only_database_mounted_read_only(self):
+        volume, vol_mount = self._get_extraction_db_mount("ro")
+
+        self.assertTrue(vol_mount.read_only)
+        self.assertEqual(volume.host_path.path, "/data/file_db.csv")
+
+    def test_copy_database_mounts_copy_read_write(self):
+        volume, vol_mount = self._get_extraction_db_mount("copy")
+
+        self.assertFalse(vol_mount.read_only)
+        self.assertEqual(
+            volume.host_path.path, f"{self.HOST_DATA_DIR}/databases/file_db.csv"
+        )
+        self.assertEqual(vol_mount.mount_path, str(self.db_dir / "file_db.csv"))
+
+    def test_service_database_ignores_default_read_only(self):
+        env = {
+            "DATABASE_LABELS": "pg_db",
+            "DATABASE_PG_DB_URI": "postgresql://host:5432/db",
+            "DATABASE_PG_DB_TYPE": "sql",
+        }
+        volumes, _, env_vars, _ = self._create_extraction_mounts(env, "pg_db")
+
+        self.assertFalse(any(v.name == "task-1-db-pg_db" for v in volumes))
+        self.assertEqual(
+            env_vars[ContainerEnvNames.DATABASE_URI.value], "postgresql://host:5432/db"
+        )
 
 
 if __name__ == "__main__":
