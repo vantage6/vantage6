@@ -1,4 +1,4 @@
-ARG PYTHON_VERSION=3.10
+ARG PYTHON_VERSION=3.13
 FROM python:${PYTHON_VERSION}-slim-bookworm
 
 LABEL version="4.15"

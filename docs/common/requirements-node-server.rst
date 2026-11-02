@@ -42,8 +42,9 @@ native to your OS and/or distribution.
     environment.
 
     We develop and test vantage6 on Python 3.10, 3.11, 3.12 and 3.13. The
-    official Docker images are built on Python 3.10. Lower versions (3.8 or
-    3.9) are not supported.
+    official server, node and algorithm store images are built on Python 3.13;
+    the algorithm base image stays on Python 3.10. Lower versions (3.8 or 3.9)
+    are not supported.
 
 .. warning::
     Note that Python 3.10 is only used in vantage6 versions 3.8.0 and higher.
