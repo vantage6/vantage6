@@ -124,7 +124,8 @@ keycloak:
     # Public client configuration. The public client is used by users to authenticate
     # in the browser.
     publicClient:
-      # Defaults to global.keycloak.publicClient, or else "public_client"
+      # Name of the public client. If set, this overrides global.keycloak.publicClient.
+      # If neither is set, "public_client" is used.
       name: public_client
       # Redirect URIs are the URIs that Keycloak is allowed to redirect to after
       # authentication. This should normally be set to the UI URL. If you have

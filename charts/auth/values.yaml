@@ -41,8 +41,9 @@ keycloak:
     smtpServer:
       # placeholder for SMTP server configuration
     publicClient:
-      # Defaults to global.keycloak.publicClient, or else "public_client"
-      name: ""
+      # Name of the public client. If not set, global.keycloak.publicClient is used,
+      # and if that is not set either, "public_client".
+      # name: public_client
 
 
 # PostgreSQL configuration for Keycloak

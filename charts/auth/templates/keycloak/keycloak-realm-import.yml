@@ -1,6 +1,7 @@
 {{- if and .Values.keycloak.realmImport (ne .Values.keycloak.realmImport.enabled false) }}
 {{- $global := .Values.global | default (dict) }}
 {{- $globalKeycloak := $global.keycloak | default (dict) }}
+{{- $hqAdminClientSecret := default $globalKeycloak.hqAdminClientSecret .Values.keycloak.realmImport.hq_admin_client_secret }}
 {{- $storeAdminClientSecret := default $globalKeycloak.storeAdminClientSecret .Values.keycloak.realmImport.store_admin_client_secret }}
 {{- $hqAdminClient := default "hq-admin-client" $globalKeycloak.hqAdminClient }}
 {{- $storeAdminClient := default "store-admin-client" $globalKeycloak.storeAdminClient }}
@@ -201,7 +202,7 @@ spec:
       # create a client that will allow HQ to manage users and clients in keycloak.
       - clientId: {{ $hqAdminClient }}
         publicClient: false
-        secret: {{ default $globalKeycloak.hqAdminClientSecret .Values.keycloak.realmImport.hq_admin_client_secret | quote }}
+        secret: {{ $hqAdminClientSecret | quote }}
         serviceAccountsEnabled: true
         standardFlowEnabled: false
       {{- if $storeAdminClientSecret }}
