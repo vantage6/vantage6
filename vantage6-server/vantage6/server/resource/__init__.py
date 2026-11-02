@@ -2,6 +2,7 @@ import datetime as dt
 import logging
 
 from functools import wraps
+from http import HTTPStatus
 
 from flask import g, request
 from flask_restful import Api
@@ -11,6 +12,7 @@ from flask_socketio import SocketIO
 
 
 from vantage6.common import logger_name
+from vantage6.common.task_status import has_task_finished
 from vantage6.backend.common.services_resources import BaseServicesResources
 from vantage6.server import db
 from vantage6.server.model.authenticatable import Authenticatable
@@ -187,6 +189,19 @@ def only_for(types: tuple[str] = ("user", "node", "container")) -> callable:
                 log.debug(f"Received request from node {node.name} ({node.id})")
 
             elif g.type == "container":
+                # A container token is only valid for as long as its task is still
+                # active, even if the token itself has not expired yet.
+                task = db.Task.get(identity["task_id"])
+                if not task or has_task_finished(task.status):
+                    log.warning(
+                        "Container from node %s used a token for finished task %s",
+                        identity["node_id"],
+                        identity["task_id"],
+                    )
+                    return {
+                        "msg": "Container token is no longer valid: task has finished"
+                    }, HTTPStatus.UNAUTHORIZED
+
                 g.container = identity
                 log.debug(
                     "Received request from container with node id "

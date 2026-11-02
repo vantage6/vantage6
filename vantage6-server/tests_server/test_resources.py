@@ -13,6 +13,7 @@ import time
 from http import HTTPStatus
 from unittest.mock import MagicMock, patch
 from flask import Response as BaseResponse
+from flask_jwt_extended import decode_token
 from flask.testing import FlaskClient
 from flask_socketio import SocketIO
 from werkzeug.utils import cached_property
@@ -23,7 +24,7 @@ from vantage6.common.task_status import TaskStatus
 from vantage6.common.serialization import serialize
 from vantage6.common import bytes_to_base64s
 from vantage6.backend.common import test_context
-from vantage6.server.globals import PACKAGE_FOLDER
+from vantage6.server.globals import CONTAINER_TOKEN_EXPIRES_HOURS, PACKAGE_FOLDER
 from vantage6.server import ServerApp
 from vantage6.server.default_roles import DefaultRole
 from vantage6.backend.common import session
@@ -2050,6 +2051,58 @@ class TestResources(unittest.TestCase):
         result = self.app.get("/api/organization", headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
         self.assertIsInstance(result.json["data"], list)
+
+        # cleanup
+        node.delete()
+
+    def test_container_token_rejected_once_task_has_finished(self):
+        node, api_key = self.create_node()
+        task = Task(
+            image="some-image",
+            collaboration=node.collaboration,
+            runs=[Run(status=TaskStatus.PENDING.value)],
+        )
+        task.save()
+        headers = self.login_container(node=node, api_key=api_key, task=task)
+
+        # the container token is valid while the task is still active
+        result = self.app.get(
+            f"/api/organization/{node.organization.id}", headers=headers
+        )
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+
+        # once the task's run(s) complete, the same token must be rejected
+        for run in task.runs:
+            run.status = TaskStatus.COMPLETED.value
+            run.save()
+
+        result = self.app.get(
+            f"/api/organization/{node.organization.id}", headers=headers
+        )
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # cleanup
+        node.delete()
+
+    def test_container_token_expiry(self):
+        node, api_key = self.create_node()
+
+        headers = self.login_container(node=node, api_key=api_key)
+        with self.server.app.app_context():
+            claims = decode_token(headers["Authorization"].removeprefix("Bearer "))
+        self.assertAlmostEqual(
+            claims["exp"],
+            time.time() + CONTAINER_TOKEN_EXPIRES_HOURS * 3600,
+            delta=60,
+        )
+
+        # an already expired token is rejected
+        with patch.dict(self.server.app.config, {"CONTAINER_TOKEN_EXPIRES": -3600}):
+            headers = self.login_container(node=node, api_key=api_key)
+        result = self.app.get(
+            f"/api/organization/{node.organization.id}", headers=headers
+        )
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
         # cleanup
         node.delete()
