@@ -1,4 +1,4 @@
-name: Image Scanner
+name: Container scan
 on:
   workflow_dispatch:
     inputs:
@@ -14,4 +14,7 @@ jobs:
   scan:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Stub. Image input: '${{ inputs.image }}'"
+      - env:
+          IMAGE: ${{ inputs.image }}
+        run: |
+          echo "Stub. Image input: '$IMAGE'"
