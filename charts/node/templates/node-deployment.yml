@@ -40,6 +40,10 @@ spec:
           value: {{ .Values.node.keycloak.realm | quote }}
         - name: V6_K8S_NODE_NAME
           value: {{ .Values.node.k8sNodeName | default "" | quote }}
+        {{- range .Values.node.databases.fileBased }}
+        - name: DATABASE_{{ include "node.databaseEnvLabel" (dict "databaseName" .name) }}_MOUNT_MODE
+          value: {{ default "ro" .mount_mode | quote }}
+        {{- end }}
         envFrom:
         - secretRef:
             name: {{ .Release.Name }}-secrets
@@ -54,11 +58,16 @@ spec:
           readOnly: true
         - name: node-logs
           mountPath: /mnt/log
+        {{- if .Values.node.encryption.enabled }}
+        - name: private-key
+          mountPath: /app/encryption
+          readOnly: true
+        {{- end }}
         {{- range .Values.node.databases.fileBased }}
         - name: database-volume-{{ .name }}
           mountPath: /app/databases/{{ .name }}.{{ .type }}
           subPath: {{ .originalName }}
-          {{- if eq (default "copy" .mount_mode) "ro" }}
+          {{- if eq (default "ro" .mount_mode) "ro" }}
           readOnly: true
           {{- end }}
         {{- end }}
@@ -72,6 +81,17 @@ spec:
       - name: node-logs
         persistentVolumeClaim:
           claimName: {{ .Release.Name }}-logs-pvc
+      {{- if .Values.node.encryption.enabled }}
+      # Secret is created by `v6 node create-private-key` (not by this chart). This
+      # means secret is kept when the node is stopped (but deleted by `v6 node remove`).
+      - name: private-key
+        secret:
+          secretName: {{ .Release.Name }}-private-key
+          defaultMode: 0400
+          items:
+          - key: private_key.pem
+            path: private_key.pem
+      {{- end }}
       {{- range .Values.node.databases.fileBased }}
       - name: database-volume-{{ .name }}
         persistentVolumeClaim:

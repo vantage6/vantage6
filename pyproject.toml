@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vantage6-base"
-version = "5.0.3"
+version = "5.0.4rc1"
 description = "Vantage6 - Privacy-preserving federated learning"
 readme = "README.md"
 license = {text = "Apache-2.0"}
@@ -61,7 +61,7 @@ vantage6-node = { workspace = true }
 vantage6-hq = { workspace = true }
 vantage6-algorithm-store = { workspace = true }
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "coverage==7.10.2",
     "black",

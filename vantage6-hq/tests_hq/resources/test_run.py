@@ -138,3 +138,53 @@ class TestResources(TestResourceBase):
             col.delete()
             org1.delete()
             org2.delete()
+
+    def test_run_node_other_collaboration_of_same_organization(self):
+        org = Organization(name=str(uuid.uuid1()))
+        col = Collaboration(name=str(uuid.uuid1()), organizations=[org])
+        other_col = Collaboration(name=str(uuid.uuid1()), organizations=[org])
+        node = self.create_node(organization=org, collaboration=col)
+        self.create_node(organization=org, collaboration=other_col)
+
+        task = Task(collaboration=col, init_org=org, image="some-image")
+        other_task = Task(collaboration=other_col, init_org=org, image="some-image")
+        run = Run(task=task, organization=org, status=RunStatus.PENDING.value)
+        other_run = Run(
+            task=other_task, organization=org, status=RunStatus.PENDING.value
+        )
+        run.save()
+        other_run.save()
+
+        headers = self.login_node(node)
+
+        # node cannot patch the run of its sibling node in another collaboration
+        response = self.app.patch(
+            f"/api/run/{other_run.id}",
+            headers=headers,
+            json={"status": RunStatus.FAILED.value, "result": "injected"},
+        )
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
+        other_run = Run.get(other_run.id)
+        self.assertEqual(other_run.status, RunStatus.PENDING.value)
+        self.assertIsNone(other_run.result)
+
+        # node can patch the run of its own collaboration
+        response = self.app.patch(
+            f"/api/run/{run.id}",
+            headers=headers,
+            json={"status": RunStatus.ACTIVE.value},
+        )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+
+        # node cannot view the run of the other collaboration
+        response = self.app.get(f"/api/run/{other_run.id}", headers=headers)
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
+        response = self.app.get(f"/api/result/{other_run.id}", headers=headers)
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
+        response = self.app.get("/api/run", headers=headers)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertEqual([r["id"] for r in response.json["data"]], [run.id])
+        response = self.app.get(
+            f"/api/run?collaboration_id={other_col.id}", headers=headers
+        )
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)

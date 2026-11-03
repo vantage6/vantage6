@@ -1,10 +1,8 @@
 from dataclasses import dataclass
 from typing import Self
 
-from vantage6.common.enum import DatabaseType
+from vantage6.common.enum import DatabaseMountMode, DatabaseType
 from vantage6.common.globals import DEFAULT_DB_MOUNT_MODE
-
-SUPPORTED_DATABASE_MOUNT_MODES = {"copy", "ro"}
 
 
 @dataclass
@@ -53,13 +51,11 @@ class TaskDB:
                 f"Database with label {data['label']} has no uri. "
                 "Please provide a valid uri."
             )
-        if (
-            "mount_mode" in data
-            and data["mount_mode"] not in SUPPORTED_DATABASE_MOUNT_MODES
-        ):
+        if "mount_mode" in data and data["mount_mode"] not in DatabaseMountMode.list():
             raise ValueError(
                 f"Database with label {data['label']} has an invalid mount mode: "
-                f"{data['mount_mode']}. Please provide a valid mount mode."
+                f"{data['mount_mode']}. Supported values are: "
+                f"{', '.join(DatabaseMountMode.list())}."
             )
         return cls(
             label=data["label"],

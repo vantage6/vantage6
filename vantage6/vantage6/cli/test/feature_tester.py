@@ -2,7 +2,7 @@ import sys
 
 import click
 
-from vantage6.common.globals import Ports
+from vantage6.common.globals import DEFAULT_KEYCLOAK_PUBLIC_CLIENT, Ports
 
 from vantage6.client import UserClient
 from vantage6.client.utils import LogLevel
@@ -33,7 +33,7 @@ from vantage6.cli.utils import error
 @click.option(
     "--auth-client",
     type=str,
-    default="public_client",
+    default=DEFAULT_KEYCLOAK_PUBLIC_CLIENT,
     help="Client ID of the authentication service (Keycloak)",
 )
 @click.option(

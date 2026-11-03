@@ -4,6 +4,7 @@ from pathlib import Path
 
 import click
 import questionary as q
+import requests
 
 from vantage6.common import error, info, warning
 from vantage6.common.client.node_client import NodeClient
@@ -19,7 +20,15 @@ from vantage6.common.globals import (
 )
 
 from vantage6.cli.common.new import new
+from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
+from vantage6.cli.k8s_config import select_k8s_config
+from vantage6.cli.node.common import create_client_and_authenticate
+from vantage6.cli.node.common.private_key import validate_private_key_pem
+from vantage6.cli.node.create_private_key import (
+    create_and_store_private_key,
+    get_organization_public_key,
+)
 from vantage6.cli.utils import prompt_config_name
 
 
@@ -52,13 +61,78 @@ def cli_node_new_configuration(
     dirs = AppContext.instance_folders(InstanceType.NODE, name, system_folders)
     default_data_dir = str(dirs["data"])
     default_log_dir = str(dirs["log"])
-    new(
+    config = new(
         config_producing_func=node_configuration_questionaire,
         config_producing_func_args=(default_data_dir, default_log_dir, name),
         name=name,
         system_folders=system_folders,
         type_=InstanceType.NODE,
     )
+
+    if config and config.get("node", {}).get("encryption", {}).get("enabled"):
+        _offer_private_key_creation(name, system_folders)
+
+
+def _offer_private_key_creation(name: str, system_folders: bool) -> None:
+    """
+    Offer to set up the node's private key, stored in a Kubernetes secret.
+
+    If the organization already has a public key at HQ, the organization's existing
+    private key is asked for instead of generating a new one, so that the other nodes
+    and users of the organization keep working.
+
+    Parameters
+    ----------
+    name : str
+        Name of the node configuration
+    system_folders : bool
+        Whether the configuration is stored in the system folders
+    """
+    later_hint = (
+        "Run 'v6 node create-private-key' before starting the node. Use "
+        "'--from-file' to store your organization's existing private key."
+    )
+    ctx = NodeContext(name, system_folders=system_folders)
+    try:
+        client = create_client_and_authenticate(ctx, use_sandbox_port=ctx.is_sandbox)
+        hq_public_key = get_organization_public_key(client)
+    except (SystemExit, requests.RequestException):
+        warning("Could not check your organization's public key at HQ.")
+        warning(later_hint)
+        return
+
+    pem = None
+    if hq_public_key:
+        info(
+            "Your organization already has a keypair. This node needs the "
+            "organization's existing private key."
+        )
+        key_path = q.path(
+            "Path to your organization's private key file (leave empty to skip):"
+        ).unsafe_ask()
+        if not key_path:
+            warning(later_hint)
+            return
+        try:
+            pem = Path(key_path).expanduser().read_bytes()
+            validate_private_key_pem(pem)
+        except (OSError, ValueError, TypeError):
+            error(f"'{key_path}' does not contain a valid unencrypted private key.")
+            warning(later_hint)
+            return
+    elif not q.confirm(
+        "Encryption is enabled. Create the node's private key now? It will be "
+        "stored in a Kubernetes secret and its public key uploaded to HQ.",
+        default=True,
+    ).unsafe_ask():
+        warning(later_hint)
+        return
+
+    try:
+        create_and_store_private_key(ctx, select_k8s_config(), pem=pem, client=client)
+    except SystemExit:
+        warning("The private key could not be stored.")
+        warning(later_hint)
 
 
 def node_configuration_questionaire(
@@ -136,41 +210,7 @@ def node_configuration_questionaire(
                 _get_service_based_database_config()
             )
 
-    is_policies = q.confirm(
-        "Do you want to limit the algorithms allowed to run on your node? This "
-        "should always be done for production scenarios.",
-        default=True,
-    ).unsafe_ask()
-    policies = {}
-    if is_policies:
-        info(
-            "You can limit the algorithms that can run on your node in two ways: by "
-            "allowing specific algorithms or by allowing all algorithms in a given "
-            "algorithm store."
-        )
-        ask_single_algorithms = q.confirm(
-            "Do you want to enter a list of allowed algorithms?"
-        ).unsafe_ask()
-        if ask_single_algorithms:
-            policies[NodePolicy.ALLOWED_ALGORITHMS.value] = _get_allowed_algorithms()
-        ask_algorithm_stores = q.confirm(
-            "Do you want to allow algorithms from specific algorithm stores?"
-        ).unsafe_ask()
-        if ask_algorithm_stores:
-            policies[NodePolicy.ALLOWED_ALGORITHM_STORES.value] = (
-                _get_allowed_algorithm_stores()
-            )
-        if ask_single_algorithms and ask_algorithm_stores:
-            require_both_whitelists = q.confirm(
-                "Do you want to allow only algorithms that are both in the list of "
-                "allowed algorithms *AND* are part of one of the allowed algorithm "
-                "stores? If not, algorithms will be allowed if they are in either the "
-                "list of allowed algorithms or one of the allowed algorithm stores.",
-                default=True,
-            ).unsafe_ask()
-            policies["allow_either_whitelist_or_store"] = not require_both_whitelists
-    if policies:
-        config["policies"] = policies
+    config["policies"] = _get_algorithm_policies()
 
     res = q.select(
         "Which level of logging would you like?",
@@ -225,13 +265,8 @@ def node_configuration_questionaire(
     else:
         encryption = q.confirm("Enable encryption?", default=True).unsafe_ask()
 
-    private_key = (
-        "" if not encryption else q.text("Path to private key file:").unsafe_ask()
-    )
-
     config["encryption"] = {
         "enabled": encryption is True or encryption == "true",
-        "private_key": private_key,
     }
 
     # pack the entire config in a dict with the 'node' key at top level
@@ -310,6 +345,52 @@ def _get_database_label() -> str:
         "Enter unique label for the database:",
         default="default",
     ).unsafe_ask()
+
+
+def _get_algorithm_policies() -> dict:
+    """
+    Prompt the user for the policies on which algorithms may run on their node. At
+    least one of the allowed algorithms or allowed algorithm stores is required.
+
+    Returns
+    -------
+    dict
+        Dictionary with the algorithm policies
+    """
+    info(
+        "You must limit the algorithms that can run on your node. You can do this in "
+        "two ways: by allowing specific algorithms or by allowing all algorithms in a "
+        "given algorithm store."
+    )
+    policies = {}
+    while not policies:
+        ask_single_algorithms = q.confirm(
+            "Do you want to enter a list of allowed algorithms?"
+        ).unsafe_ask()
+        if ask_single_algorithms:
+            policies[NodePolicy.ALLOWED_ALGORITHMS.value] = _get_allowed_algorithms()
+        ask_algorithm_stores = q.confirm(
+            "Do you want to allow algorithms from specific algorithm stores?"
+        ).unsafe_ask()
+        if ask_algorithm_stores:
+            policies[NodePolicy.ALLOWED_ALGORITHM_STORES.value] = (
+                _get_allowed_algorithm_stores()
+            )
+        if not policies:
+            error(
+                "You must define allowed algorithms and/or allowed algorithm stores. "
+                "Please try again."
+            )
+    if ask_single_algorithms and ask_algorithm_stores:
+        require_both_whitelists = q.confirm(
+            "Do you want to allow only algorithms that are both in the list of "
+            "allowed algorithms *AND* are part of one of the allowed algorithm "
+            "stores? If not, algorithms will be allowed if they are in either the "
+            "list of allowed algorithms or one of the allowed algorithm stores.",
+            default=True,
+        ).unsafe_ask()
+        policies["allow_either_whitelist_or_store"] = not require_both_whitelists
+    return policies
 
 
 def _get_allowed_algorithms() -> list[str]:

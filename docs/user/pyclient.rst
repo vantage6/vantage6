@@ -209,26 +209,11 @@ permissions to create a new organization. Regular end-users typically do
 not have these permissions (typically only administrators do); they may skip
 this part.
 
-The first (optional, but recommended) step is to create an RSA keypair.
-A keypair, consisting of a private and a public key, can be used to
-encrypt data transfers. Users from the organization you are about to
-create will only be able to use encryption if such a keypair has been
-set up and if they have access to the private key.
-
-.. code:: python
-
-   from vantage6.common import warning, error, info, debug, bytes_to_base64s
-   from vantage6.client.encryption import RSACryptor
-   from pathlib import Path
-
-   # Generated a new private key
-   # Note that the file below doesn't exist yet: you will create it
-   private_key_filepath = r'/path/to/private/key'
-   private_key = RSACryptor.create_new_rsa_key(Path(private_key_filepath))
-
-   # Generate the public key based on the private one
-   public_key_bytes = RSACryptor.create_public_key_bytes(private_key)
-   public_key = bytes_to_base64s(public_key_bytes)
+If the organization will take part in encrypted collaborations, it needs an RSA
+keypair. The keypair is created by the node administrator with
+``v6 node create-private-key``, which stores the private key in a Kubernetes secret
+and uploads the public key to HQ, so you do not need to provide a public key when
+creating the organization.
 
 Now, we can create an organization
 
@@ -241,18 +226,21 @@ Now, we can create an organization
        zipcode = '3472',
        country = 'New Zealand',
        domain = 'the_shire.org',
-       public_key = public_key   # use None if you haven't set up encryption or simply leave it out
    )
 
 Users can now be created for this organization. Any users that are
-created and who have access to the private key we generated above can
-now use encryption by running
+created and who have access to the organization's private key can
+use encryption by running
 
 .. code:: python
 
    client.setup_encryption('/path/to/private/key')
 
 after they authenticate.
+A node administrator of your organization can export the key with
+``v6 node get-private-key --to-file <path>``.
+Make sure the key file is only readable by you, or at most by the other users that
+need it.
 
 Creating a collaboration
 """"""""""""""""""""""""
@@ -355,7 +343,7 @@ something like:
          type: csv
          volumePath: /my/local/path/to/data
          originalName: olympic_athletes_2016.csv
-         mount_mode: copy
+         mount_mode: ro
 
 The third requirement is met when all nodes have the same labels in their
 configuration. As an end-user running the

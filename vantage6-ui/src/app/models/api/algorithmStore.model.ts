@@ -14,6 +14,9 @@ export interface AlgorithmStore {
   api_path: string;
   collaborations: BaseCollaboration[];
   all_collaborations: boolean;
+  // whether the store authenticates with the same Keycloak as HQ: only then is a
+  // token sent to it
+  uses_hq_keycloak: boolean;
 }
 
 export interface AlgorithmStoreForm {

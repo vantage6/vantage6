@@ -278,6 +278,28 @@ vantage6 algorithm tools:
    this rule: they are not replaced, as their messages are written by you and are
    meant to be shown to the user. Make sure not to include any sensitive data in them.
 
+Expressions in preprocessing functions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The preprocessing functions ``assign_column``, ``redefine_column`` and ``select_rows``
+take an expression, such as ``weight / (height * height)`` or
+``age >= 18 and sex == 'F'``. Expressions are evaluated by vantage6 itself and support
+only:
+
+- column names (columns must be valid Python identifiers, use ``rename_columns``
+  otherwise)
+- numbers, strings, ``True``, ``False`` and ``None``
+- arithmetic: ``+``, ``-``, ``*``, ``/``, ``//``, ``%`` (only ``+`` for text)
+- comparisons: ``==``, ``!=``, ``<``, ``<=``, ``>``, ``>=``, also chained
+  (``18 <= age < 65``)
+- membership in a list of constants: ``code in [1, 2]``, ``city not in ['A', 'B']``
+- logical operators: ``and``, ``or``, ``not``, ``&``, ``|``, ``~``
+- the functions ``abs``, ``sqrt``, ``log``, ``log2``, ``log10``, ``exp``, ``floor``,
+  ``ceil`` and ``round`` (e.g. ``round(bmi, 1)``)
+
+Other functions, attribute access (``a.b``), indexing (``a[0]``) and ``**`` are not
+supported, and an expression may be at most 250 characters long.
+
 .. _mock-test-algo-dev:
 
 Testing your algorithm

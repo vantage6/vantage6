@@ -67,7 +67,8 @@ export class AlgorithmService {
       url: environment.community_store_url,
       api_path: environment.community_store_api_path,
       collaborations: [],
-      all_collaborations: true
+      all_collaborations: true,
+      uses_hq_keycloak: false
     };
   }
   async getAlgorithmsForAlgorithmStore(algorithmStore: AlgorithmStore, params: object = {}): Promise<Algorithm[]> {

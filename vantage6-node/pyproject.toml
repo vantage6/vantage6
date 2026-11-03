@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vantage6-node"
-version = "5.0.3"
+version = "5.0.4rc1"
 description = "vantage6 node"
 readme = "README.md"
 license = {text = "Apache-2.0"}
@@ -23,20 +23,12 @@ dependencies = [
     "jinja2==3.1.6",
     "kubernetes==36.0.2",
     "nvidia-ml-py==12.535.133",
-    "parquet-tools==0.2.16",
     "psutil==7.0.0",
     "python-socketio==5.16.2",
     "requests==2.33.1",
-    "vantage6==5.0.3",
-    "vantage6-client==5.0.3",
-    "vantage6-common==5.0.3",
-]
-
-[project.optional-dependencies]
-dev = [
-    "coverage==7.10.2",
-    "black",
-    "pre-commit",
+    "vantage6==5.0.4rc1",
+    "vantage6-client==5.0.4rc1",
+    "vantage6-common==5.0.4rc1",
 ]
 
 [project.scripts]
