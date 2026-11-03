@@ -64,7 +64,6 @@ from vantage6.node.globals import (
 )
 from vantage6.common.client.node_client import NodeClient
 from vantage6.node import proxy_server
-from vantage6.node.util import get_parent_id
 from vantage6.node.docker.docker_manager import DockerManager
 from vantage6.node.docker.utils import login_to_registries
 from vantage6.node.docker.vpn_manager import VPNManager
@@ -117,6 +116,9 @@ class Node:
 
         self.config = self.ctx.config
         self.debug: dict = self.config.get("debug", {})
+
+        self.check_algorithm_policies()
+
         self.queue = queue.Queue()
         self._using_encryption = None
 
@@ -223,6 +225,36 @@ class Node:
         t.start()
 
         self.log.info("Init complete")
+
+    def check_algorithm_policies(self) -> None:
+        """
+        Verify that the node restricts which algorithms are allowed to run.
+
+        When ``production`` is true (default), the node exits if neither the
+        ``allowed_algorithms`` nor the ``allowed_algorithm_stores`` policy is set.
+        Otherwise, all algorithms are allowed and a warning is logged.
+        """
+        policies = self.config.get("policies") or {}
+        if policies.get(NodePolicy.ALLOWED_ALGORITHMS) or policies.get(
+            NodePolicy.ALLOWED_ALGORITHM_STORES
+        ):
+            return
+
+        if self.config.get("production", True):
+            self.log.error(
+                "No policies on allowed algorithms have been set for this node. Nodes "
+                "with production=true require that you set the '%s' and/or '%s' "
+                "policy in the node configuration.",
+                NodePolicy.ALLOWED_ALGORITHMS.value,
+                NodePolicy.ALLOWED_ALGORITHM_STORES.value,
+            )
+            sys.exit(1)
+        self.log.warning(
+            "No policies on allowed algorithms have been set for this node!"
+        )
+        self.log.warning(
+            "This means that all algorithms are allowed to run on this node."
+        )
 
     def __metadata_worker(self) -> None:
         """
@@ -516,15 +548,7 @@ class Node:
         # send socket event to alert everyone of task status change
         self.socketIO.emit(
             "algorithm_status_change",
-            data={
-                "node_id": self.client.whoami.id_,
-                "status": task_status,
-                "run_id": task_incl_run["id"],
-                "task_id": task["id"],
-                "collaboration_id": self.client.collaboration_id,
-                "organization_id": self.client.whoami.organization_id,
-                "parent_id": get_parent_id(task),
-            },
+            data={"run_id": task_incl_run["id"], "status": task_status},
             namespace="/tasks",
         )
 
@@ -578,15 +602,7 @@ class Node:
                 # notify socket channel of algorithm status change
                 self.socketIO.emit(
                     "algorithm_status_change",
-                    data={
-                        "node_id": self.client.whoami.id_,
-                        "status": results.status,
-                        "run_id": results.run_id,
-                        "task_id": results.task_id,
-                        "collaboration_id": self.client.collaboration_id,
-                        "organization_id": self.client.whoami.organization_id,
-                        "parent_id": results.parent_id,
-                    },
+                    data={"run_id": results.run_id, "status": results.status},
                     namespace="/tasks",
                 )
 
@@ -1095,8 +1111,9 @@ class Node:
         while not self.socketIO.connected:
             if i > TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET:
                 self.log.critical(
-                    "Could not connect to the websocket channels, do you have a "
-                    "slow connection?"
+                    "Could not connect to the websocket channels. Either the "
+                    "connection is slow, or the server refused the connection because "
+                    "the node could not be authenticated (check the server logs)."
                 )
                 exit(1)
             self.log.debug("Waiting for socket connection...")

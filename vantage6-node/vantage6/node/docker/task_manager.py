@@ -400,8 +400,6 @@ class DockerTaskManager(DockerBaseManager):
                 share_algorithm_logs=self.share_algorithm_logs,
                 socketIO=self.socket,
                 run_id=self.run_id,
-                task_id=self.task_id,
-                collaboration_id=self.collaboration_id,
             )
 
         except Exception as e:
@@ -935,9 +933,7 @@ class DockerTaskManager(DockerBaseManager):
             encoded_environment_variables[key] = _encode(str(val))
         return encoded_environment_variables
 
-    def _stream_logs(
-        self, share_algorithm_logs, socketIO, run_id, task_id, collaboration_id
-    ):
+    def _stream_logs(self, share_algorithm_logs, socketIO, run_id):
         """
         Stream logs from the running container to node logs and optionally to
         the server
@@ -955,12 +951,7 @@ class DockerTaskManager(DockerBaseManager):
                 if share_algorithm_logs:
                     socketIO.emit(
                         "algorithm_log",
-                        data={
-                            "collaboration_id": collaboration_id,
-                            "run_id": run_id,
-                            "task_id": task_id,
-                            "log": decoded_log,
-                        },
+                        data={"run_id": run_id, "log": decoded_log},
                         namespace="/tasks",
                     )
 

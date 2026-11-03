@@ -17,6 +17,9 @@ def obtain_auth_collaborations() -> list[db.Collaboration]:
     """
     Obtain the collaborations that the auth is part of.
 
+    Note that a node is only part of its own collaboration, even if its organization
+    participates in other collaborations as well.
+
     Returns
     -------
     list[db.Collaboration]
@@ -25,7 +28,7 @@ def obtain_auth_collaborations() -> list[db.Collaboration]:
     if g.user:
         return g.user.organization.collaborations
     elif g.node:
-        return g.node.organization.collaborations
+        return [g.node.collaboration]
     else:
         return [db.Collaboration.get(g.container["collaboration_id"])]
 
@@ -93,10 +96,10 @@ class RuleCollection(RuleCollectionBase):
             return True
 
         # check if the entity has collaboration permission and the subject
-        # organization is in any collaboration of the own organization
+        # organization is in any collaboration of the entity
         col_perm = getattr(self, f"{operation}_{Scope.COLLABORATION}")
         if col_perm and col_perm.can():
-            for col in auth_org.collaborations:
+            for col in obtain_auth_collaborations():
                 if subject_org_id in [org.id for org in col.organizations]:
                     return True
 
@@ -139,6 +142,10 @@ class RuleCollection(RuleCollectionBase):
             subject_org_id = int(subject_org_id)
         if isinstance(collaboration_id, str):
             collaboration_id = int(collaboration_id)
+
+        # nodes may only access resources of their own collaboration
+        if g.node and collaboration_id != g.node.collaboration_id:
+            return False
 
         auth_org = obtain_auth_organization()
 

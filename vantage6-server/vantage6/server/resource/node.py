@@ -297,6 +297,8 @@ class Nodes(NodeBase):
             elif self.r.v_org.can():
                 # only the results of the user's organization are returned
                 q = q.filter(db.Node.organization_id == auth_org_id)
+                if g.node:
+                    q = q.filter(db.Node.collaboration_id == g.node.collaboration_id)
             else:
                 return {
                     "msg": "You lack the permission to do that!"
@@ -499,7 +501,9 @@ class Node(NodeBase):
             return {"msg": f"Node id={id} is not found!"}, HTTPStatus.NOT_FOUND
 
         # check permissions
-        if not self.r.allowed_for_org(P.VIEW, node.organization_id):
+        if not self.r.allowed_for_org(
+            P.VIEW, node.organization_id
+        ) or self.is_node_outside_its_collab(node.collaboration_id):
             return {
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
@@ -641,7 +645,9 @@ class Node(NodeBase):
         if not node:
             return {"msg": f"Node id={id} not found!"}, HTTPStatus.NOT_FOUND
 
-        if not self.r.allowed_for_org(P.EDIT, node.organization_id):
+        if not self.r.allowed_for_org(
+            P.EDIT, node.organization_id
+        ) or self.is_node_outside_its_collab(node.collaboration_id):
             return {
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED

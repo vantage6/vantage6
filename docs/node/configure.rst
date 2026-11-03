@@ -128,6 +128,9 @@ There are two important steps to be taken to accomplish this:
    4. ``https://store.cotopaxi.vantage6.ai``: allow all algorithms from the
       cotopaxi algorithm store
 
+   Nodes with ``production: true`` (the default) refuse to start if neither
+   ``allowed_algorithms`` nor ``allowed_algorithm_stores`` is set.
+
    Note that you can also define regular expressions for the algorithm stores, and that
    you can combine the two policies. The section :ref:`node-configure-algorithm-access`
    below explains the considerations you need to take into account when setting these

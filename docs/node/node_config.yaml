@@ -13,6 +13,10 @@ port: 443
 # API path prefix that the server uses. Usually '/api' or an empty string
 api_path: ''
 
+# When true (default), the node refuses to start if no `allowed_algorithms` or
+# `allowed_algorithm_stores` policy is set. Set to false for development only.
+production: true
+
 # subnet of the VPN server
 vpn_subnet: 10.76.0.0/16
 
@@ -129,15 +133,14 @@ encryption:
 # Define who is allowed to run which algorithms on this node.
 policies:
   # Control which algorithm images are allowed to run on this node. This is
-  # expected to be a valid regular expression. If you don't specify this, all algorithm
-  # images are allowed to run on this node (unless other policies restrict this).
+  # expected to be a valid regular expression. If `production` is true, you must set
+  # this and/or `allowed_algorithm_stores`, otherwise the node will not start.
   allowed_algorithms:
     - ^ghcr\.io/vantage6/algorithm/[a-zA-Z]+/[a-zA-Z]+$
     - ^ghcr\.io/vantage6/algorithm/glm$
 
   # It is also possible to allow all algorithms from particular algorithm stores. Set
-  # these stores here. They may be strings or regular expressions. If you don't specify
-  # this, algorithms from any store are allowed (unless other policies prevent this).
+  # these stores here. They may be strings or regular expressions.
   allowed_algorithm_stores:
     # allow all algorithms from the vantage6 community store
     - https://store.cotopaxi.vantage6.ai

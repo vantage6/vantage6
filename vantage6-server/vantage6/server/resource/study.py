@@ -322,6 +322,8 @@ class Studies(StudyBase):
                 q = q.join(db.Organization, db.Study.organizations).filter(
                     db.Study.organizations.any(id=auth_org_id)
                 )
+                if g.node:
+                    q = q.filter(db.Study.collaboration_id == g.node.collaboration_id)
             else:
                 return {
                     "msg": "You lack the permission to do that!"
@@ -497,7 +499,7 @@ class Study(StudyBase):
             not self.r.v_glo.can()
             and not (self.r.v_col.can() and study.collaboration_id in auth_collab_ids)
             and not (self.r.v_org.can() and auth_org_id in org_ids)
-        ):
+        ) or self.is_node_outside_its_collab(study.collaboration_id):
             return {
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED

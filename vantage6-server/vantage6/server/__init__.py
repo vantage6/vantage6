@@ -68,6 +68,7 @@ from vantage6.server.resource.common.output_schema import HATEOASModelSchema
 from vantage6.server.globals import (
     APPNAME,
     ACCESS_TOKEN_EXPIRES_HOURS,
+    CONTAINER_TOKEN_EXPIRES_HOURS,
     RESOURCES,
     RESOURCES_PATH,
     SUPER_USER_INFO,
@@ -345,6 +346,12 @@ class ServerApp:
             default_hours=REFRESH_TOKENS_EXPIRE_HOURS,
             longer_than=token_expiry_seconds + MIN_REFRESH_TOKEN_EXPIRY_DELTA,
             is_refresh=True,
+        )
+
+        # Set container token expiration time
+        self.app.config["CONTAINER_TOKEN_EXPIRES"] = self._get_jwt_expiration_seconds(
+            config_key="container_token_expires_hours",
+            default_hours=CONTAINER_TOKEN_EXPIRES_HOURS,
         )
 
         # # Open Api Specification (f.k.a. swagger)
