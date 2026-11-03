@@ -1,0 +1,20 @@
+name: Container scan
+on:
+  workflow_dispatch:
+    inputs:
+      image:
+        description: "Image reference to scan (leave empty to scan all images)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          IMAGE: ${{ inputs.image }}
+        run: |
+          echo "Stub. Image input: '$IMAGE'"
