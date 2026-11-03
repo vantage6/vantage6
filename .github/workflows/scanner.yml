@@ -1,11 +1,19 @@
+# Scan a container image for vulnerabilities with Trivy. Results end up in the
+# job summary (HIGH/CRITICAL), the Security tab (SARIF, one category per image)
+# and a JSON artifact (everything).
+#
+# CVEs that Docker has marked as not exploitable in its Hardened Images are
+# suppressed through VEX. This only affects the DHI-based images mirrored via
+# docker/mirror-images.txt for now; the other images will be included once there
+# base images are also DHI images.
 name: Container scan
 on:
   workflow_dispatch:
     inputs:
       image:
-        description: "Image reference to scan (leave empty to scan all images)"
-        required: false
-        default: ""
+        description: "Image reference to scan, e.g. ghcr.io/vantage6/infrastructure/hq:latest"
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -13,8 +21,76 @@ permissions:
 jobs:
   scan:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+      security-events: write
+    env:
+      IMAGE: ${{ inputs.image }}
     steps:
-      - env:
-          IMAGE: ${{ inputs.image }}
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        # pinned to: https://github.com/docker/login-action/releases/tag/v4.1.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Install Trivy
+        # pinned to: https://github.com/aquasecurity/setup-trivy/releases/tag/v0.3.1
+        uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567
+        with:
+          version: v0.76.0
+
+      - name: Configure VEX repositories
         run: |
-          echo "Stub. Image input: '$IMAGE'"
+          mkdir -p ~/.trivy/vex
+          cat > ~/.trivy/vex/repository.yaml << 'EOF'
+          repositories:
+            - name: default
+              url: https://github.com/aquasecurity/vexhub
+              enabled: true
+            - name: dhi-vex
+              url: https://github.com/docker-hardened-images/advisories
+              enabled: true
+          EOF
+          trivy vex repo download
+
+      - name: Derive report name
+        id: name
+        run: |
+          name="${IMAGE##*/}"
+          echo "name=${name%%[:@]*}" >> "$GITHUB_OUTPUT"
+
+      - name: Scan image
+        run: trivy image --scanners vuln --vex repo --format json
+          --output report.json "$IMAGE"
+
+      - name: Write job summary
+        run: |
+          {
+            echo "## $IMAGE"
+            echo '```'
+            trivy convert --format table --severity HIGH,CRITICAL report.json
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Convert to SARIF
+        run: trivy convert --format sarif --output report.sarif report.json
+
+      - name: Upload to Security tab
+        # pinned to: https://github.com/github/codeql-action/releases/tag/v4.39.0
+        uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee
+        with:
+          sarif_file: report.sarif
+          category: ${{ steps.name.outputs.name }}
+
+      - name: Upload report
+        # pinned to: https://github.com/actions/upload-artifact/releases/tag/v7.0.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: trivy-${{ steps.name.outputs.name }}
+          path: report.json
