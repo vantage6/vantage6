@@ -1,0 +1,17 @@
+name: Image Scanner
+on:
+  workflow_dispatch:
+    inputs:
+      image:
+        description: "Image reference to scan (leave empty to scan all images)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Stub. Image input: '${{ inputs.image }}'"
