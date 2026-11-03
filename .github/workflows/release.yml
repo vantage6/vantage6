@@ -73,6 +73,22 @@ jobs:
           branch=$(echo $raw | sed 's/.*origin\///')
           echo "branch=${branch}" >> $GITHUB_OUTPUT
 
+      # Only a final release that is the newest of its major version moves the
+      # major-only algorithm base image tag (e.g. `5`). A patch release on an older
+      # minor version must not move it back.
+      - name: Check if this is the newest release of its major version
+        id: newest_in_major
+        env:
+          version: ${{ steps.split.outputs.version }}
+          major: ${{ steps.split.outputs.major }}
+          stage: ${{ steps.split.outputs.stage }}
+        run: |
+          newest=$(git tag -l "version/${major}.*" | sed 's#^version/##' \
+            | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1)
+          TAG_MAJOR=false
+          if [[ "$stage" == "" && "$version" == "$newest" ]]; then TAG_MAJOR=true; fi
+          echo "tag_major=${TAG_MAJOR}" >> $GITHUB_OUTPUT
+
       - name: Checkout branch on which tag was pushed
         uses: actions/checkout@v4
         with:
@@ -125,6 +141,7 @@ jobs:
       major_name: ${{ steps.split.outputs.major_name }}
       branch: ${{ steps.branchname.outputs.branch }}
       tag_latest: ${{ steps.split.outputs.tag_latest }}
+      tag_major: ${{ steps.newest_in_major.outputs.tag_major }}
 
   # Create Github release which can be used DOI generation
   github-release:
@@ -307,6 +324,8 @@ jobs:
       patch: ${{ needs.version.outputs.patch }}
       stage: ${{ needs.version.outputs.stage }}
       tag_latest: ${{ needs.version.outputs.tag_latest }}
+      # e.g. `5` for the newest final release of major version 5, empty otherwise
+      major_tag: ${{ needs.version.outputs.tag_major == 'true' && needs.version.outputs.major || '' }}
 
     steps:
       - name: Log in to GHCR
@@ -333,27 +352,34 @@ jobs:
       - name: Build and push Algorithm base image
         if: ${{ env.stage == '' || env.patch == 0 }}
         run: make algorithm-base-image TAG=${major}.${minor} PUSH_REG=true
-          TAG_LATEST=$tag_latest
+          TAG_LATEST=$tag_latest MAJOR_TAG=$major_tag
 
       - name: Build and push Algorithm OMOP base image
         if: ${{ env.stage == '' || env.patch == 0 }}
         run: make algorithm-omop-base-image BASE=${major}.${minor} TAG=${major}.${minor}
-          PUSH_REG=true TAG_LATEST=$tag_latest
+          PUSH_REG=true TAG_LATEST=$tag_latest MAJOR_TAG=$major_tag
 
-  # The basic algorithm images only expose functions of the vantage6 algorithm tools.
-  # Creating a new patch tag in their repositories triggers their release workflow,
-  # which rebuilds them on the algorithm base image built above, so that they contain
-  # the algorithm tools of this release.
-  algorithm-basics-images:
-    name: Trigger rebuild of basic algorithm images
+  # The community algorithms build on the major-only algorithm base image tag (e.g.
+  # `5`), which the job above moves to this release. Creating a new patch tag in their
+  # repositories triggers their release workflow, which rebuilds them so that they
+  # contain the algorithm tools of this release.
+  algorithm-images:
+    name: Trigger rebuild of community algorithm images
     runs-on: ubuntu-latest
     needs: [ version, algorithm-base-image ]
-    if: ${{ needs.version.outputs.stage == '' }}
+    if: ${{ needs.version.outputs.tag_latest == 'true' && needs.version.outputs.tag_major == 'true' }}
     strategy:
+      fail-fast: false
       matrix:
         repository:
           - vantage6/v6-preprocess-basics-py
           - vantage6/v6-extract-basics-py
+          - vantage6/v6-session-basics
+          - vantage6/v6-average-py
+          - vantage6/v6-crosstab-py
+          - vantage6/v6-glm-py
+          - vantage6/v6-kaplan-meier-py
+          - vantage6/v6-summary-py
     env:
       # tags created with the default GITHUB_TOKEN do not trigger workflows
       GH_TOKEN: ${{ secrets.COMMIT_PAT }}
@@ -370,6 +396,26 @@ jobs:
           gh api "repos/${REPOSITORY}/git/refs" -f ref="refs/tags/${new_tag}" \
             -f sha="${sha}"
           echo "Created tag ${new_tag} on ${REPOSITORY} (${sha})"
+
+  # `v6 algorithm create` uses the newest tag of the algorithm template that matches
+  # the major version of the CLI, so tag the template with this release's version.
+  algorithm-template:
+    name: Tag algorithm template
+    runs-on: ubuntu-latest
+    needs: [ version, algorithm-base-image ]
+    if: ${{ needs.version.outputs.tag_latest == 'true' && needs.version.outputs.tag_major == 'true' }}
+    env:
+      GH_TOKEN: ${{ secrets.COMMIT_PAT }}
+      REPOSITORY: vantage6/v6-algorithm-template
+      version: ${{ needs.version.outputs.version }}
+    steps:
+      - name: Create release tag
+        run: |
+          branch=$(gh api "repos/${REPOSITORY}" --jq .default_branch)
+          sha=$(gh api "repos/${REPOSITORY}/commits/${branch}" --jq .sha)
+          gh api "repos/${REPOSITORY}/git/refs" -f ref="refs/tags/${version}" \
+            -f sha="${sha}"
+          echo "Created tag ${version} on ${REPOSITORY} (${sha})"
 
   # Update the server and node images
   deploy:
