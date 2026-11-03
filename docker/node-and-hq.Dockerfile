@@ -6,7 +6,7 @@
 # * ghcr.io/vantage6/infrastructure/hq:x.x.x
 #
 ARG TAG=latest
-ARG BASE=5.0
+ARG BASE=5.1
 FROM ghcr.io/astral-sh/uv:python3.13-bookworm
 
 LABEL version=${TAG}
