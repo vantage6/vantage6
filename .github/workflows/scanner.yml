@@ -2,7 +2,8 @@
 # in docker/maintained-images.toml are scanned; with an image reference, only
 # that image.
 # Results end up in the job summary (HIGH/CRITICAL), the Security tab (SARIF,
-# one category per image and tag) and a JSON artifact (everything).
+# one category per image and tag) and a JSON artifact (everything). A full scan
+# also removes the results of tags that are no longer maintained.
 #
 # CVEs that Docker has marked as not exploitable in its Hardened Images are
 # suppressed through VEX. This only affects the DHI-based images mirrored via
@@ -159,3 +160,39 @@ jobs:
         with:
           name: trivy-${{ matrix.target.category }}
           path: report.json
+
+  # Delete the Trivy analyses, and with them the alerts, of categories that are
+  # no longer in docker/maintained-images.toml. Only on a full scan: a single
+  # image scan lists just one category, so everything else would be deleted.
+  cleanup:
+    name: Remove unmaintained images
+    needs: targets
+    if: inputs.image == '' && needs.targets.outputs.targets != '[]'
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - name: Delete analyses of removed categories
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGETS: ${{ needs.targets.outputs.targets }}
+        run: |
+          keep=$(jq -r '.[].category' <<< "$TARGETS")
+          # Each set of analyses (ref + tool + category) has exactly one deletable
+          # analysis: the most recent. Deleting it returns the next one in the set,
+          # so follow confirm_delete_url until the set is gone.
+          gh api --paginate --method GET \
+            "repos/$GITHUB_REPOSITORY/code-scanning/analyses" \
+            -f tool_name=Trivy -f ref="$GITHUB_REF" -f per_page=100 \
+            --jq '.[] | select(.deletable) | "\(.id) \(.category)"' |
+          while read -r id category; do
+            if grep -qxF "$category" <<< "$keep"; then
+              continue
+            fi
+            echo "Deleting analyses of category $category"
+            url="repos/$GITHUB_REPOSITORY/code-scanning/analyses/$id?confirm_delete=true"
+            while [ -n "$url" ]; do
+              url=$(gh api --method DELETE "$url" --jq '.confirm_delete_url // empty')
+              url="${url#https://api.github.com/}"
+            done
+          done
