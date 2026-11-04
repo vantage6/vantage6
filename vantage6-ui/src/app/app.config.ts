@@ -40,47 +40,9 @@ import { OverlayModule } from '@angular/cdk/overlay';
 import { provideRouter } from '@angular/router';
 import { routes } from './app-routing.module';
 
-import {
-  provideKeycloak,
-  createInterceptorCondition,
-  IncludeBearerTokenCondition,
-  INCLUDE_BEARER_TOKEN_INTERCEPTOR_CONFIG,
-  withAutoRefreshToken,
-  AutoRefreshTokenService,
-  UserActivityService,
-  includeBearerTokenInterceptor
-} from 'keycloak-angular';
+import { provideKeycloak, withAutoRefreshToken, AutoRefreshTokenService, UserActivityService } from 'keycloak-angular';
 import { environment } from 'src/environments/environment';
-
-/*
- * Get the URL pattern for services that the token is sent to.
-
- * If the allowed algorithm stores is '*', return a pattern that matches all URLs.
- * If allowed algorithm stores are specified, we can determine the URL pattern to allow
- * for the Bearer token inclusion as thes HQ URL plus the allowed algorithm stores.
- */
-function getUrlPattern() {
-  if (environment.allowed_algorithm_stores === '*') {
-    return new RegExp(`.*`, 'i');
-  }
-  const urls: string[] = environment.allowed_algorithm_stores.split(' ');
-  urls.push(environment.hq_url);
-
-  // Create a pattern that matches the base URL and any subpaths
-  // Escape special regex characters in URLs and add optional trailing slash and subpaths
-  const escapedUrls = urls.map((url) => {
-    const escaped = url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    return `${escaped}(/.*)?`;
-  });
-  return new RegExp(`^(${escapedUrls.join('|')})$`, 'i');
-}
-
-// Send the Keycloak token along with requests when the user is authenticated. The url
-// pattern defines to which backend services the token is included.
-const UrlCondition = createInterceptorCondition<IncludeBearerTokenCondition>({
-  urlPattern: getUrlPattern(),
-  bearerPrefix: 'Bearer'
-});
+import { HQ_AUDIENCE_SCOPE, STORE_AUDIENCE_SCOPE, hqTokenInterceptor } from './services/token.service';
 
 export const provideKeycloakAngular = () =>
   provideKeycloak({
@@ -90,6 +52,9 @@ export const provideKeycloakAngular = () =>
       clientId: environment.keycloak_client
     },
     initOptions: {
+      // log in for both HQ and algorithm stores; TokenService gets a separate token
+      // for each from this login
+      scope: `${HQ_AUDIENCE_SCOPE} ${STORE_AUDIENCE_SCOPE}`,
       onLoad: 'check-sso',
       // checkLoginIframe: true
       silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
@@ -101,14 +66,7 @@ export const provideKeycloakAngular = () =>
         sessionTimeout: Number(environment.refresh_token_validity_seconds) * 1000
       })
     ],
-    providers: [
-      AutoRefreshTokenService,
-      UserActivityService,
-      {
-        provide: INCLUDE_BEARER_TOKEN_INTERCEPTOR_CONFIG,
-        useValue: [UrlCondition]
-      }
-    ]
+    providers: [AutoRefreshTokenService, UserActivityService]
   });
 
 export function HttpLoaderFactory(http: HttpClient) {
@@ -156,7 +114,7 @@ export const appConfig: ApplicationConfig = {
       OverlayModule
     ),
     { provide: MAT_DATE_LOCALE, useValue: enCA },
-    provideHttpClient(withInterceptorsFromDi(), withInterceptors([includeBearerTokenInterceptor])),
+    provideHttpClient(withInterceptorsFromDi(), withInterceptors([hqTokenInterceptor])),
     DatePipe,
     provideAnimations(),
     provideKeycloakAngular(),

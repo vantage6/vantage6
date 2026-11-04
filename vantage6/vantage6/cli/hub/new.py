@@ -100,7 +100,8 @@ def cli_hub_new(
     keycloak_config = global_hub_config["keycloak"]
     credentials = HubCredentials(
         admin_password=keycloak_config.pop("adminPassword"),
-        admin_client_secret=keycloak_config.pop("adminClientSecret"),
+        hq_admin_client_secret=keycloak_config.pop("hqAdminClientSecret"),
+        store_admin_client_secret=keycloak_config.pop("storeAdminClientSecret"),
     )
     keycloak_config["credentialsInSecrets"] = True
 
@@ -152,6 +153,7 @@ def cli_hub_new(
                 "name": base_config["store_name"],
                 "url": base_config["store_url"],
                 "api_path": "/store",
+                "uses_hq_keycloak": True,
             }
         ]
         extra_config["ui"] = {

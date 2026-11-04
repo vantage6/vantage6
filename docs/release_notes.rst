@@ -1,6 +1,142 @@
 Release notes
 =============
 
+5.1.0
+-----
+
+*3 November 2026*
+
+- **Security**
+
+  - Algorithm stores no longer receive tokens that are valid at HQ. HQ and algorithm
+    stores now each only accept Keycloak tokens issued for them, HQ looks up
+    algorithms at a store with its own read-only token instead of the user's token,
+    tokens are only sent to algorithm stores that use the same Keycloak as HQ, and
+    algorithm stores get their own Keycloak client that can only look up users
+    (`GHSA-v995-8jhw-349w
+    <https://github.com/vantage6/vantage6/security/advisories/GHSA-v995-8jhw-349w>`_).
+  - Preprocessing expressions in ``assign_column``, ``redefine_column`` and
+    ``select_rows`` are now evaluated by vantage6 itself instead of by pandas
+    ``eval``/``query``, which may have allowed researchers to run arbitrary code on the
+    node (`GHSA-98jv-c22f-3qrp
+    <https://github.com/vantage6/vantage6/security/advisories/GHSA-98jv-c22f-3qrp>`_).
+  - Nodes may only access runs, tasks and data of their own collaboration. Before, a
+    compromised node could patch runs and view data of other collaborations its
+    organization takes part in. Nodes also can no longer patch their own node resource
+    (`GHSA-c676-7h46-8725
+    <https://github.com/vantage6/vantage6/security/advisories/GHSA-c676-7h46-8725>`_).
+  - HQ only issues a container token to a node whose organization is assigned to the
+    task. Before, a compromised node in the collaboration could create one
+    (`GHSA-69vq-j3qr-vg8x
+    <https://github.com/vantage6/vantage6/security/advisories/GHSA-69vq-j3qr-vg8x>`_).
+  - Container tokens now expire, and are refused as soon as their task has finished
+    (`GHSA-m879-xx69-79f2
+    <https://github.com/vantage6/vantage6/security/advisories/GHSA-m879-xx69-79f2>`_).
+  - HQ verifies the data in socket events from nodes, and derives it where possible
+    (`GHSA-82rc-cpqj-9926
+    <https://github.com/vantage6/vantage6/security/advisories/GHSA-82rc-cpqj-9926>`_).
+  - Socket clients that fail to authenticate are now disconnected
+    (`GHSA-942q-gcpr-gh5q
+    <https://github.com/vantage6/vantage6/security/advisories/GHSA-942q-gcpr-gh5q>`_).
+  - The node's private key is stored in a Kubernetes secret instead of a plain-text
+    file. Use ``v6 node get-private-key`` to get it, e.g. to use it in the Python client
+    or UI
+    (`GHSA-r5cm-8vc3-5333
+    <https://github.com/vantage6/vantage6/security/advisories/GHSA-r5cm-8vc3-5333>`_).
+  - Production nodes refuse to start without an ``allowed_algorithms`` or
+    ``allowed_algorithm_stores`` policy
+    (`GHSA-hx2w-rjmx-934x
+    <https://github.com/vantage6/vantage6/security/advisories/GHSA-hx2w-rjmx-934x>`_).
+  - Tasks from an algorithm store are refused if their method is not registered in
+    the store, and subtasks are now also checked against the store
+    (`GHSA-4998-q23j-7w5r
+    <https://github.com/vantage6/vantage6/security/advisories/GHSA-4998-q23j-7w5r>`_).
+  - The ``mount_mode`` of a database is now applied to algorithm pods, and its default
+    is now ``ro``
+    (`GHSA-27gf-8rcw-jqgh
+    <https://github.com/vantage6/vantage6/security/advisories/GHSA-27gf-8rcw-jqgh>`_).
+  - HQ checks on task creation that the session and dataframes belong to the task's
+    collaboration
+    (`GHSA-47f9-q832-gc8q
+    <https://github.com/vantage6/vantage6/security/advisories/GHSA-47f9-q832-gc8q>`_).
+  - Update UI and Python dependencies to fix security vulnerabilities, and drop the
+    compromised emSign CA certificates by upgrading certifi
+    (`PR#2771 <https://github.com/vantage6/vantage6/pull/2771>`_,
+    `PR#2822 <https://github.com/vantage6/vantage6/pull/2822>`_).
+
+- **Upgrade notes**
+
+  - Existing 5.0.x hubs cannot be upgraded in place, as the Keycloak realm and the HQ
+    database changed: set up the hub again. Nodes, the UI and Python clients must
+    also use this version, as HQ and stores refuse tokens of older versions.
+  - Keycloak settings were renamed, and algorithm stores need their own client. In
+    your configuration:
+
+    - ``keycloak.adminClient`` → ``hqAdminClient``
+    - ``keycloak.adminClientSecret`` → ``hqAdminClientSecret``
+    - auth chart: ``keycloak.realmImport.backend_client_secret`` →
+      ``hq_admin_client_secret``
+    - UI: ``ui.keycloak.client`` → ``ui.keycloak.publicClient``
+    - new: ``storeAdminClientSecret``. A standalone store needs a
+      ``store-admin-client`` client in Keycloak with only the ``realm-management``
+      role ``view-users``.
+
+  - Mark the algorithm stores that use the same Keycloak as HQ with
+    ``uses_hq_keycloak: true`` in ``hq.algorithm_stores``, or with a ``PATCH`` to
+    ``/algorithmstore/<id>`` as a user with global collaboration edit permission.
+    Other stores receive no tokens, so only their public algorithms can be used.
+  - When a store restricts who may view algorithms, HQ no longer checks at task
+    creation whether the user may view the algorithm, only whether it is approved.
+  - HQ and algorithm stores respond to invalid tokens with 401 instead of 422 or 400.
+  - Nodes with ``production: true`` (the default) need an ``allowed_algorithms`` or
+    ``allowed_algorithm_stores`` policy, otherwise they do not start.
+  - The ``encryption.private_key`` node setting is no longer used. For encrypted
+    nodes, store the existing private key in a Kubernetes secret with
+    ``v6 node create-private-key --from-file <path>``.
+  - Databases are now mounted read-only by default. Set ``mount_mode: copy`` for
+    databases that algorithms need to write to.
+  - Container tokens expire after ``container_token_expires_hours`` (default 168
+    hours) in the HQ configuration. Increase it if your algorithms run longer.
+  - Preprocessing expressions now support a limited set of operations, see the
+    algorithm development documentation.
+
+- **Feature**
+
+  - Runs get the status ``pulling image`` while the node downloads the algorithm
+    image, which the UI shows as 'Downloading algorithm'
+    (`Issue#2230 <https://github.com/vantage6/vantage6/issues/2230>`_,
+    `PR#2723 <https://github.com/vantage6/vantage6/pull/2723>`_).
+  - The size of HQ's database connection pool can be set with ``database_pool_size``
+    and ``database_max_overflow``
+    (`Issue#2651 <https://github.com/vantage6/vantage6/issues/2651>`_,
+    `PR#2678 <https://github.com/vantage6/vantage6/pull/2678>`_).
+  - Add the ``--encrypted`` option to ``v6 sandbox`` to test encrypted collaborations.
+
+- **Change**
+
+  - Nodes connect to HQ over websockets only, as HTTP long-polling was unstable and
+    lost messages under load. Set ``allow_http_polling: true`` in the node
+    configuration if your network does not support websockets. The UI prefers
+    websockets and falls back to polling, and HQ accepts more packets per polling
+    request
+    (`Issue#2646 <https://github.com/vantage6/vantage6/issues/2646>`_,
+    `Issue#2650 <https://github.com/vantage6/vantage6/issues/2650>`_,
+    `PR#2808 <https://github.com/vantage6/vantage6/pull/2808>`_).
+  - Move the development and documentation dependencies to dependency groups
+    (`PR#2817 <https://github.com/vantage6/vantage6/pull/2817>`_).
+
+- **Bugfix**
+
+  - Release the database sessions of HQ's background workers, which before kept
+    pooled connections in use
+    (`Issue#2651 <https://github.com/vantage6/vantage6/issues/2651>`_,
+    `PR#2678 <https://github.com/vantage6/vantage6/pull/2678>`_).
+  - Skip the algorithm status change notification when the node's socket connection
+    is down. Before, this raised an error that marked the run as failed on HQ, even
+    though the algorithm was running fine
+    (`Issue#2648 <https://github.com/vantage6/vantage6/issues/2648>`_,
+    `PR#2800 <https://github.com/vantage6/vantage6/pull/2800>`_).
+
 5.0.3
 -----
 
@@ -283,6 +419,63 @@ more details regarding the lower-level changes required to accomplish it.*
   - Prevent issues in database initialization due to racing conditions when there
     are multiple concurrent services start at the same time
     (`PR#2510 <https://github.com/vantage6/vantage6/pull/2510>`_).
+
+4.15.3
+------
+
+*2 November 2026*
+
+- **Security**
+
+  - Nodes may only access runs, tasks and data of their own collaboration. Before, a
+    node could patch runs and view data of other collaborations its organization takes
+    part in
+    (`GHSA-c676-7h46-8725
+    <https://github.com/vantage6/vantage6/security/advisories/GHSA-c676-7h46-8725>`_).
+  - The server only issues a container token to a node whose organization is assigned
+    to the task. Before, any node in the collaboration could create one
+    (`GHSA-69vq-j3qr-vg8x
+    <https://github.com/vantage6/vantage6/security/advisories/GHSA-69vq-j3qr-vg8x>`_).
+  - Container tokens now expire, and are refused as soon as their task has finished
+    (`GHSA-m879-xx69-79f2
+    <https://github.com/vantage6/vantage6/security/advisories/GHSA-m879-xx69-79f2>`_).
+  - The server verifies the data in socket events from nodes, and derives it where
+    possible, instead of trusting it
+    (`GHSA-82rc-cpqj-9926
+    <https://github.com/vantage6/vantage6/security/advisories/GHSA-82rc-cpqj-9926>`_).
+  - Socket clients that fail to authenticate are now disconnected. Before, the
+    connection stayed open
+    (`GHSA-942q-gcpr-gh5q
+    <https://github.com/vantage6/vantage6/security/advisories/GHSA-942q-gcpr-gh5q>`_).
+  - Private key files are created so that only their owner can read them
+    (`GHSA-r5cm-8vc3-5333
+    <https://github.com/vantage6/vantage6/security/advisories/GHSA-r5cm-8vc3-5333>`_).
+  - Nodes have a new ``production`` setting (default ``true``). Production nodes refuse
+    to start without an ``allowed_algorithms`` or ``allowed_algorithm_stores`` policy.
+    Before, such nodes allowed any algorithm
+    (`GHSA-hx2w-rjmx-934x
+    <https://github.com/vantage6/vantage6/security/advisories/GHSA-hx2w-rjmx-934x>`_).
+  - Upgrade pip and certifi and update the base images to drop the compromised eMudhra
+    CA certificates
+    (`PR#2827 <https://github.com/vantage6/vantage6/pull/2827>`_).
+
+- **Upgrade notes**
+
+  - Nodes with ``production: true`` (the default) need an ``allowed_algorithms`` or
+    ``allowed_algorithm_stores`` policy, otherwise they do not start. Set
+    ``production: false`` only for development.
+  - Container tokens expire after ``container_token_expires_hours`` (default 168
+    hours) in the server configuration. Increase it if your algorithms run longer.
+
+- **Bugfix**
+
+  - Fix that repeated password reset requests silently failed after the first one
+    (`Issue#2267 <https://github.com/vantage6/vantage6/issues/2267>`_,
+    `PR#2746 <https://github.com/vantage6/vantage6/pull/2746>`_).
+  - Fix that the server registered an extra database listener every time its Azure
+    storage service was created, so that each run deletion triggered all of them
+    (`Issue#2737 <https://github.com/vantage6/vantage6/issues/2737>`_,
+    `PR#2749 <https://github.com/vantage6/vantage6/pull/2749>`_).
 
 4.15.2
 ------

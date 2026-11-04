@@ -55,7 +55,9 @@ class HubCredentials:
     """Credentials collected while creating a hub configuration."""
 
     admin_password: str
-    admin_client_secret: str
+    # secrets of the Keycloak clients of HQ and the algorithm store
+    hq_admin_client_secret: str
+    store_admin_client_secret: str
     admin_username: str = DEFAULT_KEYCLOAK_ADMIN_USERNAME
     auth_db: dict[str, str] = field(default_factory=dict)
     smtp_password: str | None = None
@@ -215,13 +217,10 @@ def build_hub_secrets(
     dict[str, dict[str, str]]
         The data of each secret, by secret name
     """
-    keycloak_admin = {
-        "KEYCLOAK_ADMIN_PASSWORD": credentials.admin_password,
-        "KEYCLOAK_ADMIN_CLIENT_SECRET": credentials.admin_client_secret,
-    }
     realm = {
         "admin-password": credentials.admin_password,
-        "backend-client-secret": credentials.admin_client_secret,
+        "hq-admin-client-secret": credentials.hq_admin_client_secret,
+        "store-admin-client-secret": credentials.store_admin_client_secret,
     }
     if credentials.smtp_password:
         realm["smtp-password"] = credentials.smtp_password
@@ -229,7 +228,8 @@ def build_hub_secrets(
         secret_names.auth_db: credentials.auth_db,
         secret_names.realm: realm,
         secret_names.hq: {
-            **keycloak_admin,
+            "KEYCLOAK_ADMIN_PASSWORD": credentials.admin_password,
+            "KEYCLOAK_ADMIN_CLIENT_SECRET": credentials.hq_admin_client_secret,
             "V6_JWT_SECRET_KEY": secrets.token_urlsafe(48),
             "V6_DATABASE_URI": credentials.hq_database_uri,
             "V6_RABBITMQ_URI": rabbitmq_uri(
@@ -239,7 +239,11 @@ def build_hub_secrets(
         },
     }
     if has_store:
-        store = {**keycloak_admin, "V6_DATABASE_URI": credentials.store_database_uri}
+        # the store only gets its own Keycloak client, not the Keycloak admin user
+        store = {
+            "KEYCLOAK_ADMIN_CLIENT_SECRET": credentials.store_admin_client_secret,
+            "V6_DATABASE_URI": credentials.store_database_uri,
+        }
         if credentials.smtp_password:
             store["V6_SMTP_PASSWORD"] = credentials.smtp_password
         hub_secrets[secret_names.store] = store

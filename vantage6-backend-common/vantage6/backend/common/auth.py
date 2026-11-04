@@ -4,6 +4,13 @@ from dataclasses import dataclass
 
 from keycloak import KeycloakAdmin, KeycloakError, KeycloakOpenID
 
+from vantage6.common.globals import (
+    HQ_AUDIENCE_SCOPE,
+    HQ_TOKEN_AUDIENCE,
+    STORE_AUDIENCE_SCOPE,
+    STORE_TOKEN_AUDIENCE,
+)
+
 from vantage6.backend.common.globals import RequiredBackendEnvVars
 from vantage6.backend.common.resource.error_handling import BadRequestError
 
@@ -144,25 +151,11 @@ def create_service_account_in_keycloak(
     try:
         keycloak_admin: KeycloakAdmin = get_keycloak_admin_client()
         client_id = keycloak_admin.create_client(
-            {
-                "clientId": client_name,
-                "publicClient": False,
-                "enabled": True,
-                "serviceAccountsEnabled": True,
-                "standardFlowEnabled": False,
-                "protocolMappers": [
-                    {
-                        "name": "vantage6_client_type",
-                        "protocol": "openid-connect",
-                        "protocolMapper": "oidc-hardcoded-claim-mapper",
-                        "config": {
-                            "claim.name": "vantage6_client_type",
-                            "claim.value": "node" if is_node else "user",
-                            "access.token.claim": True,
-                        },
-                    }
-                ],
-            }
+            _service_account_client(client_name, "node" if is_node else "user")
+        )
+        # service accounts request a token per audience: one for HQ, one for stores
+        _add_optional_scopes(
+            keycloak_admin, client_id, [HQ_AUDIENCE_SCOPE, STORE_AUDIENCE_SCOPE]
         )
         user_id = keycloak_admin.get_user_id(f"service-account-{client_name}")
         secret = keycloak_admin.get_client_secrets(client_id)
@@ -197,6 +190,140 @@ def delete_service_account_in_keycloak(client_id: str) -> None:
         raise BadRequestError(
             f"Service account '{client_id}' could not be deleted from Keycloak"
         ) from exc
+
+
+def _client_type_mapper(client_type: str) -> dict:
+    """Protocol mapper that sets the `vantage6_client_type` claim"""
+    return {
+        "name": "vantage6_client_type",
+        "protocol": "openid-connect",
+        "protocolMapper": "oidc-hardcoded-claim-mapper",
+        "config": {
+            "claim.name": "vantage6_client_type",
+            "claim.value": client_type,
+            "access.token.claim": True,
+        },
+    }
+
+
+def _service_account_client(client_name: str, client_type: str) -> dict:
+    """
+    Representation of a confidential client that only uses its service account. Its
+    tokens carry `client_type` as `vantage6_client_type`.
+    """
+    return {
+        "clientId": client_name,
+        "publicClient": False,
+        "enabled": True,
+        "serviceAccountsEnabled": True,
+        "standardFlowEnabled": False,
+        "protocolMappers": [_client_type_mapper(client_type)],
+    }
+
+
+def _get_client_scope_ids(keycloak_admin: KeycloakAdmin) -> dict[str, str]:
+    return {scope["name"]: scope["id"] for scope in keycloak_admin.get_client_scopes()}
+
+
+def _add_optional_scopes(
+    keycloak_admin: KeycloakAdmin, client_id: str, scope_names: list[str]
+) -> None:
+    scope_ids = _get_client_scope_ids(keycloak_admin)
+    present = {
+        scope["name"]
+        for scope in keycloak_admin.get_client_optional_client_scopes(client_id)
+    }
+    for name in scope_names:
+        if name not in present:
+            keycloak_admin.add_client_optional_client_scope(
+                client_id, scope_ids[name], {}
+            )
+
+
+def _add_default_scope(
+    keycloak_admin: KeycloakAdmin, client_id: str, scope_name: str
+) -> None:
+    present = {
+        scope["name"]
+        for scope in keycloak_admin.get_client_default_client_scopes(client_id)
+    }
+    if scope_name not in present:
+        scope_id = _get_client_scope_ids(keycloak_admin)[scope_name]
+        keycloak_admin.add_client_default_client_scope(client_id, scope_id, {})
+
+
+def _ensure_audience_scopes(keycloak_admin: KeycloakAdmin) -> None:
+    """
+    Create the client scopes that add the HQ or store audience to a token.
+
+    These are created here rather than in the Keycloak realm import: when an imported
+    realm defines any client scopes, Keycloak does not create its built-in scopes
+    (e.g. `basic`, `profile`, `roles`, `web-origins`), so tokens would lack claims
+    such as `sub`. Copying those built-in scopes into the realm import would tie it to
+    the Keycloak version.
+    """
+    existing = _get_client_scope_ids(keycloak_admin)
+    for scope_name, audience in [
+        (HQ_AUDIENCE_SCOPE, HQ_TOKEN_AUDIENCE),
+        (STORE_AUDIENCE_SCOPE, STORE_TOKEN_AUDIENCE),
+    ]:
+        if scope_name in existing:
+            continue
+        keycloak_admin.create_client_scope(
+            {
+                "name": scope_name,
+                "protocol": "openid-connect",
+                "attributes": {"include.in.token.scope": "false"},
+                "protocolMappers": [
+                    {
+                        "name": f"{audience}-audience",
+                        "protocol": "openid-connect",
+                        "protocolMapper": "oidc-audience-mapper",
+                        "config": {
+                            "included.custom.audience": audience,
+                            "access.token.claim": "true",
+                            "id.token.claim": "false",
+                        },
+                    }
+                ],
+            }
+        )
+
+
+def ensure_keycloak_audiences(public_client: str, hq_store_reader_client: str) -> None:
+    """
+    Make sure the Keycloak realm issues separate tokens for HQ and for algorithm
+    stores. It is safe to run on every start.
+
+    Parameters
+    ----------
+    public_client : str
+        Client users log in with
+    hq_store_reader_client : str
+        Client HQ uses to read approved algorithms from algorithm stores as itself
+    """
+    keycloak_admin: KeycloakAdmin = get_keycloak_admin_client()
+    _ensure_audience_scopes(keycloak_admin)
+
+    public_client_id = keycloak_admin.get_client_id(public_client)
+    if public_client_id is None:
+        log.warning("Keycloak client '%s' not found", public_client)
+    else:
+        # Users log in for both audiences and then get a token per audience
+        _add_optional_scopes(
+            keycloak_admin, public_client_id, [HQ_AUDIENCE_SCOPE, STORE_AUDIENCE_SCOPE]
+        )
+
+    if keycloak_admin.get_client_id(hq_store_reader_client) is None:
+        log.info("Creating Keycloak client '%s'", hq_store_reader_client)
+        keycloak_admin.create_client(
+            _service_account_client(hq_store_reader_client, "hq")
+        )
+    _add_default_scope(
+        keycloak_admin,
+        keycloak_admin.get_client_id(hq_store_reader_client),
+        STORE_AUDIENCE_SCOPE,
+    )
 
 
 def get_email_for_keycloak_id(keycloak_id: str) -> str | None:

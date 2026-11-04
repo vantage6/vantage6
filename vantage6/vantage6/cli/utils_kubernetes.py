@@ -201,7 +201,7 @@ def load_kubernetes_config_with_fallback(context: str | None = None) -> bool:
     Parameters
     ----------
     context : str | None
-        Kubernetes context to use. If None, the current context is used.
+        Kubeconfig context to load. If None, the current context is used.
 
     Returns
     -------
@@ -238,7 +238,7 @@ def create_kubernetes_apis_with_ssl_handling(
     Parameters
     ----------
     context : str | None
-        Kubernetes context to use. If None, the current context is used.
+        Kubeconfig context to use. If None, the current context is used.
 
     Returns
     -------
@@ -246,7 +246,7 @@ def create_kubernetes_apis_with_ssl_handling(
         Tuple of CoreV1Api and BatchV1Api clients
     """
     # Load configuration with fallback handling
-    if not load_kubernetes_config_with_fallback(context):
+    if not load_kubernetes_config_with_fallback(context=context):
         raise RuntimeError("Failed to load Kubernetes configuration")
 
     # Create API clients
@@ -263,9 +263,9 @@ def get_core_api_with_ssl_handling(context: str | None = None) -> client.CoreV1A
     Parameters
     ----------
     context : str | None
-        Kubernetes context to use. If None, the current context is used.
+        Kubeconfig context to use. If None, the current context is used.
     """
-    core_api, _ = create_kubernetes_apis_with_ssl_handling(context)
+    core_api, _ = create_kubernetes_apis_with_ssl_handling(context=context)
     return core_api
 
 

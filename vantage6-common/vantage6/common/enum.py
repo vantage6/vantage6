@@ -97,6 +97,13 @@ class DatabaseType(StrEnumBase):
         ]
 
 
+class DatabaseMountMode(StrEnumBase):
+    """Enum to represent how a file/folder database is mounted in algorithms"""
+
+    READ_ONLY = "ro"
+    COPY = "copy"
+
+
 class TaskStatus(StrEnumBase):
     """Enum to represent the status of a task"""
 

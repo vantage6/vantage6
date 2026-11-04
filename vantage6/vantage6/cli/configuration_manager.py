@@ -58,6 +58,7 @@ class NodeConfiguration(Configuration):
     #     Optional("node_extra_mounts"): [str],
     #     Optional("node_extra_hosts"): dict,
     #     Optional("share_algorithm_logs"): Use(bool),
+    #     Optional("allow_http_polling"): Use(bool),
     # }
     # }
 

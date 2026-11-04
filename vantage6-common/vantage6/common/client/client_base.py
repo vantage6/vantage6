@@ -7,13 +7,17 @@ from collections.abc import Callable
 from pathlib import Path
 
 import requests
+from keycloak import KeycloakOpenID
 
 from vantage6.common.client.blob_storage import BlobStorageMixin
 from vantage6.common.encryption import DummyCryptor, RSACryptor
 from vantage6.common.enum import TaskStatus
+from vantage6.common.exceptions import PublicKeyMismatchError
 from vantage6.common.globals import (
+    HQ_AUDIENCE_SCOPE,
     INTERVAL_MULTIPLIER,
     MAX_INTERVAL,
+    STORE_AUDIENCE_SCOPE,
     STRING_ENCODING,
 )
 
@@ -96,9 +100,11 @@ class ClientBase(BlobStorageMixin):
         self.__hq_url = hq_url
         self.__auth_url = auth_url
 
-        # tokens
+        # tokens. HQ and algorithm stores each get their own token, so that a store
+        # never receives a token it could use at HQ.
         self._access_token = None
         self._refresh_token = None
+        self._store_access_token = None
 
         self.cryptor = None
         self.whoami = None
@@ -128,6 +134,23 @@ class ClientBase(BlobStorageMixin):
         """
         if self._access_token:
             return {"Authorization": "Bearer " + self._access_token}
+        else:
+            return {}
+
+    @property
+    def store_headers(self) -> dict:
+        """
+        Headers that are sent with each request to an algorithm store. This includes
+        the token for algorithm stores, but only if the selected store authenticates
+        with the same Keycloak as HQ.
+
+        Returns
+        -------
+        dict
+            Headers
+        """
+        if self._store_access_token and self.store.uses_hq_keycloak:
+            return {"Authorization": "Bearer " + self._store_access_token}
         else:
             return {}
 
@@ -256,7 +279,8 @@ class ClientBase(BlobStorageMixin):
         self.log.debug(f"Making request: {method.upper()} | {url} | {params}")
 
         # add additional headers if any are given
-        headers = self.headers if headers is None else headers | self.headers
+        auth_headers = self.store_headers if is_for_algorithm_store else self.headers
+        headers = (headers or {}) | auth_headers
 
         timeout_attempts = 0
         while True:
@@ -334,6 +358,9 @@ class ClientBase(BlobStorageMixin):
         ------
         AssertionError
             If the client is not authenticated
+        PublicKeyMismatchError
+            If HQ has a public key for the organization that does not belong to the
+            private key
         """
         assert self._access_token, "Encryption can only be setup after authentication"
         assert self.whoami.organization_id, (
@@ -349,36 +376,29 @@ class ClientBase(BlobStorageMixin):
 
         cryptor = RSACryptor(private_key_file)
 
-        # check if the public-key is the same on HQ. If this is
-        # not the case, this node will not be able to read any messages
-        # that are send to him! If this is the case, the new public_key
-        # will be uploaded to HQ.
+        # Check that the private key belongs to the public key that HQ has for the
+        # organization. If HQ has no public key yet, upload it. If HQ has a different
+        # one, do not replace it: the organization's other nodes and users use the
+        # private key that belongs to it, and would no longer be able to decrypt data.
         organization = self.request(f"organization/{self.whoami.organization_id}")
         pub_key = organization.get("public_key")
-        upload_pub_key = False
 
-        if pub_key:
-            if cryptor.verify_public_key(pub_key):
-                self.log.info("Public key matches HQ's public key! Good to go!")
-
-            else:
-                self.log.critical(
-                    "Local public key does not match HQ's public key. "
-                    "You will not beable to read any messages that are intended "
-                    "for you!"
-                )
-                upload_pub_key = True
-        else:
-            upload_pub_key = True
-
-        # upload public key if required
-        if upload_pub_key:
+        if not pub_key:
             self.request(
                 f"organization/{self.whoami.organization_id}",
                 method="patch",
                 json={"public_key": cryptor.public_key_str},
             )
             self.log.info("The public key on HQ is updated!")
+        elif cryptor.verify_public_key(pub_key):
+            self.log.info("Public key matches HQ's public key! Good to go!")
+        else:
+            raise PublicKeyMismatchError(
+                "The private key does not belong to the public key that HQ has for "
+                "your organization. Use your organization's existing private key. "
+                "To replace the organization's keypair on purpose, use "
+                "'v6 node create-private-key --key-policy rotate_organization_key'."
+            )
 
         self.cryptor = cryptor
 
@@ -394,6 +414,23 @@ class ClientBase(BlobStorageMixin):
         Depending on the type of entity authenticating, this may use a refresh token
         """
         return
+
+    def _obtain_client_credentials_tokens(self, kc_openid: KeycloakOpenID) -> None:
+        """
+        Get a token for HQ and a token for algorithm stores with the client
+        credentials of a node or service account.
+
+        Parameters
+        ----------
+        kc_openid : KeycloakOpenID
+            Keycloak client of the node or service account
+        """
+        self._access_token = kc_openid.token(
+            grant_type="client_credentials", scope=HQ_AUDIENCE_SCOPE
+        )["access_token"]
+        self._store_access_token = kc_openid.token(
+            grant_type="client_credentials", scope=STORE_AUDIENCE_SCOPE
+        )["access_token"]
 
     def _fetch_and_decrypt_run_data(
         self,
@@ -656,6 +693,8 @@ class ClientBase(BlobStorageMixin):
             super().__init__(parent)
             self.url = None
             self.store_id = None
+            # only stores that authenticate with the same Keycloak as HQ get a token
+            self.uses_hq_keycloak = False
 
         def get(self, id_: int) -> dict:
             """
@@ -683,6 +722,7 @@ class ClientBase(BlobStorageMixin):
             try:
                 self.url = f"{store['url']}{store['api_path']}"
                 self.store_id = id_
+                self.uses_hq_keycloak = bool(store.get("uses_hq_keycloak"))
             except KeyError:
                 self.parent.log.error("Algorithm store URL could not be set.")
             return store

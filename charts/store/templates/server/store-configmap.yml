@@ -7,6 +7,12 @@ data:
   config.yaml: |
     api_path: {{ .Values.store.api_path }}
     description: {{ .Values.store.description }}
+    {{- if .Values.store.database_pool_size }}
+    database_pool_size: {{ .Values.store.database_pool_size }}
+    {{- end }}
+    {{- if .Values.store.database_max_overflow }}
+    database_max_overflow: {{ .Values.store.database_max_overflow }}
+    {{- end }}
     logging:
       backup_count: {{ .Values.store.logging.backup_count }}
       datefmt: {{ .Values.store.logging.datefmt | quote }}

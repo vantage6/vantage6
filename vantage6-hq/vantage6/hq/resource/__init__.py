@@ -16,6 +16,7 @@ from flask_restful import Api
 from flask_socketio import SocketIO
 
 from vantage6.common import logger_name
+from vantage6.common.enum import TaskStatus
 from vantage6.common.exceptions import AuthenticationException
 
 from vantage6.backend.common.permission import RuleNeed
@@ -154,6 +155,24 @@ class ServicesResources(BaseServicesResources):
         """
         return [col.id for col in obtain_auth_collaborations()]
 
+    @staticmethod
+    def is_node_outside_its_collab(collaboration_id: int | None) -> bool:
+        """
+        Check if the auth is a node and the collaboration is not its own.
+
+        Parameters
+        ----------
+        collaboration_id : int | None
+            Id of the collaboration that a resource belongs to
+
+        Returns
+        -------
+        bool
+            True if the auth is a node and the collaboration is not the node's
+            collaboration, False otherwise
+        """
+        return bool(g.node) and collaboration_id != g.node.collaboration_id
+
 
 # ------------------------------------------------------------------------------
 # Helper functions/decoraters ...
@@ -270,6 +289,14 @@ def _validate_container_token():
     # Verify this is a container token
     if claims.get("sub", {}).get("vantage6_client_type") != "container":
         raise AuthenticationException("Not a container token")
+
+    # A container token is only valid for as long as its task is still active. Once
+    # the task has finished, the token must be rejected even if it has not expired yet.
+    task = db.Task.get(claims["sub"]["task_id"])
+    if not task or TaskStatus.has_finished(task.status):
+        raise AuthenticationException(
+            "Container token is no longer valid: task has finished"
+        )
 
     # Set the container info in the global context
     g.type = "container"

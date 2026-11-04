@@ -4,7 +4,7 @@ import { io, Socket } from 'socket.io-client';
 
 import { environment } from 'src/environments/environment';
 import { AlgorithmLogMsg, AlgorithmStatusChangeMsg, NewTaskMsg, NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
-import { AuthService } from './auth.service';
+import { TokenService } from './token.service';
 
 @Injectable({
   providedIn: 'root'
@@ -16,17 +16,21 @@ export class SocketioConnectService {
   algoLogUpdate$: BehaviorSubject<AlgorithmLogMsg | null> = new BehaviorSubject<AlgorithmLogMsg | null>(null);
   socket: Socket | null = null;
 
-  constructor(private authService: AuthService) {}
+  constructor(private tokenService: TokenService) {}
 
   connect() {
     if (this.socket === null) {
-      const token = this.authService.getToken();
       // connect to tasks namespace
       const namespace = '/tasks';
       this.socket = io(`${environment.hq_url}${namespace}`, {
         withCredentials: true,
-        extraHeaders: {
-          Authorization: `Bearer ${token}`
+        // Prefer websockets and only fall back to HTTP long-polling if they fail
+        transports: ['websocket', 'polling'],
+        tryAllTransports: true,
+        // Browsers cannot set headers on websocket connections, so the token is sent
+        // in the auth payload. It is read on each (re)connect so it is never stale.
+        auth: (cb) => {
+          this.tokenService.getHqToken().then((token) => cb({ token }));
         }
       });
       this.subscribe();

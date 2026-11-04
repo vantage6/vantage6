@@ -33,7 +33,7 @@ class TestContainerManagerLogSharing(unittest.TestCase):
         with patch(
             "vantage6.node.k8s.container_manager.watch.Watch", return_value=fake_watch
         ):
-            manager._ContainerManager__log_stream(run_io=run_io, task_id=99)
+            manager._ContainerManager__log_stream(run_io=run_io)
 
         manager.socket_io.emit.assert_not_called()
 
@@ -46,16 +46,11 @@ class TestContainerManagerLogSharing(unittest.TestCase):
         with patch(
             "vantage6.node.k8s.container_manager.watch.Watch", return_value=fake_watch
         ):
-            manager._ContainerManager__log_stream(run_io=run_io, task_id=99)
+            manager._ContainerManager__log_stream(run_io=run_io)
 
         manager.socket_io.emit.assert_called_once_with(
             "algorithm_log",
-            {
-                "collaboration_id": 7,
-                "run_id": 42,
-                "task_id": 99,
-                "log": "hello from algorithm",
-            },
+            {"run_id": 42, "log": "hello from algorithm"},
             namespace="/tasks",
         )
 

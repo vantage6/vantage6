@@ -98,8 +98,9 @@ keycloak:
   realmImport:
     enabled: true
     {% if has_realm_secret_ref %}
-    # Kubernetes secret with the 'admin-password', 'backend-client-secret' and, if
-    # the SMTP server requires authentication, 'smtp-password' keys
+    # Kubernetes secret with the 'admin-password', 'hq-admin-client-secret',
+    # 'store-admin-client-secret' and, if the SMTP server requires authentication,
+    # 'smtp-password' keys
     existingSecret: {{ keycloak.realmImportSecret }}
     {% endif %}
     {% if keycloak.standalone is defined and keycloak.standalone %}
@@ -188,7 +189,8 @@ keycloak:
         {% endif %}
 
     {% if keycloak.standalone is defined and keycloak.standalone %}
-    {{ secret_field('backend_client_secret', keycloak.adminClientSecret, 'Keycloak admin client secret', 'myadminclientsecret', has_realm_secret_ref) }}
+    {{ secret_field('hq_admin_client_secret', keycloak.hqAdminClientSecret, 'Keycloak HQ admin client secret', 'myadminclientsecret', has_realm_secret_ref) }}
+    {{ secret_field('store_admin_client_secret', keycloak.storeAdminClientSecret, 'Keycloak store admin client secret', 'mystoreadminclientsecret', has_realm_secret_ref) }}
     {% endif %}
 
     # SMTP server configuration for email sending

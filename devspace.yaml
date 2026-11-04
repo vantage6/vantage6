@@ -60,12 +60,15 @@ vars:
   KEYCLOAK_FRONTEND_CLIENT:
     source: env
     default: public_client
-  KEYCLOAK_ADMIN_CLIENT:
+  KEYCLOAK_HQ_ADMIN_CLIENT:
     source: env
-    default: backend-admin-client
-  KEYCLOAK_ADMIN_CLIENT_SECRET:
+    default: hq-admin-client
+  KEYCLOAK_HQ_ADMIN_CLIENT_SECRET:
     source: env
     default: myadminclientsecret
+  KEYCLOAK_STORE_ADMIN_CLIENT_SECRET:
+    source: env
+    default: mystoreadminclientsecret
   KEYCLOAK_ADMIN_USERNAME:
     source: env
     default: admin
@@ -283,7 +286,8 @@ deployments:
             admin:
               username: admin
               password: admin
-            backend_client_secret: myadminclientsecret
+            hq_admin_client_secret: ${KEYCLOAK_HQ_ADMIN_CLIENT_SECRET}
+            store_admin_client_secret: ${KEYCLOAK_STORE_ADMIN_CLIENT_SECRET}
             publicClient:
               redirectUris:
                 - "http://localhost:7600/*"
@@ -320,8 +324,8 @@ deployments:
             realm: ${KEYCLOAK_REALM}
             adminUsername: ${KEYCLOAK_ADMIN_USERNAME}
             adminPassword: ${KEYCLOAK_ADMIN_PASSWORD}
-            adminClient: ${KEYCLOAK_ADMIN_CLIENT}
-            adminClientSecret: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
+            hqAdminClient: ${KEYCLOAK_HQ_ADMIN_CLIENT}
+            hqAdminClientSecret: ${KEYCLOAK_HQ_ADMIN_CLIENT_SECRET}
           logging:
             level: DEBUG
             volumeHostPath: ${LOG_MOUNT_PATH}/hq
@@ -336,13 +340,14 @@ deployments:
             - name: Local store
               url: http://vantage6-store-store.${CURRENT_NAMESPACE}.svc.cluster.local:7602
               api_path: /store
+              uses_hq_keycloak: true
         ui:
           image: ${UI_IMAGE}
           imagePullPolicy: IfNotPresent
           keycloak:
             publicUrl: ${KEYCLOAK_PUBLIC_URL}
             realm: ${KEYCLOAK_REALM}
-            client: ${KEYCLOAK_FRONTEND_CLIENT}
+            publicClient: ${KEYCLOAK_FRONTEND_CLIENT}
 
         database:
           external: false
@@ -390,9 +395,7 @@ deployments:
             url: ${KEYCLOAK_URL}
             realm: ${KEYCLOAK_REALM}
             adminUsername: ${KEYCLOAK_ADMIN_USERNAME}
-            adminPassword: ${KEYCLOAK_ADMIN_PASSWORD}
-            adminClient: ${KEYCLOAK_ADMIN_CLIENT}
-            adminClientSecret: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
+            storeAdminClientSecret: ${KEYCLOAK_STORE_ADMIN_CLIENT_SECRET}
           logging:
             level: DEBUG
             volumeHostPath: ${LOG_MOUNT_PATH}/store

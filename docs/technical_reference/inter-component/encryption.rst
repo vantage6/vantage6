@@ -28,21 +28,50 @@ messages to the other parties.
     and decryption of the payload.
 
 When the node starts, it checks that the public key stored at HQ
-is derived from the local private key. If this is not the case, the node
-will replace the public key at HQ.
+is derived from its private key. If HQ has no public key for the organization yet, the
+node uploads it. If HQ has a different public key, the node refuses to start rather than
+replacing it, as that would break decryption for the organization's other nodes and
+users.
 
 .. warning::
     If an organization has multiple nodes and/or users, they must use the same
     private key.
 
 To create a new keypair, you can use the command ``v6 node create-private-key``.
-This will create the keypair and share the public key with HQ. The private key
-is stored locally. If a private key already exists locally, the existing key is reused
-(unless you use the ``--force`` flag). This way, it is easy to configure multiple nodes
-to use the same key.
+This will create the keypair and share the public key with HQ. The private key is
+stored in a Kubernetes secret (``<node release name>-private-key``) in the namespace of
+the node, which is mounted into the node when it starts. No private key file is written
+to disk. If the secret already exists, the existing key is reused (unless you use
+``--key-policy replace_node_key``). ``v6 node new`` offers to create the key when you enable
+encryption.
 
-It is also possible to generate the keypair yourself and upload the public key yourself
-via UI, Python client, or REST API.
+If your organization already has a public key at HQ, a new key is not generated: store
+the organization's existing private key instead. If another node of your organization
+already holds it, get it out of that node's secret with
+``v6 node get-private-key --name <existing node> --to-file <path>``. Then store it with
+``v6 node create-private-key --from-file <path>``, and delete the file afterwards.
+Alternatively, ``v6 node new`` detects that your organization already has a key and
+asks for the path to the private key file, and stores it for you.
+
+Users of your organization also need the private key to encrypt task input and decrypt
+results in an encrypted collaboration. Get it with
+``v6 node get-private-key --name <node> --to-file <path>`` and use it in the Python
+client with ``client.setup_encryption(<path>)``, or upload it in the UI when you select
+the collaboration. Keep this file secure, as anyone holding it can decrypt your
+organization's data.
+
+Replacing the organization's keypair requires
+``--key-policy rotate_organization_key``.
+
+.. caution::
+
+    Replacing the keypair breaks your organization's other nodes and users that still
+    use the old private key: they can no longer decrypt data. Give them the new private
+    key, e.g. by storing it in the other nodes with
+    ``v6 node create-private-key --from-file <path> --key-policy replace_node_key``.
+
+The secret is kept when the node is stopped or restarted, and is deleted when the node
+is removed with ``v6 node remove``.
 
 .. warning::
 

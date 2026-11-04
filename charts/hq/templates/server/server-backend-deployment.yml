@@ -72,7 +72,9 @@ spec:
         - name: KEYCLOAK_ADMIN_USERNAME
           value: {{ (default ($global.keycloak | default (dict)) .Values.hq.keycloak).adminUsername | default "admin" | quote }}
         - name: KEYCLOAK_ADMIN_CLIENT
-          value: {{ (default ($global.keycloak | default (dict)) .Values.hq.keycloak).adminClient | default "backend-admin-client" | quote }}
+          value: {{ (default ($global.keycloak | default (dict)) .Values.hq.keycloak).hqAdminClient | default "hq-admin-client" | quote }}
+        - name: KEYCLOAK_HQ_STORE_READER_CLIENT
+          value: {{ (default ($global.keycloak | default (dict)) .Values.hq.keycloak).hqStoreReaderClient | default "hq-store-reader-client" | quote }}
 {{- if and .Values.hq.dev .Values.hq.dev.store_address }}
         - name: LOCAL_STORE_URL
           value: {{ .Values.hq.dev.store_address | quote }}

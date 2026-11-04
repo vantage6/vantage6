@@ -174,6 +174,68 @@ class TestAlgorithmResources(TestResources):
         # cleanup
         policy.delete()
 
+    def test_view_algorithm_decorator_hq(self):
+        """
+        Test that HQ's own token may list approved algorithms, like a node, but no
+        non-approved algorithms and nothing that requires a store user.
+        """
+        policy = Policy(
+            key=StorePolicies.ALGORITHM_VIEW.value,
+            value=AlgorithmViewPolicies.ONLY_WITH_EXPLICIT_PERMISSION.value,
+        )
+        policy.save()
+        algorithm = Algorithm(
+            name="test_algorithm", status=AlgorithmStatus.APPROVED.value
+        )
+        algorithm.save()
+        hq_headers = self.login_node(client_type="hq")
+
+        rv = self.app.get("/api/algorithm", headers=hq_headers)
+        self.assertEqual(rv.status_code, HTTPStatus.OK)
+
+        rv = self.app.get("/api/algorithm?under_review=1", headers=hq_headers)
+        self.assertEqual(rv.status_code, HTTPStatus.UNAUTHORIZED)
+        rv = self.app.get(f"/api/algorithm/{algorithm.id}", headers=hq_headers)
+        self.assertEqual(rv.status_code, HTTPStatus.UNAUTHORIZED)
+        rv = self.app.get("/api/user", headers=hq_headers)
+        self.assertEqual(rv.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # cleanup
+        algorithm.delete()
+        policy.delete()
+
+    def test_tokens_for_hq_refused(self):
+        """
+        Test that the store refuses tokens issued for HQ, so clients cannot send
+        their HQ token to a store.
+        """
+        policy = Policy(
+            key=StorePolicies.ALGORITHM_VIEW.value,
+            value=AlgorithmViewPolicies.ONLY_WITH_EXPLICIT_PERMISSION.value,
+        )
+        policy.save()
+
+        for client_type in ["node", "hq"]:
+            headers = self.login_node(client_type=client_type, audience="vantage6-hq")
+            rv = self.app.get("/api/algorithm", headers=headers)
+            self.assertEqual(rv.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # cleanup
+        policy.delete()
+
+    def test_tokens_for_hq_and_stores_refused(self):
+        """
+        Test that the store refuses tokens that are also valid at HQ, such as the
+        token of a login that asks for both audiences.
+        """
+        headers = self.login_node(audience="vantage6-store")
+        rv = self.app.get("/api/algorithm", headers=headers)
+        self.assertEqual(rv.status_code, HTTPStatus.OK)
+
+        headers = self.login_node(audience=["vantage6-store", "vantage6-hq"])
+        rv = self.app.get("/api/algorithm", headers=headers)
+        self.assertEqual(rv.status_code, HTTPStatus.UNAUTHORIZED)
+
     def test_view_algorithm_single_not_affected_by_node_bypass(self):
         """
         Test that the node bypass on the algorithm list endpoint does not extend to

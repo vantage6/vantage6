@@ -1,17 +1,76 @@
 import logging
 import os
+import time
 from http import HTTPStatus
 from urllib.parse import urlparse
 
 import requests
 from flask import Response
+from keycloak import KeycloakOpenID
 
 from vantage6.common.globals import DEFAULT_API_PATH, HTTP_LOCALHOST, LINUX_LOCALHOST
 
+from vantage6.backend.common.auth import get_service_account_in_keycloak
+from vantage6.backend.common.globals import (
+    DEFAULT_HQ_STORE_READER_KEYCLOAK_CLIENT,
+    RequiredBackendEnvVars,
+)
+
 from vantage6.hq import db
+from vantage6.hq.globals import HQ_STORE_READER_CLIENT_ENV_VAR
 
 module_name = __name__.split(".")[-1]
 log = logging.getLogger(module_name)
+
+# seconds before HQ's token for algorithm stores expires that it is renewed
+HQ_STORE_TOKEN_RENEWAL_MARGIN = 30
+
+
+class HQStoreToken:
+    """
+    The token HQ uses to call algorithm stores.
+
+    The token is issued to HQ itself (not to a user) and is only valid at algorithm
+    stores, where it only allows reading approved algorithms. It is kept until shortly
+    before it expires.
+    """
+
+    _access_token: str | None = None
+    _expires_at: float = 0
+
+    @classmethod
+    def get(cls) -> str:
+        """
+        Get a valid token, requesting a new one if needed.
+
+        Returns
+        -------
+        str
+            Access token
+        """
+        if cls._access_token is None or cls._expires_at <= time.time():
+            cls._renew()
+        return cls._access_token
+
+    @classmethod
+    def _renew(cls) -> None:
+        """Request a new token from Keycloak."""
+        client_name = os.environ.get(
+            HQ_STORE_READER_CLIENT_ENV_VAR, DEFAULT_HQ_STORE_READER_KEYCLOAK_CLIENT
+        )
+        keycloak_openid = KeycloakOpenID(
+            server_url=os.environ.get(RequiredBackendEnvVars.KEYCLOAK_URL.value),
+            realm_name=os.environ.get(RequiredBackendEnvVars.KEYCLOAK_REALM.value),
+            client_id=client_name,
+            client_secret_key=get_service_account_in_keycloak(
+                client_name
+            ).client_secret,
+        )
+        token = keycloak_openid.token(grant_type="client_credentials")
+        cls._access_token = token["access_token"]
+        cls._expires_at = (
+            time.time() + token["expires_in"] - HQ_STORE_TOKEN_RENEWAL_MARGIN
+        )
 
 
 def _check_algorithm_store_online(algorithm_store_url: str) -> bool:
@@ -93,12 +152,17 @@ def add_algorithm_store_to_database(
     for record in records_to_delete:
         record.delete()
 
-    # Create new record
+    # Create new record. If not given, whether the store uses HQ's Keycloak is copied
+    # from other records of the same store.
     algorithm_store = db.AlgorithmStore(
         name=data["name"],
         url=algorithm_store_url,
         api_path=api_path,
         collaboration_id=collaboration_id,
+        uses_hq_keycloak=data.get(
+            "uses_hq_keycloak",
+            any(store.uses_hq_keycloak for store in existing_algorithm_stores),
+        ),
     )
     algorithm_store.save()
 

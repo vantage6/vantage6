@@ -25,7 +25,7 @@ store:
 
   {% if has_secret_ref %}
   # Kubernetes secret with the sensitive configuration of the store: database URI,
-  # Keycloak admin credentials, SMTP password and private Docker registries
+  # Keycloak client secret, SMTP password and private Docker registries
   existingSecret: {{ store.existingSecret }}
   {% endif %}
 
@@ -35,9 +35,9 @@ store:
     url: {{ store.keycloak.url }}
     realm: {{ store.keycloak.realm | default('vantage6') }}
     adminUsername: {{ store.keycloak.adminUsername | default('admin') }}
-    {{ secret_field('adminPassword', store.keycloak.adminPassword, 'Keycloak admin password', 'admin', has_secret_ref) }}
-    adminClient: {{ store.keycloak.adminClient | default('backend-admin-client') }}
-    {{ secret_field('adminClientSecret', store.keycloak.adminClientSecret, 'Keycloak admin client secret', 'myadminclientsecret', has_secret_ref) }}
+    # the store's own Keycloak client, which can only look up users
+    storeAdminClient: {{ store.keycloak.storeAdminClient | default('store-admin-client') }}
+    {{ secret_field('storeAdminClientSecret', store.keycloak.storeAdminClientSecret, 'Keycloak store admin client secret', 'mystoreadminclientsecret', has_secret_ref) }}
   {% endif %}
 
   {% if store.standalone is defined and store.standalone %}
@@ -205,6 +205,20 @@ store:
     - level: warning
       name: sqlalchemy.engine
     {% endif %}
+
+  # SQLAlchemy database connection pool settings. Optional; when omitted,
+  # SQLAlchemy's defaults are used (pool_size=5, max_overflow=10). Ignored for
+  # SQLite databases.
+  {% if store.database_pool_size is defined %}
+  database_pool_size: {{ store.database_pool_size }}
+  {% else %}
+  # database_pool_size: 5
+  {% endif %}
+  {% if store.database_max_overflow is defined %}
+  database_max_overflow: {{ store.database_max_overflow }}
+  {% else %}
+  # database_max_overflow: 10
+  {% endif %}
 
   # Specify private Docker registries so that the store can login and interact with
   # private algorithms to retrieve the digests.

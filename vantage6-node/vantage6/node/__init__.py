@@ -35,9 +35,11 @@ from threading import Thread
 import psutil
 import pynvml
 import requests.exceptions
+from engineio.payload import Payload
 from gevent.pywsgi import WSGIServer
 from keycloak import KeycloakAuthenticationError
 from socketio import Client as SocketIO
+from socketio.exceptions import BadNamespaceError
 
 from vantage6.common import logger_name, validate_required_env_vars
 from vantage6.common.client.node_client import NodeClient
@@ -45,6 +47,7 @@ from vantage6.common.enum import AlgorithmStepType, RunStatus, TaskStatusQueryOp
 from vantage6.common.exceptions import EncryptionMismatchError
 from vantage6.common.globals import (
     PING_INTERVAL_SECONDS,
+    SOCKETIO_MAX_DECODE_PACKETS,
     NodeConfigKey,
     NodePolicy,
     RequiredNodeEnvVars,
@@ -55,6 +58,7 @@ from vantage6.cli.context.node import NodeContext
 
 from vantage6.node import proxy_server
 from vantage6.node.globals import (
+    PRIVATE_KEY_MOUNT_PATH,
     SLEEP_BTWN_NODE_LOGIN_TRIES,
     TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET,
     TIME_LIMIT_RETRY_CONNECT_NODE,
@@ -62,7 +66,6 @@ from vantage6.node.globals import (
 from vantage6.node.k8s.container_manager import ContainerManager
 from vantage6.node.k8s.data_classes import Result, ToBeKilled
 from vantage6.node.socket import NodeTaskNamespace
-from vantage6.node.util import get_parent_id
 
 __version__ = importlib.metadata.version(__package__)
 
@@ -106,6 +109,8 @@ class Node:
 
         self.config = self.ctx.config
         self.debug: dict = self.config.get("debug", {})
+
+        self.check_algorithm_policies()
 
         self._using_encryption = None
 
@@ -154,6 +159,36 @@ class Node:
             t.start()
 
         self.log.info("Init complete")
+
+    def check_algorithm_policies(self) -> None:
+        """
+        Verify that the node restricts which algorithms are allowed to run.
+
+        When ``production`` is true (default), the node exits if neither the
+        ``allowed_algorithms`` nor the ``allowed_algorithm_stores`` policy is set.
+        Otherwise, all algorithms are allowed and a warning is logged.
+        """
+        policies = self.config.get("policies") or {}
+        if policies.get(NodePolicy.ALLOWED_ALGORITHMS.value) or policies.get(
+            NodePolicy.ALLOWED_ALGORITHM_STORES.value
+        ):
+            return
+
+        if self.config.get("production", True):
+            self.log.error(
+                "No policies on allowed algorithms have been set for this node. Nodes "
+                "with production=true require that you set the '%s' and/or '%s' "
+                "policy in the node configuration.",
+                NodePolicy.ALLOWED_ALGORITHMS.value,
+                NodePolicy.ALLOWED_ALGORITHM_STORES.value,
+            )
+            sys.exit(1)
+        self.log.warning(
+            "No policies on allowed algorithms have been set for this node!"
+        )
+        self.log.warning(
+            "This means that all algorithms are allowed to run on this node."
+        )
 
     def check_algorithm_isolation(self) -> None:
         """
@@ -444,9 +479,7 @@ class Node:
                     "log": f"Unrecognized action {run_to_execute['action']}",
                 },
             )
-            self.__emit_algorithm_status_change(
-                task["id"], run_id, get_parent_id(task), RunStatus.FAILED
-            )
+            self.__emit_algorithm_status_change(run_id, RunStatus.FAILED)
             return
 
         # Only compute containers need a token as they are the only ones that should
@@ -471,9 +504,6 @@ class Node:
                     },
                 )
 
-        task_id = task["id"]
-        parent_id = get_parent_id(task)
-
         # Run the container. This adds the created container/task to the list
         # __docker.active_tasks
         run_status: RunStatus = self.k8s_container_manager.run(
@@ -485,16 +515,12 @@ class Node:
             session_id=task["session"]["id"],
             token=token,
             databases_to_use=task.get("databases", []),
-            on_status_change=lambda status: self.__report_run_status(
-                run_id, task_id, parent_id, status
-            ),
+            on_status_change=lambda status: self.__report_run_status(run_id, status),
         )
 
-        self.__report_run_status(run_id, task_id, parent_id, run_status)
+        self.__report_run_status(run_id, run_status)
 
-    def __report_run_status(
-        self, run_id: int, task_id: int, parent_id: int | None, status: RunStatus
-    ) -> None:
+    def __report_run_status(self, run_id: int, status: RunStatus) -> None:
         """
         Report a status of an algorithm run to HQ.
 
@@ -504,10 +530,6 @@ class Node:
         ----------
         run_id : int
             Run ID
-        task_id : int
-            Task ID
-        parent_id : int | None
-            ID of the parent task, if any
         status : RunStatus
             Status of the algorithm run
         """
@@ -523,22 +545,19 @@ class Node:
         # send socket event to alert everyone of task status change. In case the
         # namespace is not connected, the socket notification will not be sent to other
         # nodes, but the task will still be processed
-        self.__emit_algorithm_status_change(task_id, run_id, parent_id, status)
+        self.__emit_algorithm_status_change(run_id, status)
 
-    def __emit_algorithm_status_change(
-        self, task_id: int, run_id: int, parent_id: int | None, status: RunStatus
-    ) -> None:
+    def __emit_algorithm_status_change(self, run_id: int, status: RunStatus) -> None:
         """
         Emit a socket event to alert everyone of task status change.
 
+        HQ derives the task, collaboration and node details from the run, so only
+        the run ID and the new status are sent.
+
         Parameters
         ----------
-        task_id : int
-            Task ID
         run_id : int
             Run ID
-        parent_id : int | None
-            ID of the parent task, if any
         status : RunStatus
             Status of the algorithm run
         """
@@ -546,25 +565,32 @@ class Node:
         # (usually < 5s) when the socket just (re)connected
         MAX_ATTEMPTS = 30
         retries = 0
-        while "/tasks" not in self.socketIO.namespaces and retries < MAX_ATTEMPTS:
+        while "/tasks" not in self.socketIO.namespaces:
+            if retries >= MAX_ATTEMPTS:
+                self.log.warning(
+                    "Not connected to /tasks namespace, skipping algorithm status "
+                    "change notification for run %s",
+                    run_id,
+                )
+                return
             retries += 1
             self.log.debug("Waiting for /tasks namespace to connect...")
             time.sleep(1)
         self.log.debug("Connected to /tasks namespace")
 
-        self.socketIO.emit(
-            "algorithm_status_change",
-            data={
-                "node_id": self.client.whoami.id_,
-                "status": status.value,
-                "run_id": run_id,
-                "task_id": task_id,
-                "collaboration_id": self.client.collaboration_id,
-                "organization_id": self.client.whoami.organization_id,
-                "parent_id": parent_id,
-            },
-            namespace="/tasks",
-        )
+        try:
+            self.socketIO.emit(
+                "algorithm_status_change",
+                data={"run_id": run_id, "status": status.value},
+                namespace="/tasks",
+            )
+        except BadNamespaceError:
+            # the namespace may have disconnected between the check above and the emit
+            self.log.warning(
+                "Lost connection to /tasks namespace, skipping algorithm status change "
+                "notification for run %s",
+                run_id,
+            )
 
     def __send_updates_finished_tasks(self) -> None:
         """
@@ -609,9 +635,7 @@ class Node:
         )
 
         # notify HQ, other nodes, and clients about algorithm status change
-        self.__emit_algorithm_status_change(
-            results.task_id, results.run_id, results.parent_id, results.status
-        )
+        self.__emit_algorithm_status_change(results.run_id, results.status)
 
     def __print_connection_error_logs(self):
         """Print error message when node cannot find HQ"""
@@ -663,30 +687,12 @@ class Node:
         # start thread to keep the connection alive by refreshing the token
         self.client.auto_renew_token()
 
-    def private_key_filename(self) -> Path:
-        """Get the path to the private key."""
-
-        # FIXME: Code duplication: vantage6/cli/node.py uses a lot of the same
-        #   logic. Suggest moving this to ctx.get_private_key()
-        filename = self.config["encryption"]["private_key"]
-
-        # filename may be set to an empty string
-        if not filename:
-            filename = "private_key.pem"
-
-        # If we're running dockerized, the location may have been overridden
-        filename = os.environ.get("PRIVATE_KEY", filename)
-
-        # If ctx.get_data_file() receives an absolute path, its returned as-is
-        fullpath = Path(self.ctx.get_data_file(filename))
-
-        return fullpath
-
     def setup_encryption(self) -> None:
         """
         Setup encryption for the node if it is part of an encrypted collaboration.
 
-        This uses the private key file that is specified in the node configuration.
+        This uses the private key that the Helm chart mounts into the node from the
+        node's private key secret.
         """
         encrypted_collaboration = self.client.is_encrypted_collaboration()
         encrypted_node = self.config["encryption"]["enabled"]
@@ -699,9 +705,13 @@ class Node:
 
         if encrypted_collaboration:
             self.log.warning("Enabling encryption!")
-            # TODO (HC) check that encryption works with k8s-based node
-            private_key_file = self.private_key_filename()
-            self.client.setup_encryption(private_key_file)
+            if not PRIVATE_KEY_MOUNT_PATH.is_file():
+                raise FileNotFoundError(
+                    f"Encryption is enabled, but no private key was found at "
+                    f"{PRIVATE_KEY_MOUNT_PATH}. The node's private key secret is "
+                    "probably missing: create it with 'v6 node create-private-key'."
+                )
+            self.client.setup_encryption(PRIVATE_KEY_MOUNT_PATH)
 
         else:
             self.log.warning("Disabling encryption!")
@@ -722,20 +732,44 @@ class Node:
         self.socketIO.register_namespace(NodeTaskNamespace("/tasks"))
         NodeTaskNamespace.node_worker_ref = self
 
+        allow_http_polling = self.config.get("allow_http_polling", False)
+        Payload.max_decode_packets = SOCKETIO_MAX_DECODE_PACKETS
+        if allow_http_polling:
+            self.log.info(
+                "HTTP long-polling is allowed in the configuration for the socket "
+                "connection"
+            )
+        else:
+            self.log.info(
+                "Forcing websocket transport for the socket connection (default)"
+            )
+
         self.socketIO.connect(
             url=self.client.hq_url,
             headers=self.client.headers,
             wait=False,
+            transports=None if allow_http_polling else ["websocket"],
         )
 
         # Log the outcome
         i = 0
         while not self.socketIO.connected:
             if i > TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET:
-                self.log.critical(
-                    "Could not connect to the websocket channels, do you have a "
-                    "slow connection?"
-                )
+                if allow_http_polling:
+                    self.log.critical(
+                        "Could not connect to the websocket channels. Either the "
+                        "connection is slow, or HQ refused the connection because "
+                        "the node could not be authenticated (check the HQ logs)."
+                    )
+                else:
+                    self.log.critical(
+                        "Could not connect to the websocket channels. HQ may have "
+                        "refused the connection because the node could not be "
+                        "authenticated (check the HQ logs). If your network does not "
+                        "support websocket connections, set `allow_http_polling: "
+                        "true` in the node configuration to fall back to HTTP "
+                        "long-polling."
+                    )
                 sys.exit(1)
             self.log.debug("Waiting for socket connection...")
             time.sleep(1)

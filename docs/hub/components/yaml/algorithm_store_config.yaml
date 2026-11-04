@@ -45,10 +45,11 @@ store:
   keycloak:
     url: https://my-vantage6-auth.org
     realm: vantage6
+    # Username of the store's root user
     adminUsername: admin
-    adminPassword: admin
-    adminClient: backend-admin-client
-    adminClientSecret: myadminclientsecret
+    # Keycloak client the store uses to look up users
+    storeAdminClient: store-admin-client
+    storeAdminClientSecret: mystoreadminclientsecret
 
   # The URI of the vantage6 HQ that provides the admin user that will be admin
   # user in the store on startup. Note that if set, this overrides the global HQ address
@@ -98,6 +99,14 @@ store:
   cors_allowed_origins:
     - https://portal.uluru.vantage6.ai
     - http://localhost:7600
+
+  # SQLAlchemy database connection pool settings. Optional; when omitted,
+  # SQLAlchemy's defaults are used (pool_size=5, max_overflow=10). These are
+  # ignored for SQLite databases. database_pool_size is the number of persistent
+  # connections kept open; database_max_overflow is the number of extra
+  # connections allowed during demand spikes.
+  # database_pool_size: 5
+  # database_max_overflow: 10
 
   # Credentials used to login to private Docker registries. These credentials are used
   # to e.g. find the digests of the algorithm.

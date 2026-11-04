@@ -137,7 +137,9 @@ class TestHubCredentials(unittest.TestCase):
     def setUp(self):
         self.names = HubSecretNames.for_hub("myhub", system_folders=False)
         self.credentials = HubCredentials(
-            admin_password="SENTINEL_ADMIN", admin_client_secret="SENTINEL_CLIENT"
+            admin_password="SENTINEL_ADMIN",
+            hq_admin_client_secret="SENTINEL_HQ_CLIENT",
+            store_admin_client_secret="SENTINEL_STORE_CLIENT",
         )
 
     def test_secret_names_use_release_name(self):
@@ -215,7 +217,8 @@ class TestHubCredentials(unittest.TestCase):
             hub_secrets[self.names.realm],
             {
                 "admin-password": "SENTINEL_ADMIN",
-                "backend-client-secret": "SENTINEL_CLIENT",
+                "hq-admin-client-secret": "SENTINEL_HQ_CLIENT",
+                "store-admin-client-secret": "SENTINEL_STORE_CLIENT",
                 "smtp-password": "SENTINEL_SMTP",
             },
         )
@@ -227,6 +230,9 @@ class TestHubCredentials(unittest.TestCase):
         self.assertEqual(hq_secret["V6_DATABASE_URI"], "postgresql://u:SENTINEL@db/x")
         self.assertEqual(hq_secret["RABBITMQ_PASSWORD"], "SENTINEL_RABBIT")
         self.assertEqual(hq_secret["KEYCLOAK_ADMIN_PASSWORD"], "SENTINEL_ADMIN")
+        self.assertEqual(
+            hq_secret["KEYCLOAK_ADMIN_CLIENT_SECRET"], "SENTINEL_HQ_CLIENT"
+        )
         self.assertNotIn("KEYCLOAK_ADMIN_USERNAME", hq_secret)
         self.assertNotIn("KEYCLOAK_ADMIN_CLIENT", hq_secret)
         self.assertTrue(hq_secret["V6_JWT_SECRET_KEY"])
@@ -292,7 +298,8 @@ class TestHubWizard(unittest.TestCase):
             }
             global_auth.return_value = {
                 "adminPassword": "SENTINEL_ADMIN",
-                "adminClientSecret": "SENTINEL_CLIENT",
+                "hqAdminClientSecret": "SENTINEL_HQ_CLIENT",
+                "storeAdminClientSecret": "SENTINEL_STORE_CLIENT",
             }
             auth_q.return_value = {
                 "keycloak": {
@@ -350,6 +357,12 @@ class TestHubWizard(unittest.TestCase):
             set(hub_secrets), {names.hq, names.store, names.auth_db, names.realm}
         )
         self.assertEqual(hub_secrets[names.store]["V6_SMTP_PASSWORD"], "SENTINEL_SMTP")
+        # the store gets its own Keycloak client, not the Keycloak admin user
+        self.assertEqual(
+            hub_secrets[names.store]["KEYCLOAK_ADMIN_CLIENT_SECRET"],
+            "SENTINEL_STORE_CLIENT",
+        )
+        self.assertNotIn("KEYCLOAK_ADMIN_PASSWORD", hub_secrets[names.store])
         self.assertEqual(
             hub_secrets[names.hq]["V6_DATABASE_URI"], "postgresql://u:SENTINEL@db/hq"
         )
@@ -369,7 +382,9 @@ class TestNodeSecrets(unittest.TestCase):
             True,  # add an environment variable
             False,  # no more environment variables
             False,  # no more databases
-            False,  # no algorithm policies
+            True,  # enter a list of allowed algorithms
+            False,  # no more allowed algorithms
+            False,  # no allowed algorithm stores
             False,  # no encryption
         ]
         q.select.return_value.unsafe_ask.side_effect = [
@@ -382,6 +397,7 @@ class TestNodeSecrets(unittest.TestCase):
             "postgresql://u:SENTINEL_DBPW@h/db",  # database URI
             "password",  # environment variable name
             "SENTINEL_DBENV",  # environment variable value
+            "^some-algorithm$",  # allowed algorithm
             "https://auth.example.org/",  # keycloak URL
         ]
         k8s_cfg = KubernetesConfig(context="ctx", namespace="ns1")

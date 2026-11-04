@@ -9,7 +9,6 @@ import subprocess
 import sys
 import time
 import webbrowser
-from pathlib import Path
 
 import pyfiglet
 import requests
@@ -17,9 +16,15 @@ from keycloak import KeycloakAuthenticationError, KeycloakError, KeycloakOpenID
 
 from vantage6.common import WhoAmI
 from vantage6.common.client.client_base import ClientBase
-from vantage6.common.encryption import DummyCryptor, RSACryptor
+from vantage6.common.encryption import DummyCryptor
 from vantage6.common.enum import TaskDatabaseType
-from vantage6.common.globals import APPNAME, AuthStatus
+from vantage6.common.globals import (
+    APPNAME,
+    DEFAULT_KEYCLOAK_PUBLIC_CLIENT,
+    HQ_AUDIENCE_SCOPE,
+    STORE_AUDIENCE_SCOPE,
+    AuthStatus,
+)
 from vantage6.common.kubernetes.utils import running_in_wsl
 from vantage6.common.serialization import serialize
 
@@ -43,7 +48,7 @@ class UserClient(ClientBase):
         hq_url: str,
         auth_url: str,
         auth_realm: str = "vantage6",
-        auth_client: str = "public_client",
+        auth_client: str = DEFAULT_KEYCLOAK_PUBLIC_CLIENT,
         log_level=LogLevel.INFO,
     ) -> None:
         """Create user client
@@ -173,7 +178,47 @@ class UserClient(ClientBase):
         if not token:
             return
 
-        self._finalize_successful_authentication(token)
+        # The login covers both HQ and algorithm stores, so its access token is never
+        # used: HQ and the stores each get a token for their own audience only.
+        self._refresh_token = token.get("refresh_token")
+        if not self._obtain_tokens_per_audience():
+            return
+
+        self._finalize_successful_authentication()
+
+    def _obtain_tokens_per_audience(self) -> bool:
+        """
+        Use the refresh token to get a token that is only valid at HQ and one that is
+        only valid at algorithm stores. The refresh token covers both audiences, so the
+        scope must be given on every refresh.
+
+        Returns
+        -------
+        bool
+            Whether both tokens were obtained
+        """
+        try:
+            hq_token = self.kc_openid.token(
+                grant_type="refresh_token",
+                refresh_token=self._refresh_token,
+                scope=f"openid {HQ_AUDIENCE_SCOPE}",
+            )
+            store_token = self.kc_openid.token(
+                grant_type="refresh_token",
+                refresh_token=hq_token["refresh_token"],
+                scope=f"openid {STORE_AUDIENCE_SCOPE}",
+            )
+        except KeycloakAuthenticationError:
+            self.log.exception("Could not authenticate token. Please re-authenticate!")
+            return False
+        except KeycloakError:
+            self.log.exception("Error in refreshing token. Please re-authenticate!")
+            return False
+
+        self._access_token = hq_token["access_token"]
+        self._store_access_token = store_token["access_token"]
+        self._refresh_token = store_token["refresh_token"]
+        return True
 
     def _get_device_flow_endpoints(self) -> tuple[str | None, str | None]:
         """Retrieve device authorization and token endpoints from Keycloak."""
@@ -206,7 +251,7 @@ class UserClient(ClientBase):
                 device_endpoint,
                 data={
                     "client_id": self.auth_client,
-                    "scope": "openid",
+                    "scope": f"openid {HQ_AUDIENCE_SCOPE} {STORE_AUDIENCE_SCOPE}",
                 },
                 timeout=30,
             )
@@ -333,15 +378,8 @@ class UserClient(ClientBase):
             )
             return None
 
-    def _finalize_successful_authentication(self, token: dict) -> None:
-        """Store tokens, load user info and set up encryption."""
-        self._access_token = token.get("access_token")
-        self._refresh_token = token.get("refresh_token")
-
-        if not self._access_token:
-            self.log.error("No access token received from Keycloak")
-            return
-
+    def _finalize_successful_authentication(self) -> None:
+        """Load user info and set up encryption."""
         user = self.request("user/me")
         user_id = user.get("id")
         user_name = user.get("username")
@@ -420,8 +458,7 @@ class UserClient(ClientBase):
             "Authenticating with service account %s", self.service_account_client_name
         )
 
-        token = self.kc_openid.token(grant_type="client_credentials")
-        self._access_token = token["access_token"]
+        self._obtain_client_credentials_tokens(self.kc_openid)
 
         self.log.info("Succesfully authenticated!")
 
@@ -437,18 +474,7 @@ class UserClient(ClientBase):
         """Obtain a new token for a non-service account user"""
         self.log.info("Refreshing token")
         assert self._refresh_token, "Refresh token not found, did you authenticate?"
-
-        try:
-            new_token = self.kc_openid.refresh_token(self._refresh_token)
-        except KeycloakAuthenticationError:
-            self.log.exception("Could not authenticate token. Please re-authenticate!")
-            return
-        except KeycloakError:
-            self.log.exception("Error in refreshing token. Please re-authenticate!")
-            return
-
-        self._access_token = new_token["access_token"]
-        self._refresh_token = new_token["refresh_token"]
+        self._obtain_tokens_per_audience()
 
     def setup_collaboration(self, collaboration_id: int) -> None:
         """Setup the collaboration.
@@ -532,32 +558,6 @@ class UserClient(ClientBase):
             return self.parent.request(
                 "health", silent_on_connection_error=silent_on_connection_error
             )
-
-        def generate_private_key(self, file_: str | None = None) -> None:
-            """Generate new private key
-
-            Parameters
-            ----------
-            file_ : str, optional
-                Path where to store the private key, by default None
-            """
-            if not file_:
-                self.parent.log.info("--> Using current directory")
-                file_ = "private_key.pem"
-
-            if isinstance(file_, str):
-                file_ = Path(file_).absolute()
-
-            self.parent.log.info(f"--> Generating private key file: {file_}")
-            private_key = RSACryptor.create_new_rsa_key(file_)
-
-            self.parent.log.info("--> Assigning private key to client")
-            self.parent.cryptor.private_key = private_key
-
-            self.parent.log.info(
-                "--> Encrypting the client and uploading the public key"
-            )
-            self.parent.setup_encryption(file_)
 
     class Collaboration(ClientBase.SubClient):
         """Collection of collaboration requests"""

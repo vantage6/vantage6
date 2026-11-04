@@ -12,6 +12,7 @@ data:
     algorithm_stores: []
     api_path: {{ .Values.hq.apiPath }}
     description: {{ .Values.hq.description }}
+    jwt_container_token_expires_hours: {{ (.Values.hq.jwt).container_token_expires_hours | default 168 }}
     logging:
       backup_count: {{ .Values.hq.logging.backup_count }}
       datefmt: {{ .Values.hq.logging.datefmt | quote }}
@@ -38,12 +39,16 @@ data:
       host_uri: {{ .Values.hq.dev.host_uri }}
       store_address: {{ .Values.hq.dev.store_address | default $internal.store }}
     {{- end }}
+    {{- $hqKeycloak := default ($global.keycloak | default (dict)) .Values.hq.keycloak }}
+    keycloak:
+      public_client: {{ $hqKeycloak.publicClient | default "public_client" }}
     {{- if .Values.hq.algorithm_stores }}
     algorithm_stores:
       {{- range .Values.hq.algorithm_stores }}
       - name: {{ .name }}
         url: {{ .url }}
         api_path: {{ .api_path }}
+        uses_hq_keycloak: {{ .uses_hq_keycloak | default false }}
       {{- end }}
     {{- end }}
     {{- if .Values.hq.runs_data_cleanup_days }}
@@ -51,6 +56,12 @@ data:
     {{- end }}
     {{- if .Values.hq.runs_data_cleanup_include_args }}
     runs_data_cleanup_include_args: {{ .Values.hq.runs_data_cleanup_include_args }}
+    {{- end }}
+    {{- if hasKey .Values.hq "database_pool_size" }}
+    database_pool_size: {{ .Values.hq.database_pool_size }}
+    {{- end }}
+    {{- if hasKey .Values.hq "database_max_overflow" }}
+    database_max_overflow: {{ .Values.hq.database_max_overflow }}
     {{- end }}
     {{- if and .Values.prometheus .Values.prometheus.enabled }}
     prometheus:

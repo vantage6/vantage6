@@ -138,10 +138,10 @@ itself, that database also takes its password from the database Secret.
     - ``username``, ``password``
     - Credentials of the Keycloak database
   * - ``keycloak.realmImport.existingSecret``
-    - ``admin-password``, ``backend-client-secret``; ``smtp-password`` if the SMTP
-      server is set up and requires authentication
-    - Password of the vantage6 admin user and secret of the client that HQ and the
-      algorithm store use to manage Keycloak
+    - ``admin-password``, ``hq-admin-client-secret``, ``store-admin-client-secret``;
+      ``smtp-password`` if the SMTP server is set up and requires authentication
+    - Password of the vantage6 admin user, and secrets of the Keycloak clients of HQ
+      (to manage users and clients) and of the algorithm store (to look up users)
 
 HQ chart (``hq``)
 ^^^^^^^^^^^^^^^^^
@@ -150,10 +150,10 @@ Reference the Secret with ``hq.existingSecret``. Its keys are made available to 
 environment variables.
 
 - ``KEYCLOAK_ADMIN_PASSWORD`` and ``KEYCLOAK_ADMIN_CLIENT_SECRET``: password of the
-  vantage6 admin user and secret of the Keycloak admin client. These must match
-  ``admin-password`` and ``backend-client-secret`` in the realm Secret of the ``auth``
-  chart. The admin username and client name are not secret; they are taken from the
-  Keycloak values (``adminUsername``, ``adminClient``).
+  vantage6 admin user and secret of HQ's Keycloak admin client. These must match
+  ``admin-password`` and ``hq-admin-client-secret`` in the realm Secret of the ``auth``
+  chart. The admin username and client names are not secret; they are taken from the
+  Keycloak values (``adminUsername``, ``hqAdminClient``, ``hqStoreReaderClient``).
 - ``V6_DATABASE_URI``: URI of the HQ database, including credentials.
 - ``V6_RABBITMQ_URI`` and ``RABBITMQ_PASSWORD``: the URI with which HQ connects to
   RabbitMQ, e.g. ``amqp://<username>:<password>@<release>-rabbitmq:5672/%2Fvantage6``
@@ -169,7 +169,9 @@ Algorithm store chart (``store``)
 
 Reference the Secret with ``store.existingSecret``.
 
-- ``KEYCLOAK_ADMIN_PASSWORD`` and ``KEYCLOAK_ADMIN_CLIENT_SECRET``: as for HQ.
+- ``KEYCLOAK_ADMIN_CLIENT_SECRET``: secret of the store's own Keycloak client, which can
+  only look up users. It must match ``store-admin-client-secret`` in the realm Secret of
+  the ``auth`` chart. The client name is taken from ``storeAdminClient``.
 - ``V6_DATABASE_URI``: URI of the store database, including credentials.
 - ``DATABASE_PASSWORD``: only when using the database deployed by the chart.
 - ``V6_SMTP_PASSWORD``: only when the SMTP server requires authentication.

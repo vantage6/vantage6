@@ -1,9 +1,10 @@
-import { HttpClient, HttpErrorResponse, HttpResponse, HttpStatusCode } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders, HttpResponse, HttpStatusCode } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, first } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { Pagination } from 'src/app/models/api/pagination.model';
 import { SnackbarService } from './snackbar.service';
+import { TokenService } from './token.service';
 import { isNested } from 'src/app/helpers/utils.helper';
 import { AlgorithmStore } from '../models/api/algorithmStore.model';
 
@@ -13,7 +14,8 @@ import { AlgorithmStore } from '../models/api/algorithmStore.model';
 export class ApiService {
   constructor(
     private http: HttpClient,
-    private snackBarService: SnackbarService
+    private snackBarService: SnackbarService,
+    private tokenService: TokenService
   ) {}
 
   async getForApi<T = null>(path: string, params: object | null = null): Promise<T> {
@@ -70,7 +72,8 @@ export class ApiService {
     showAuthError: boolean = true
   ): Promise<T> {
     const request = this.http.get<T>(this.getAlgoStorePath(algoStore, path), {
-      params: { ...parameters }
+      params: { ...parameters },
+      headers: await this.getStoreHeaders(algoStore)
     });
     if (showAuthError) {
       return await this.handleResult(request);
@@ -92,22 +95,35 @@ export class ApiService {
           ...parameters,
           page: currentPage,
           per_page: '10'
-        }
+        },
+        headers: await this.getStoreHeaders(algoStore)
       })
     );
   }
 
   async postForAlgorithmApi<T>(algoStore: AlgorithmStore, path: string, body: object): Promise<T> {
-    return await this.handleResult(this.http.post<T>(this.getAlgoStorePath(algoStore, path), body));
+    return await this.handleResult(
+      this.http.post<T>(this.getAlgoStorePath(algoStore, path), body, { headers: await this.getStoreHeaders(algoStore) })
+    );
   }
 
   async patchForAlgorithmApi<T>(algoStore: AlgorithmStore, path: string, body: object): Promise<T> {
-    return await this.handleResult(this.http.patch<T>(this.getAlgoStorePath(algoStore, path), body));
+    return await this.handleResult(
+      this.http.patch<T>(this.getAlgoStorePath(algoStore, path), body, { headers: await this.getStoreHeaders(algoStore) })
+    );
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async deleteForAlgorithmApi(algoStore: AlgorithmStore, path: string): Promise<any> {
-    return await this.handleResult(this.http.delete(this.getAlgoStorePath(algoStore, path)));
+    return await this.handleResult(
+      this.http.delete(this.getAlgoStorePath(algoStore, path), { headers: await this.getStoreHeaders(algoStore) })
+    );
+  }
+
+  // Only stores that authenticate with the same Keycloak as HQ get a token
+  private async getStoreHeaders(algoStore: AlgorithmStore): Promise<HttpHeaders> {
+    const token = algoStore.uses_hq_keycloak ? await this.tokenService.getStoreToken() : undefined;
+    return token ? new HttpHeaders({ Authorization: `Bearer ${token}` }) : new HttpHeaders();
   }
 
   private async handleResult<T = null>(request: Observable<T>): Promise<T> {
