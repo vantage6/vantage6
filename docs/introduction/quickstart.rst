@@ -21,7 +21,7 @@ miniconda, you can create and activate a Python environment called 'vantage6_env
 
 .. code-block:: bash
 
-    conda create -n vantage6_env python=3.10
+    conda create -n vantage6_env python=3.13
     conda activate vantage6_env
 
 Then, install the vantage6 command line interface (CLI) by running:

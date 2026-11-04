@@ -57,7 +57,7 @@ class ServerContext(BaseServerContext):
         str
             Server's docker container name
         """
-        return f"{APPNAME}-{self.name}-{self.scope}-{ServerType.V6SERVER}"
+        return f"{APPNAME}-{self.name}-{self.scope}-{ServerType.V6SERVER.value}"
 
     @property
     def prometheus_container_name(self) -> str:

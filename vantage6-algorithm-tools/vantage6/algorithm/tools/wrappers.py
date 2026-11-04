@@ -22,16 +22,15 @@ import pandas as pd
 
 from sqlalchemy import create_engine
 
-from enum import Enum
-
 from SPARQLWrapper import SPARQLWrapper, CSV
 
+from vantage6.common.enum import StrEnumBase
 from vantage6.algorithm.tools.util import info, error
 
 _SPARQL_RETURN_FORMAT = CSV
 
 
-class DatabaseType(str, Enum):
+class DatabaseType(StrEnumBase):
     """
     Enum for the different database types.
 

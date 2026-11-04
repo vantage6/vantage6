@@ -1,9 +1,8 @@
-from enum import Enum
-
+from vantage6.common.enum import StrEnumBase
 from vantage6.server.model.rule import Operation, Scope
 
 
-class DefaultRole(str, Enum):
+class DefaultRole(StrEnumBase):
     """Enum containing the names of the default roles"""
 
     ROOT = "Root"
@@ -13,10 +12,6 @@ class DefaultRole(str, Enum):
     RESEARCHER = "Researcher"
     ORG_ADMIN = "Organization Admin"
     COL_ADMIN = "Collaboration Admin"
-
-    @classmethod
-    def list(cls):
-        return list(map(lambda c: c.value, cls))
 
 
 # TODO BvB 22-06-07: we now have to pass this 'db' module as argument to a

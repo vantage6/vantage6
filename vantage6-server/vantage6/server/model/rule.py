@@ -1,13 +1,13 @@
 from __future__ import annotations
-from enum import Enum as Enumerate
 
 from sqlalchemy import Column, Text, String, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
+from vantage6.common.enum import StrEnumBase
 from vantage6.server.model.base import Base, DatabaseSessionManager
 
 
-class Operation(str, Enumerate):
+class Operation(StrEnumBase):
     """Enumerator of all available operations"""
 
     VIEW = "v"
@@ -18,7 +18,7 @@ class Operation(str, Enumerate):
     RECEIVE = "r"
 
 
-class Scope(str, Enumerate):
+class Scope(StrEnumBase):
     """Enumerator of all available scopes"""
 
     OWN = "own"
