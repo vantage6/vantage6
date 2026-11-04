@@ -188,6 +188,9 @@ And finally there are some images released for algorithm development:
 - `ghcr.io/vantage6/infrastructure/algorithm-base:MAJOR.MINOR` -> _Base image for algorithm development_
 - `ghcr.io/vantage6/infrastructure/algorithm-ohdsi-base:MAJOR.MINOR` -> _Extended algorithm base image for OHDSI algorithm development_
 
+Both are also tagged with `MAJOR` (e.g. `5`), which points to the latest final release of
+that major version.
+
 ## :gift_heart: Join the community!
 
 We hope to continue developing, improving, and supporting **vantage6** with the help of
