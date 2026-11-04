@@ -11,7 +11,7 @@
 ## Container Images
 
 The container images we maintain in `ghcr.io/vantage6/infrastructure` are listed in
-[docker/maintained-images.txt](docker/maintained-images.txt).
+[docker/maintained-images.toml](docker/maintained-images.toml).
 
 - **Scanning:** all final releases of these images are scanned for known vulnerabilities,
   including the named tags (such as `uluru` for 5.x and `cotopaxi` for 4.x) that point at
