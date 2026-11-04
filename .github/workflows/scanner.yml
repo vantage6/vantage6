@@ -45,13 +45,16 @@ jobs:
           fi
           echo "targets=$targets" >> "$GITHUB_OUTPUT"
 
-      # Download the vulnerability databases once and share them with the scan
-      # jobs through the cache, instead of letting every job hit the registry.
+      # Download the Trivy binary and the vulnerability databases once and share
+      # them with the scan jobs through the cache, instead of letting every job
+      # download them. The binary is cached per version, so keep the versions of
+      # both Install Trivy steps the same.
       - name: Install Trivy
         # pinned to: https://github.com/aquasecurity/setup-trivy/releases/tag/v0.3.1
         uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567
         with:
           version: v0.76.1
+          cache: true
 
       - name: Download vulnerability databases
         run: |
@@ -100,7 +103,8 @@ jobs:
         # pinned to: https://github.com/aquasecurity/setup-trivy/releases/tag/v0.3.1
         uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567
         with:
-          version: v0.76.0
+          version: v0.76.1
+          cache: true
 
       - name: Restore vulnerability databases
         # pinned to: https://github.com/actions/cache/releases/tag/v6.1.0
