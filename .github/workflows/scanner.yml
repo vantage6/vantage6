@@ -1,6 +1,8 @@
-# Scan a container image for vulnerabilities with Trivy. Results end up in the
-# job summary (HIGH/CRITICAL), the Security tab (SARIF, one category per image)
-# and a JSON artifact (everything).
+# Scan container images for vulnerabilities with Trivy. Without input, all tags
+# in docker/maintained-images.toml are scanned; with an image reference, only
+# that image.
+# Results end up in the job summary (HIGH/CRITICAL), the Security tab (SARIF,
+# one category per image and tag) and a JSON artifact (everything).
 #
 # CVEs that Docker has marked as not exploitable in its Hardened Images are
 # suppressed through VEX. This only affects the DHI-based images mirrored via
@@ -11,22 +13,77 @@ on:
   workflow_dispatch:
     inputs:
       image:
-        description: "Image reference to scan, e.g. ghcr.io/vantage6/infrastructure/hq:latest"
-        required: true
+        description: "Image reference to scan, e.g. ghcr.io/vantage6/infrastructure/hq:latest (leave empty to scan all maintained images)"
+        required: false
         type: string
 
 permissions:
   contents: read
 
 jobs:
+  targets:
+    name: List images
+    runs-on: ubuntu-latest
+    outputs:
+      targets: ${{ steps.targets.outputs.targets }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: List images to scan
+        id: targets
+        env:
+          IMAGE: ${{ inputs.image }}
+        run: |
+          if [ -n "$IMAGE" ]; then
+            name="${IMAGE##*/}"
+            name="${name%%@*}"
+            targets=$(jq -nc --arg image "$IMAGE" --arg category "${name/:/-}" \
+              '[{image: $image, category: $category}]')
+          else
+            targets=$(python3 tools/maintained-images.py)
+          fi
+          echo "targets=$targets" >> "$GITHUB_OUTPUT"
+
+      # Download the vulnerability databases once and share them with the scan
+      # jobs through the cache, instead of letting every job hit the registry.
+      - name: Install Trivy
+        # pinned to: https://github.com/aquasecurity/setup-trivy/releases/tag/v0.3.1
+        uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567
+        with:
+          version: v0.76.0
+
+      - name: Download vulnerability databases
+        run: |
+          trivy image --download-db-only
+          trivy image --download-java-db-only
+
+      - name: Cache vulnerability databases
+        # pinned to: https://github.com/actions/cache/releases/tag/v6.1.0
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: |
+            ~/.cache/trivy/db
+            ~/.cache/trivy/java-db
+          key: trivy-db-${{ github.run_id }}
+
   scan:
+    name: ${{ matrix.target.category }}
+    needs: targets
+    if: needs.targets.outputs.targets != '[]'
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: read
       security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJSON(needs.targets.outputs.targets) }}
     env:
-      IMAGE: ${{ inputs.image }}
+      IMAGE: ${{ matrix.target.image }}
+      TRIVY_SKIP_DB_UPDATE: true
+      TRIVY_SKIP_JAVA_DB_UPDATE: true
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -45,6 +102,16 @@ jobs:
         with:
           version: v0.76.0
 
+      - name: Restore vulnerability databases
+        # pinned to: https://github.com/actions/cache/releases/tag/v6.1.0
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: |
+            ~/.cache/trivy/db
+            ~/.cache/trivy/java-db
+          key: trivy-db-${{ github.run_id }}
+          fail-on-cache-miss: true
+
       - name: Configure VEX repositories
         run: |
           mkdir -p ~/.trivy/vex
@@ -58,12 +125,6 @@ jobs:
               enabled: true
           EOF
           trivy vex repo download
-
-      - name: Derive report name
-        id: name
-        run: |
-          name="${IMAGE##*/}"
-          echo "name=${name%%[:@]*}" >> "$GITHUB_OUTPUT"
 
       - name: Scan image
         run: trivy image --scanners vuln --vex repo --format json
@@ -86,11 +147,11 @@ jobs:
         uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee
         with:
           sarif_file: report.sarif
-          category: ${{ steps.name.outputs.name }}
+          category: ${{ matrix.target.category }}
 
       - name: Upload report
         # pinned to: https://github.com/actions/upload-artifact/releases/tag/v7.0.2
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
-          name: trivy-${{ steps.name.outputs.name }}
+          name: trivy-${{ matrix.target.category }}
           path: report.json
