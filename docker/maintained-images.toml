@@ -5,7 +5,8 @@
 # Each image lists its tags explicitly, in one of two lists:
 #
 #   scan-only         scanned for vulnerabilities.
-#   scan-and-rebuild  scanned, and rebuilt on a schedule. Rebuilding only helps
+#   scan-and-rebuild  scanned, and rebuilt on a schedule (not implemented yet,
+#                     so not used for now). Rebuilding only helps
 #                     when the base image receives fixes, i.e. for releases built
 #                     on a Docker Hardened Image (DHI). Mirrored images (see
 #                     docker/mirror-images.txt) are rebuilt by re-mirroring.
@@ -66,13 +67,13 @@ scan-only = ["4.15", "4.15.0", "4.15.1", "4.15.2", "4.15.3"]
 scan-only = ["4.15", "4.15.0", "4.15.1", "4.15.2", "4.15.3"]
 
 [curl]
-scan-and-rebuild = ["5.0.2", "5.0.3", "5.1.0"]
+scan-only = ["5.0.2", "5.0.3", "5.1.0"]
 
 [kubectl]
-scan-and-rebuild = ["5.0.2", "5.0.3", "5.1.0"]
+scan-only = ["5.0.2", "5.0.3", "5.1.0"]
 
 [busybox]
-scan-and-rebuild = ["5.0.2", "5.0.3", "5.1.0"]
+scan-only = ["5.0.2", "5.0.3", "5.1.0"]
 
 [prometheus]
-scan-and-rebuild = ["5.0.2", "5.0.3", "5.1.0"]
+scan-only = ["5.0.2", "5.0.3", "5.1.0"]
