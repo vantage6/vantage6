@@ -4,6 +4,7 @@ import requests
 from vantage6.common.globals import (
     REQUEST_TIMEOUT,
     DEFAULT_CHUNK_SIZE,
+    HTTP_UPLOAD_CHUNK_SIZE,
 )
 from vantage6.common.client.utils import is_uuid
 
@@ -40,7 +41,7 @@ class BlobStorageMixin:
         url = self.generate_path_to("blobstream", False)
 
         def chunked_run_data_stream(
-            run_data: bytes, chunk_size: int = DEFAULT_CHUNK_SIZE
+            run_data: bytes, chunk_size: int = HTTP_UPLOAD_CHUNK_SIZE
         ):
             for i in range(0, len(run_data), chunk_size):
                 yield run_data[i : i + chunk_size]
