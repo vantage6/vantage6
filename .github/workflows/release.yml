@@ -274,13 +274,14 @@ jobs:
 
       - name: Build and push Algorithm OMOP base image
         if: ${{ env.stage == '' || env.patch == 0 }}
-        run: make algorithm-omop-base-image BASE=${major}.${minor} TAG=${major}.${minor}
+        run:
+          make algorithm-omop-base-image BASE=${major}.${minor} TAG=${major}.${minor}
           PUSH_REG=true TAG_LATEST=$tag_latest
 
   # Update the server and node images
   deploy:
     runs-on: ubuntu-latest
-    needs: [ version, infrastructure-images, support-images ]
+    needs: [version, infrastructure-images, support-images]
     env:
       version: ${{ needs.version.outputs.version }}
       major: ${{ needs.version.outputs.major }}
@@ -366,7 +367,7 @@ jobs:
     runs-on: ubuntu-latest
     # Note: infrastructure-images is not a required dependency, but we want
     # to ensure that step succeeds before pushing the code to PyPi
-    needs: [ version, infrastructure-images ]
+    needs: [version, infrastructure-images]
     env:
       version: ${{ needs.version.outputs.version }}
       major: ${{ needs.version.outputs.major }}
@@ -407,30 +408,3 @@ jobs:
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
         run: |
           make publish
-
-  # When the project is built and released the Discord community is notified.
-  notify:
-    runs-on: ubuntu-latest
-    needs: [ version, build-n-release, deploy ]
-    env:
-      version: ${{ needs.version.outputs.version }}
-      stage: ${{ needs.version.outputs.stage }}
-      branch: ${{ needs.version.outputs.branch }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ env.branch }}
-
-      - name: Install dependencies
-        run: |
-          pip install discord.py==1.7.3
-          pip install click
-
-      - name: Notify Discord community
-        if: ${{  env.stage == '' }}
-        env:
-          DISCORD_TOKEN: ${{ secrets.DISCORD_RELEASE_TOKEN }}
-        run: |
-          make community FLAGS="--version $version --notes '' \
-            --post-notes ''"
