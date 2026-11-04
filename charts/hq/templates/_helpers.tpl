@@ -34,3 +34,10 @@ Match labels
 {{- define "vantage6.matchLabels" -}}
 {{- include "common.matchLabels" (dict "Chart" .Chart "Release" .Release "Values" .Values "Component" "hq") -}}
 {{- end }}
+
+{{/*
+Name of the Secret with HQ's sensitive configuration
+*/}}
+{{- define "vantage6.secretName" -}}
+{{- .Values.hq.existingSecret | default (printf "%s-hq-secrets" .Release.Name) -}}
+{{- end }}

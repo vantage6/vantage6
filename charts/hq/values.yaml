@@ -15,6 +15,10 @@ hq:
 
   replications: 1
 
+  # Name of an existing secret with HQ's sensitive configuration. If empty, a secret
+  # is created from the values in this file.
+  existingSecret: ""
+
   logging:
     level: DEBUG
     file: hq.log

@@ -36,10 +36,10 @@ spec:
     {{- end }}
     database: {{ .Values.database.name }}
     usernameSecret:
-      name: {{ .Release.Name }}-kc-db-secret
+      name: {{ include "auth.dbSecretName" . }}
       key: username
     passwordSecret:
-      name: {{ .Release.Name }}-kc-db-secret
+      name: {{ include "auth.dbSecretName" . }}
       key: password
   {{- if $behindGateway }}
   http:

@@ -12,3 +12,19 @@
 {{ (' ' * indent) ~ key ~ ': ' ~ yaml_sq(value) ~ '\n' -}}
 {%- endif -%}
 {%- endmacro -%}
+
+{#-
+  Render a secret as `key: 'value'`. Secrets have no default value outside the
+  sandbox: if no value is given, the field is omitted when the secret is provided via
+  a Kubernetes secret (has_secret_ref), and rendering fails otherwise. Requires the
+  template to import this macro `with context`.
+-#}
+{% macro secret_field(key, value, name, sandbox_default, has_secret_ref=false) -%}
+{%- if value is defined and value is not none and (value | string) != '' -%}
+{{ key }}: {{ yaml_sq(value) }}
+{%- elif is_sandbox -%}
+{{ key }}: {{ yaml_sq(sandbox_default) }}
+{%- elif not has_secret_ref -%}
+{{ raise_error(name ~ " must be set, or provided via a Kubernetes secret") }}
+{%- endif -%}
+{%- endmacro %}

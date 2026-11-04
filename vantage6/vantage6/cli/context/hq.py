@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import ClassVar
 
 from vantage6.common.globals import APPNAME, InstanceType
 
@@ -30,6 +31,16 @@ class HQContext(BaseBackendContext):
     # The HQ configuration manager is aware of the structure of the HQ
     # configuration file and makes sure only valid configuration can be loaded.
     INST_CONFIG_MANAGER = HQConfigurationManager
+    CONFIG_ENV_OVERRIDES: ClassVar[dict[str, tuple[str, ...]]] = {
+        **BaseBackendContext.CONFIG_ENV_OVERRIDES,
+        "V6_RABBITMQ_URI": ("rabbitmq", "uri"),
+        "V6_JWT_SECRET_KEY": ("jwt_secret_key",),
+        "V6_LARGE_RESULT_STORE_CONNECTION_STRING": (
+            "large_result_store",
+            "connection_string",
+        ),
+        "V6_LARGE_RESULT_STORE_CLIENT_SECRET": ("large_result_store", "client_secret"),
+    }
 
     def __init__(
         self,

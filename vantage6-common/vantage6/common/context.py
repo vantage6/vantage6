@@ -1,11 +1,12 @@
 import enum
+import json
 import logging
 import logging.handlers
 import os
 import sys
 from abc import abstractmethod
 from pathlib import Path
-from typing import Self
+from typing import ClassVar, Self
 
 import appdirs
 import pyfiglet
@@ -36,6 +37,11 @@ class AppContext(metaclass=Singleton):
     INST_CONFIG_MANAGER = ConfigurationManager
     LOGGING_ENABLED = True
     LOGGER_PREFIX = ""
+    # Environment variables (e.g. loaded from a Kubernetes secret) that override
+    # configuration values inside the container, mapped to their configuration path.
+    # Variables in CONFIG_ENV_JSON contain JSON of the given type.
+    CONFIG_ENV_OVERRIDES: ClassVar[dict[str, tuple[str, ...]]] = {}
+    CONFIG_ENV_JSON: ClassVar[dict[str, type]] = {}
 
     def __init__(
         self,
@@ -122,6 +128,8 @@ class AppContext(metaclass=Singleton):
         self.config_file = self.find_config_file(
             instance_type, self.name, system_folders, config_file, is_sandbox=is_sandbox
         )
+        if self.in_container:
+            self._apply_config_env_overrides()
         self.is_sandbox = is_sandbox
 
         # look up system / user directories. This way we can check if the
@@ -138,6 +146,31 @@ class AppContext(metaclass=Singleton):
         self.log = logging.getLogger(module_name)
         if print_log_header:
             self.print_log_header()
+
+    def _apply_config_env_overrides(self) -> None:
+        """Overwrite configuration values with those set in `CONFIG_ENV_OVERRIDES`."""
+        for env_var, path in self.CONFIG_ENV_OVERRIDES.items():
+            value = os.environ.get(env_var)
+            if not value:
+                continue
+            if expected_type := self.CONFIG_ENV_JSON.get(env_var):
+                try:
+                    value = json.loads(value)
+                except json.JSONDecodeError:
+                    raise ValueError(
+                        f"Environment variable {env_var} does not contain valid JSON"
+                    ) from None
+                if not isinstance(value, expected_type):
+                    raise ValueError(
+                        f"Environment variable {env_var} should contain a JSON "
+                        f"{expected_type.__name__}"
+                    )
+            section = self.config
+            for key in path[:-1]:
+                if not isinstance(section.get(key), dict):
+                    section[key] = {}
+                section = section[key]
+            section[path[-1]] = value
 
     def print_log_header(self) -> None:
         """

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import ClassVar
+
 from vantage6.common.globals import InstanceType
 
 from vantage6.cli import __version__
@@ -25,6 +27,12 @@ class AlgorithmStoreContext(BaseBackendContext):
     """
 
     INST_CONFIG_MANAGER = AlgorithmStoreConfigurationManager
+    CONFIG_ENV_OVERRIDES: ClassVar[dict[str, tuple[str, ...]]] = {
+        **BaseBackendContext.CONFIG_ENV_OVERRIDES,
+        "V6_SMTP_PASSWORD": ("smtp_server", "password"),
+        "V6_PRIVATE_DOCKER_REGISTRIES": ("private_docker_registries",),
+    }
+    CONFIG_ENV_JSON: ClassVar[dict[str, type]] = {"V6_PRIVATE_DOCKER_REGISTRIES": list}
 
     def __init__(
         self, instance_name: str, system_folders: bool = S_FOL, is_sandbox: bool = False

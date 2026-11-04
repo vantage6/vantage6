@@ -1,8 +1,10 @@
 {{- if and .Values.keycloak.realmImport (ne .Values.keycloak.realmImport.enabled false) }}
 {{- $global := .Values.global | default (dict) }}
 {{- $globalKeycloak := $global.keycloak | default (dict) }}
-{{- $hqAdminClientSecret := default $globalKeycloak.hqAdminClientSecret .Values.keycloak.realmImport.hq_admin_client_secret }}
 {{- $storeAdminClientSecret := default $globalKeycloak.storeAdminClientSecret .Values.keycloak.realmImport.store_admin_client_secret }}
+{{- /* with an existing secret, the chart cannot see whether it holds the store's
+client secret; it must then contain 'store-admin-client-secret' */}}
+{{- $withStoreAdminClient := or $storeAdminClientSecret .Values.keycloak.realmImport.existingSecret }}
 {{- $hqAdminClient := default "hq-admin-client" $globalKeycloak.hqAdminClient }}
 {{- $storeAdminClient := default "store-admin-client" $globalKeycloak.storeAdminClient }}
 {{- $publicClient := .Values.keycloak.realmImport.publicClient | default (dict) }}
@@ -36,6 +38,30 @@ metadata:
   {{- end }}
 spec:
   keycloakCRName: {{ .Release.Name }}-kc
+  {{- $realmSecretName := include "auth.realmSecretName" . }}
+  {{- $smtpConfig := .Values.keycloak.realmImport.smtpServer | default (dict) }}
+  {{- $smtpPassword := or $smtpConfig.password (and .Values.keycloak.realmImport.existingSecret (eq (toString $smtpConfig.auth) "true")) }}
+  placeholders:
+    V6_REALM_ADMIN_PASSWORD:
+      secret:
+        name: {{ $realmSecretName }}
+        key: admin-password
+    V6_HQ_ADMIN_CLIENT_SECRET:
+      secret:
+        name: {{ $realmSecretName }}
+        key: hq-admin-client-secret
+    {{- if $withStoreAdminClient }}
+    V6_STORE_ADMIN_CLIENT_SECRET:
+      secret:
+        name: {{ $realmSecretName }}
+        key: store-admin-client-secret
+    {{- end }}
+    {{- if $smtpPassword }}
+    V6_SMTP_PASSWORD:
+      secret:
+        name: {{ $realmSecretName }}
+        key: smtp-password
+    {{- end }}
   realm:
     realm: {{ default $globalKeycloak.realm .Values.keycloak.realmImport.realm }}
     enabled: {{ .Values.keycloak.realmImport.enabled | default true }}
@@ -65,7 +91,7 @@ spec:
     failureFactor: {{ .Values.keycloak.realmImport.failureFactor }}
     {{- end }}
     {{- $smtp := .Values.keycloak.realmImport.smtpServer | default (dict) }}
-    {{- if or $smtp.host $smtp.port $smtp.from (hasKey $smtp "fromDisplayName") (hasKey $smtp "replyTo") (hasKey $smtp "replyToDisplayName") (hasKey $smtp "ssl") (hasKey $smtp "starttls") (hasKey $smtp "auth") (hasKey $smtp "authType") $smtp.user $smtp.password }}
+    {{- if or $smtp.host $smtp.port $smtp.from (hasKey $smtp "fromDisplayName") (hasKey $smtp "replyTo") (hasKey $smtp "replyToDisplayName") (hasKey $smtp "ssl") (hasKey $smtp "starttls") (hasKey $smtp "auth") (hasKey $smtp "authType") $smtp.user $smtpPassword }}
     smtpServer:
       {{- if $smtp.host }}
       host: {{ $smtp.host | quote }}
@@ -100,8 +126,8 @@ spec:
       {{- if $smtp.user }}
       user: {{ $smtp.user | quote }}
       {{- end }}
-      {{- if $smtp.password }}
-      password: {{ $smtp.password | quote }}
+      {{- if $smtpPassword }}
+      password: "${V6_SMTP_PASSWORD}"
       {{- end }}
     {{- end }}
     {{- if .Values.keycloak.production }}
@@ -144,7 +170,7 @@ spec:
         {{- end }}
         credentials:
         - type: password
-          value: {{ default $globalKeycloak.adminPassword $realmImportAdmin.password | quote}}
+          value: "${V6_REALM_ADMIN_PASSWORD}"
         {{- if .Values.keycloak.production }}
         requiredActions:
         - CONFIGURE_TOTP
@@ -165,7 +191,7 @@ spec:
             - view-clients
             - manage-clients
             - create-client
-      {{- if $storeAdminClientSecret }}
+      {{- if $withStoreAdminClient }}
       - username: service-account-{{ $storeAdminClient }}
         enabled: true
         serviceAccountClientId: {{ $storeAdminClient }}
@@ -202,14 +228,14 @@ spec:
       # create a client that will allow HQ to manage users and clients in keycloak.
       - clientId: {{ $hqAdminClient }}
         publicClient: false
-        secret: {{ $hqAdminClientSecret | quote }}
+        secret: "${V6_HQ_ADMIN_CLIENT_SECRET}"
         serviceAccountsEnabled: true
         standardFlowEnabled: false
-      {{- if $storeAdminClientSecret }}
+      {{- if $withStoreAdminClient }}
       # algorithm stores only need to look up users
       - clientId: {{ $storeAdminClient }}
         publicClient: false
-        secret: {{ $storeAdminClientSecret | quote }}
+        secret: "${V6_STORE_ADMIN_CLIENT_SECRET}"
         serviceAccountsEnabled: true
         standardFlowEnabled: false
       {{- end }}

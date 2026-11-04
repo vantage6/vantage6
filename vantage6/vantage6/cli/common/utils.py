@@ -1,3 +1,4 @@
+import base64
 import json
 import secrets
 import string
@@ -7,8 +8,10 @@ from pathlib import Path
 
 import questionary as q
 from kubernetes import client as k8s_client
+from kubernetes.client.exceptions import ApiException
+from urllib3.exceptions import HTTPError
 
-from vantage6.common import error
+from vantage6.common import error, info
 from vantage6.common.globals import (
     APPNAME,
     SANDBOX_SUFFIX,
@@ -18,6 +21,7 @@ from vantage6.common.globals import (
 from vantage6.cli.globals import CLICommandName
 from vantage6.cli.k8s_config import KubernetesConfig
 from vantage6.cli.utils import validate_input_cmd_args
+from vantage6.cli.utils_kubernetes import get_core_api_with_ssl_handling
 
 
 def create_directory_if_not_exists(directory: Path) -> None:
@@ -336,3 +340,220 @@ def create_kubernetes_secret(
         string_data=secret_data,
     )
     core_api.create_namespaced_secret(namespace=namespace, body=secret_body)
+
+
+def update_kubernetes_secret(
+    core_api: k8s_client.CoreV1Api,
+    secret_name: str,
+    namespace: str,
+    secret_data: dict[str, str],
+) -> None:
+    """
+    Set keys in a Kubernetes secret, creating the secret if it does not exist.
+
+    Keys that are already in the secret but not in `secret_data` are kept.
+
+    Parameters
+    ----------
+    core_api: k8s_client.CoreV1Api
+        The Kubernetes Core API instance
+    secret_name: str
+        The name of the secret
+    namespace: str
+        The namespace of the secret
+    secret_data: dict[str, str]
+        The keys and values to set
+    """
+    try:
+        create_kubernetes_secret(core_api, secret_name, namespace, secret_data)
+    except ApiException as exc:
+        # 409 Conflict: the secret already exists, so update it instead
+        if exc.status != 409:
+            raise
+        core_api.patch_namespaced_secret(
+            name=secret_name, namespace=namespace, body={"stringData": secret_data}
+        )
+
+
+def kubernetes_secret_exists(
+    core_api: k8s_client.CoreV1Api, secret_name: str, namespace: str
+) -> bool:
+    """
+    Check whether a Kubernetes secret exists.
+
+    Parameters
+    ----------
+    core_api: k8s_client.CoreV1Api
+        The Kubernetes Core API instance
+    secret_name: str
+        The name of the secret
+    namespace: str
+        The namespace of the secret
+
+    Returns
+    -------
+    bool
+        True if the secret exists, False otherwise
+    """
+    try:
+        core_api.read_namespaced_secret(name=secret_name, namespace=namespace)
+    except ApiException as exc:
+        if exc.status == 404:
+            return False
+        raise
+    return True
+
+
+def read_kubernetes_secret_value(
+    core_api: k8s_client.CoreV1Api, secret_name: str, namespace: str, key: str
+) -> str | None:
+    """
+    Read a single value from a Kubernetes secret.
+
+    Parameters
+    ----------
+    core_api: k8s_client.CoreV1Api
+        The Kubernetes Core API instance
+    secret_name: str
+        The name of the secret
+    namespace: str
+        The namespace of the secret
+    key: str
+        The key to read
+
+    Returns
+    -------
+    str | None
+        The value, or None if the key is not in the secret
+    """
+    secret = core_api.read_namespaced_secret(name=secret_name, namespace=namespace)
+    value = (secret.data or {}).get(key)
+    return base64.b64decode(value).decode() if value is not None else None
+
+
+def delete_kubernetes_secret(
+    core_api: k8s_client.CoreV1Api, secret_name: str, namespace: str
+) -> None:
+    """
+    Delete a Kubernetes secret. Does nothing if the secret does not exist.
+
+    Parameters
+    ----------
+    core_api: k8s_client.CoreV1Api
+        The Kubernetes Core API instance
+    secret_name: str
+        The name of the secret
+    namespace: str
+        The namespace of the secret
+    """
+    try:
+        core_api.delete_namespaced_secret(name=secret_name, namespace=namespace)
+    except ApiException as exc:
+        if exc.status != 404:
+            raise
+
+
+def store_credentials_in_kubernetes_secrets(
+    k8s_cfg: KubernetesConfig, credentials: dict[str, dict[str, str]]
+) -> None:
+    """
+    Create Kubernetes secrets with credentials, asking before replacing existing ones.
+
+    If any secret cannot be created, the secrets created so far are deleted again and
+    the program exits.
+
+    Parameters
+    ----------
+    k8s_cfg: KubernetesConfig
+        Kubernetes configuration in which the secrets are created
+    credentials: dict[str, dict[str, str]]
+        The data of each secret, by secret name
+    """
+    created = []
+    try:
+        core_api = get_core_api_with_ssl_handling(k8s_cfg.context)
+        for secret_name, secret_data in credentials.items():
+            if kubernetes_secret_exists(core_api, secret_name, k8s_cfg.namespace):
+                replace = q.confirm(
+                    f"Kubernetes secret '{secret_name}' already exists in namespace "
+                    f"'{k8s_cfg.namespace}'. Replace it?",
+                    default=False,
+                ).unsafe_ask()
+                if not replace:
+                    raise RuntimeError(f"Secret '{secret_name}' already exists")
+                delete_kubernetes_secret(core_api, secret_name, k8s_cfg.namespace)
+            create_kubernetes_secret(
+                core_api, secret_name, k8s_cfg.namespace, secret_data
+            )
+            created.append(secret_name)
+    except (RuntimeError, ApiException, HTTPError) as exc:
+        error(f"Failed to store credentials in Kubernetes secrets: {exc}")
+        for secret_name in created:
+            delete_kubernetes_secret(core_api, secret_name, k8s_cfg.namespace)
+        sys.exit(1)
+    info(
+        f"Stored credentials in Kubernetes secrets {', '.join(created)} (namespace "
+        f"'{k8s_cfg.namespace}')."
+    )
+
+
+# configuration keys whose value is the name of a Kubernetes secret
+SECRET_REFERENCE_KEYS = ("existingSecret", "adminUserSecret")
+
+
+def referenced_secret_names(config: dict) -> list[str]:
+    """
+    Get the names of the Kubernetes secrets that a configuration refers to.
+
+    Parameters
+    ----------
+    config: dict
+        The configuration
+
+    Returns
+    -------
+    list[str]
+        Names of the referenced secrets
+    """
+    names = []
+    for key, value in config.items():
+        if key in SECRET_REFERENCE_KEYS and isinstance(value, str) and value:
+            names.append(value)
+        elif isinstance(value, dict):
+            names.extend(referenced_secret_names(value))
+    return names
+
+
+def ensure_referenced_secrets_exist(config: dict, k8s_config: KubernetesConfig) -> None:
+    """
+    Exit if a Kubernetes secret that the configuration refers to does not exist.
+
+    Parameters
+    ----------
+    config: dict
+        The configuration
+    k8s_config: KubernetesConfig
+        Kubernetes configuration in which the service will be started. A namespace
+        in the configuration takes precedence over its namespace.
+    """
+    names = referenced_secret_names(config)
+    if not names:
+        return
+    namespace = config.get("namespace") or k8s_config.namespace
+    try:
+        core_api = get_core_api_with_ssl_handling(k8s_config.context)
+        missing = [
+            name
+            for name in names
+            if not kubernetes_secret_exists(core_api, name, namespace)
+        ]
+    except (RuntimeError, ApiException, HTTPError) as exc:
+        error(f"Could not check the Kubernetes secrets of the configuration: {exc}")
+        sys.exit(1)
+    if missing:
+        error(
+            f"The following Kubernetes secrets are missing in namespace '{namespace}': "
+            f"{', '.join(missing)}. They are created by the 'new' command in the "
+            "namespace selected there; make sure to use that namespace."
+        )
+        sys.exit(1)

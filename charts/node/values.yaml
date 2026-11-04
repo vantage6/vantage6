@@ -3,6 +3,11 @@
 node:
   createSecrets: true
 
+  # Name of an existing secret with the sensitive node configuration: V6_API_KEY and,
+  # for service-based databases, DATABASE_[LABEL]_URI and DATABASE_[LABEL]_[KEY]. These
+  # values can then be left out of this file.
+  existingSecret: ""
+
   production: true
 
   name: ""

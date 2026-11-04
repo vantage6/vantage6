@@ -30,7 +30,10 @@ spec:
         - name: POSTGRES_USER
           value: {{ .Values.database.username }}
         - name: POSTGRES_PASSWORD
-          value: {{ .Values.database.password }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "store.secretName" . }}
+              key: DATABASE_PASSWORD
         volumeMounts:
         - name: postgres-storage
           mountPath: /var/lib/postgresql/data

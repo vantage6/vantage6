@@ -12,9 +12,15 @@ from vantage6.common import (
 from vantage6.common.context import AppContext
 from vantage6.common.globals import InstanceType
 
-from vantage6.cli.common.utils import check_running
+from vantage6.cli.common.utils import (
+    check_running,
+    delete_kubernetes_secret,
+    referenced_secret_names,
+)
 from vantage6.cli.globals import InfraComponentName
+from vantage6.cli.k8s_config import select_k8s_config
 from vantage6.cli.utils import remove_file
+from vantage6.cli.utils_kubernetes import get_core_api_with_ssl_handling
 
 
 def execute_remove(
@@ -61,6 +67,8 @@ def execute_remove(
         info(f"The {infra_component.value} {name} will not be deleted")
         sys.exit(0)
 
+    _remove_referenced_secrets(ctx.config, force)
+
     # remove the config file
     remove_file(ctx.config_file, "configuration")
 
@@ -73,3 +81,40 @@ def execute_remove(
         # remove the whole folder with all the log files. This may also still contain
         # other files like (for HQ) RabbitMQ configuration etc
         rmtree(log_dir)
+
+
+def _remove_referenced_secrets(config: dict, force: bool) -> None:
+    """
+    Delete the Kubernetes secrets that a configuration refers to.
+
+    Unless the removal is forced, the user is asked first, and the secrets are kept by
+    default, because deleting e.g. database credentials can make existing data
+    inaccessible.
+
+    Parameters
+    ----------
+    config : dict
+        The configuration that is being removed
+    force : bool
+        Whether to delete the secrets without asking
+    """
+    names = referenced_secret_names(config)
+    if not names:
+        return
+    info(f"This configuration refers to Kubernetes secrets: {', '.join(names)}")
+    if (
+        not force
+        and not q.confirm(
+            "Do you also want to delete these secrets? They cannot be recovered.",
+            default=False,
+        ).unsafe_ask()
+    ):
+        info("The Kubernetes secrets are kept.")
+        return
+    namespace = config.get("namespace")
+    k8s_config = select_k8s_config(namespace=namespace)
+    namespace = namespace or k8s_config.namespace
+    core_api = get_core_api_with_ssl_handling(k8s_config.context)
+    for name in names:
+        delete_kubernetes_secret(core_api, name, namespace)
+        info(f"Deleted Kubernetes secret '{name}' (namespace '{namespace}')")
