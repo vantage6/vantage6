@@ -4,31 +4,36 @@
 # listed in SECURITY.md.
 #
 # Tags are derived from the registry: all final releases of the listed major
-# versions (e.g. 5.0.3, no release candidates) plus the named development tags
-# (uluru for 5, cotopaxi for 4). Tags that resolve to the same digest, such as
-# hq and node in 5.x, are only processed once.
+# versions (e.g. 5.0.3, no release candidates), plus the named tags. Named tags
+# (uluru for 5, cotopaxi for 4, see release.yml) point at the latest release of
+# a major version and are the defaults in the Helm charts. Tags that resolve to
+# the same digest, such as hq and node in 5.x, are only processed once.
 #
 # Scan:    all derived tags are scanned for vulnerabilities.
 # Rebuild: only releases from `rebuild from` onward are rebuilt on a schedule.
 #          Rebuilding only helps when the base image receives fixes, i.e. for
 #          releases built on a Docker Hardened Image (DHI). Releases built on
 #          other bases are scan only (`-`). Mirrored images (see
-#          docker/mirror-images.txt) are rebuilt by re-mirroring.
+#          docker/mirror-images.txt) are rebuilt by re-mirroring. When a release
+#          is rebuilt, the named tags pointing at it move along.
 #
-# name                  major versions  rebuild from
-server                  4               -
-# hq                      5               -
-# node                    4 5             -
-# algorithm-store         4 5             -
-# ui                      4 5             -
-# alpine                  4 5             -
-# algorithm-base          4 5             -
-# algorithm-ohdsi-base    4 5             -
-# squid                   4               -
-# ssh-tunnel              4               -
-# vpn-client              4               -
-# vpn-configurator        4               -
-# curl                    5               5.0.2
-# kubectl                 5               5.0.2
-# busybox                 5               5.0.2
-# prometheus              5               5.0.2
+# Columns are separated by whitespace; multiple values within a column by
+# commas. `-` means none.
+#
+# name                  majors  named tags                rebuild from
+server                  4       cotopaxi,cotopaxi-live    -
+# hq                      5       uluru,uluru-live          -
+# node                    4,5     cotopaxi,uluru            -
+# algorithm-store         4,5     cotopaxi,uluru            -
+# ui                      4,5     cotopaxi,uluru            -
+# alpine                  4,5     -                         -
+# algorithm-base          4,5     -                         -
+# algorithm-ohdsi-base    4,5     -                         -
+# squid                   4       -                         -
+# ssh-tunnel              4       -                         -
+# vpn-client              4       -                         -
+# vpn-configurator        4       -                         -
+# curl                    5       -                         5.0.2
+# kubectl                 5       -                         5.0.2
+# busybox                 5       -                         5.0.2
+# prometheus              5       -                         5.0.2
