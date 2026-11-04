@@ -20,6 +20,15 @@ on:
         description: "Image reference to scan, e.g. ghcr.io/vantage6/infrastructure/hq:latest (leave empty to scan all maintained images)"
         required: false
         type: string
+  # Called by release.yml to scan the images it just published. These results
+  # are only reported in the job summary and as artifacts: they reach the
+  # Security tab once the release is added to docker/maintained-images.toml.
+  workflow_call:
+    inputs:
+      images:
+        description: Image references to scan, separated by whitespace
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -37,13 +46,15 @@ jobs:
       - name: List images to scan
         id: targets
         env:
-          IMAGE: ${{ inputs.image }}
+          IMAGES: ${{ inputs.images || inputs.image }}
         run: |
-          if [ -n "$IMAGE" ]; then
-            name="${IMAGE##*/}"
-            name="${name%%@*}"
-            targets=$(jq -nc --arg image "$IMAGE" --arg category "${name/:/-}" \
-              '[{image: $image, category: $category}]')
+          if [ -n "$IMAGES" ]; then
+            targets=$(for image in $IMAGES; do
+              name="${image##*/}"
+              name="${name%%@*}"
+              jq -nc --arg image "$image" --arg category "${name/:/-}" \
+                '{image: $image, category: $category}'
+            done | jq -sc .)
           else
             targets=$(python3 tools/maintained-images.py)
           fi
@@ -151,6 +162,7 @@ jobs:
         run: trivy convert --format sarif --output report.sarif report.json
 
       - name: Upload to Security tab
+        if: inputs.images == ''
         # pinned to: https://github.com/github/codeql-action/releases/tag/v4.39.0
         uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee
         with:
@@ -165,12 +177,16 @@ jobs:
           path: report.json
 
   # Delete the Trivy analyses, and with them the alerts, of categories that are
-  # no longer in docker/maintained-images.toml. Only on a full scan: a single
-  # image scan lists just one category, so everything else would be deleted.
+  # no longer in docker/maintained-images.toml. Only on a full scan: a scan of
+  # given images lists only those categories, so everything else would be
+  # deleted.
   cleanup:
     name: Remove unmaintained images
     needs: targets
-    if: inputs.image == '' && needs.targets.outputs.targets != '[]'
+    if: >-
+      (github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && inputs.image == '')) &&
+      needs.targets.outputs.targets != '[]'
     runs-on: ubuntu-latest
     permissions:
       security-events: write
