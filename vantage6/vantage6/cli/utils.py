@@ -16,6 +16,40 @@ from vantage6.common import error, info, warning
 
 MAX_LEN_NAME = 16
 
+# Matches a pre-release version with or without hyphen (e.g. 5.0.4rc1, 5.0.4-rc1)
+_PRE_RELEASE_VERSION_PATTERN = re.compile(r"^(\d+\.\d+\.\d+)-?(a|b|rc)(\d+)")
+
+
+def to_helm_chart_version(version: str) -> str:
+    """
+    Convert a pre-release version to the format of the Helm charts, which includes a
+    hyphen (e.g. 5.0.4rc1 -> 5.0.4-rc1). Other versions are returned unchanged.
+    """
+    return _PRE_RELEASE_VERSION_PATTERN.sub(r"\1-\2\3", version)
+
+
+def to_image_version(version: str) -> str:
+    """
+    Convert a pre-release version to the format of the Docker image tags, which has
+    no hyphen (e.g. 5.0.4-rc1 -> 5.0.4rc1). Other versions are returned unchanged.
+    """
+    return _PRE_RELEASE_VERSION_PATTERN.sub(r"\1\2\3", version)
+
+
+def normalize_image_tag(image: str | None) -> str | None:
+    """
+    Convert the tag of a Docker image reference to the image version format (e.g.
+    harbor2.vantage6.ai/infrastructure/hq:5.0.4-rc1 -> ...:5.0.4rc1). Images without
+    a tag or with a digest are returned unchanged.
+    """
+    if not image or "@" in image:
+        return image
+    name, sep, tag = image.rpartition(":")
+    # no tag, or the colon belongs to a registry port (e.g. localhost:5000/image)
+    if not sep or "/" in tag:
+        return image
+    return f"{name}:{to_image_version(tag)}"
+
 
 def _is_valid_k8s_dns_name(name: str) -> bool:
     """

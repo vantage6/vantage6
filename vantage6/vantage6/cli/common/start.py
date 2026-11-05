@@ -15,7 +15,11 @@ from vantage6.common.globals import (
 from vantage6.cli.common.utils import check_running
 from vantage6.cli.globals import ChartName, CLICommandName
 from vantage6.cli.k8s_config import KubernetesConfig
-from vantage6.cli.utils import check_config_name_allowed, validate_input_cmd_args
+from vantage6.cli.utils import (
+    check_config_name_allowed,
+    to_helm_chart_version,
+    validate_input_cmd_args,
+)
 
 
 def execute_cli_start(
@@ -160,7 +164,7 @@ def helm_install(
             chart_ref,
         ]
         if chart_version:
-            command.extend(["--version", chart_version])
+            command.extend(["--version", to_helm_chart_version(chart_version)])
 
     if values_file:
         command.extend(["-f", str(values_file)])

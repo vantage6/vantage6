@@ -22,6 +22,7 @@ from vantage6.cli.sandbox.populate.helpers.utils import (
     replace_wsl_path,
     str_replace_wsl_path,
 )
+from vantage6.cli.utils import normalize_image_tag
 
 
 @dataclass
@@ -78,7 +79,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         self.node_names = node_names
         self.num_nodes = len(api_keys)
         self.hq_port = hq_port
-        self.node_image = node_image
+        self.node_image = normalize_image_tag(node_image)
         self.extra_node_config = extra_node_config
         if extra_dataset:
             self.node_datasets = [extra_dataset]
