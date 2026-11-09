@@ -1,0 +1,79 @@
+# Images that we maintain. Because upgrading a federated network is challenging,
+# every final release of a supported major version is maintained, not only the
+# latest one. Supported major versions are listed in SECURITY.md.
+#
+# Each image lists its tags explicitly, in one of two lists:
+#
+#   scan-only         scanned for vulnerabilities.
+#   scan-and-rebuild  scanned, and rebuilt on a schedule (not implemented yet,
+#                     so not used for now). Rebuilding only helps
+#                     when the base image receives fixes, i.e. for releases built
+#                     on a Docker Hardened Image (DHI). Mirrored images (see
+#                     docker/mirror-images.txt) are rebuilt by re-mirroring.
+#
+# Named tags (uluru for 5, cotopaxi for 4, see release.yml) point at the latest
+# release of a major version and are the defaults in the Helm charts. Tags that
+# are the same image as another listed tag are left out, e.g. node is the same
+# image as server (4.x) and hq (5.x).
+
+registry = "ghcr.io/vantage6/infrastructure"
+
+[server]
+scan-only = ["4.15.0", "4.15.1", "4.15.2", "4.15.3", "cotopaxi"]
+
+[hq]
+scan-only = ["5.0.0", "5.0.1", "5.0.2", "5.0.3", "5.1.0", "uluru"]
+
+[node]
+scan-only = [
+    "4.15.0", "4.15.1", "4.15.2", "4.15.3", "cotopaxi",
+    "5.0.0", "5.0.1", "5.0.2", "5.0.3", "5.1.0", "uluru",
+]
+
+[algorithm-store]
+scan-only = [
+    "4.15.0", "4.15.1", "4.15.2", "4.15.3", "cotopaxi",
+    "5.0.0", "5.0.1", "5.0.2", "5.0.3", "5.1.0", "uluru",
+]
+
+[ui]
+scan-only = [
+    "4.15.0", "4.15.1", "4.15.2", "4.15.3", "cotopaxi",
+    "5.0.0", "5.0.1", "5.0.2", "5.0.3", "5.1.0", "uluru",
+]
+
+[alpine]
+scan-only = [
+    "4.15", "4.15.0", "4.15.1", "4.15.2", "4.15.3",
+    "5.0", "5.0.0", "5.0.1", "5.0.2", "5.0.3", "5.1.0",
+]
+
+[algorithm-base]
+scan-only = ["4.15", "5.0", "5.1"]
+
+[algorithm-ohdsi-base]
+scan-only = ["4.15", "5.0", "5.1"]
+
+[squid]
+scan-only = ["4.15.0", "4.15.1", "4.15.2", "4.15.3"]
+
+[ssh-tunnel]
+scan-only = ["4.15", "4.15.0", "4.15.1", "4.15.2", "4.15.3"]
+
+[vpn-client]
+scan-only = ["4.15", "4.15.0", "4.15.1", "4.15.2", "4.15.3"]
+
+[vpn-configurator]
+scan-only = ["4.15", "4.15.0", "4.15.1", "4.15.2", "4.15.3"]
+
+[curl]
+scan-only = ["5.0.2", "5.0.3", "5.1.0"]
+
+[kubectl]
+scan-only = ["5.0.2", "5.0.3", "5.1.0"]
+
+[busybox]
+scan-only = ["5.0.2", "5.0.3", "5.1.0"]
+
+[prometheus]
+scan-only = ["5.0.2", "5.0.3", "5.1.0"]
