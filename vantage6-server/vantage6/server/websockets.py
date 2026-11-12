@@ -404,7 +404,7 @@ class DefaultSocketNamespace(Namespace):
         """
         auth = db.Authenticatable.get(session.auth_id)
         auth.status = AuthStatus.ONLINE.value
-        auth.last_seen = dt.datetime.now(dt.UTC)
+        auth.last_seen = dt.datetime.now(dt.timezone.utc)
         auth.save()
 
     def __join_room_and_notify(self, room: str) -> None:
