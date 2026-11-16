@@ -19,10 +19,6 @@ Requirements
 You need Python to use the Python client. The client is tested with Python
 3.13 and supports Python 3.10 and higher.
 
-.. warning::
-    If you use a vantage6 version older than 3.8.0, you should use Python 3.7
-    instead of Python 3.10.
-
 Install
 ^^^^^^^
 

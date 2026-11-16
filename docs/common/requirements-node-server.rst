@@ -46,10 +46,6 @@ native to your OS and/or distribution.
     on Python 3.13; the algorithm base image stays on Python 3.10. Lower
     versions (3.8 or 3.9) are not supported.
 
-.. warning::
-    Note that Python 3.10 is only used in vantage6 versions 3.8.0 and higher.
-    In lower versions, Python 3.7 is required.
-
 .. _docker:
 
 Docker
