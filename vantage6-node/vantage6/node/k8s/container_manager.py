@@ -656,13 +656,87 @@ class ContainerManager:
             )
             return RunStatus.FAILED
 
-        if secrets:
-            secret = k8s_client.V1Secret(
-                metadata=k8s_client.V1ObjectMeta(name=run_io.container_name),
-                string_data=secrets,
+        try:
+            status = self._create_and_start_job(
+                run_io=run_io,
+                image=image,
+                volumes=_volumes,
+                volume_mounts=_volume_mounts,
+                io_env_vars=io_env_vars,
+                secrets=secrets,
+                task_id=task_id,
+                parent_task_id=parent_task_id,
+                init_org_id=init_org_id,
+                action=action,
+                session_id=session_id,
+                df_details=df_details,
+                on_status_change=on_status_change,
             )
+        except Exception:
+            self.log.exception(
+                "[Algorithm run %s requested by org %s] Could not start the job",
+                run_id,
+                init_org_id,
+            )
+            self._delete_job_resources(run_io)
+            return RunStatus.START_FAILED
+
+        if status in (RunStatus.ACTIVE, RunStatus.FAILED, RunStatus.COMPLETED):
+            # The job exists and is picked up by process_next_completed_run
+            self.num_active_tasks += 1
+            if status == RunStatus.ACTIVE:
+                self._stream_logs(run_io=run_io)
+        else:
+            # The pod is stuck (e.g. the image cannot be pulled): the job never
+            # finishes by itself
+            self._delete_job_resources(run_io)
+
+        return status
+
+    def _delete_job_resources(self, run_io: RunIO) -> None:
+        delete_run_related_pods(
+            run_id=run_io.run_id,
+            container_name=run_io.container_name,
+            namespace=self.task_namespace,
+            core_api=self.core_api,
+            batch_api=self.batch_api,
+        )
+
+    def _create_or_replace_secret(self, secret: k8s_client.V1Secret) -> None:
+        try:
             self.core_api.create_namespaced_secret(
                 namespace=self.task_namespace, body=secret
+            )
+        except ApiException as exc:
+            if exc.status != 409:
+                raise
+            # Left behind by an earlier attempt of the same run
+            self.core_api.replace_namespaced_secret(
+                name=secret.metadata.name, namespace=self.task_namespace, body=secret
+            )
+
+    def _create_and_start_job(
+        self,
+        run_io: RunIO,
+        image: str,
+        volumes: list[k8s_client.V1Volume],
+        volume_mounts: list[k8s_client.V1VolumeMount],
+        io_env_vars: list[k8s_client.V1EnvVar],
+        secrets: dict[str, str],
+        task_id: int,
+        parent_task_id: int | None,
+        init_org_id: int,
+        action: AlgorithmStepType,
+        session_id: int,
+        df_details: dict,
+        on_status_change: Callable[[RunStatus], None],
+    ) -> RunStatus:
+        if secrets:
+            self._create_or_replace_secret(
+                k8s_client.V1Secret(
+                    metadata=k8s_client.V1ObjectMeta(name=run_io.container_name),
+                    string_data=secrets,
+                )
             )
 
         # Create a Docker login secret for private Docker registries if any are defined.
@@ -677,7 +751,7 @@ class ContainerManager:
             image=image,
             image_pull_policy=self._get_image_pull_policy(),
             tty=True,
-            volume_mounts=_volume_mounts,
+            volume_mounts=volume_mounts,
             env=io_env_vars,
             env_from=(
                 [
@@ -732,7 +806,7 @@ class ContainerManager:
                     ),
                     spec=self.algorithm_pod_spec(
                         containers=[container],
-                        volumes=_volumes,
+                        volumes=volumes,
                         image_pull_secrets=image_pull_secrets,
                     ),
                 ),
@@ -746,7 +820,7 @@ class ContainerManager:
         self.log.info(
             "[Algorithm run %s requested by org %s] Creating namespaced K8S job for"
             " task_id=%s.",
-            run_id,
+            run_io.run_id,
             init_org_id,
             task_id,
         )
@@ -771,18 +845,11 @@ class ContainerManager:
         # kubernetes.io/docs/concepts/workloads/controllers/job/#pod-backoff-failure-
         # policy
 
-        status = self.__wait_until_pod_running(
+        return self.__wait_until_pod_running(
             run_io=run_io,
             label=f"app={run_io.container_name}",
             on_status_change=on_status_change,
         )
-
-        # start streaming logs to HQ
-        self._stream_logs(run_io=run_io)
-
-        self.num_active_tasks += 1
-
-        return status
 
     def _create_docker_login_secret(
         self, priv_regs: list[dict], image: str, run_id: int
@@ -922,7 +989,7 @@ class ContainerManager:
               a runtime crash.
             - RunStatus.UNKNOWN_ERROR: If the pod is in an unexpected or unknown state.
             - RunStatus.COMPLETED: Not expected to happen but still possible: the task
-              pod is reported as Succeded shortly after being created.
+              pod is reported as Succeeded shortly after being created.
         """
 
         # Wait until the POD is created
@@ -943,7 +1010,7 @@ class ContainerManager:
             while True:
                 # Non-busy waiting for status changes on the task pod through K8S' event
                 # stream watch. This inner for loop will process events until a terminal
-                # status is identifed (Running, Failed, Succeded) or timeout_seconds is
+                # status is identifed (Running, Failed, Succeeded) or timeout_seconds is
                 # reached.
                 #
                 # Given that after the timeout the status would be uncertain, the task
@@ -1336,7 +1403,7 @@ class ContainerManager:
 
         if len(databases_to_use) == 0:
             self.log.error("No database is provided for the data extraction step.")
-            ok = False
+            raise PermanentAlgorithmStartFail()
 
         source_database = databases_to_use[0]
 
@@ -1638,54 +1705,51 @@ class ContainerManager:
                 time.sleep(1)
                 continue
 
-            # Check if any of the jobs is completed
-            for job in finished_jobs:
-                annotations = job.metadata.annotations
-                # Create helper object to process the output of the job
-                run_io = RunIO.from_dict(
-                    annotations,
-                    self.client,
-                    task_dir_extension=self.ctx.config.get("dev", {}).get(
-                        "task_dir_extension"
-                    ),
-                )
-                results, status = (
-                    run_io.process_output()
-                    if job.status.succeeded
-                    else (b"", RunStatus.CRASHED)
-                )
+            # Process one job per call; the others are returned by the next calls
+            job = finished_jobs[0]
+            annotations = job.metadata.annotations
+            # Create helper object to process the output of the job
+            run_io = RunIO.from_dict(
+                annotations,
+                self.client,
+                task_dir_extension=self.ctx.config.get("dev", {}).get(
+                    "task_dir_extension"
+                ),
+            )
+            results, status = (
+                run_io.process_output()
+                if job.status.succeeded
+                else (b"", RunStatus.CRASHED)
+            )
 
-                logs = self._get_logs(run_io)
+            logs = self._get_logs(run_io)
 
-                self.log.info(
-                    "Sending results of run_id=%s and task_id=%s back to HQ",
-                    run_io.run_id,
-                    annotations["task_id"],
-                )
+            self.log.info(
+                "Sending results of run_id=%s and task_id=%s back to HQ",
+                run_io.run_id,
+                annotations["task_id"],
+            )
 
-                parent_id = annotations["task_parent_id"]
-                result = Result(
-                    run_id=run_io.run_id,
-                    task_id=int(annotations["task_id"]),
-                    logs=logs,
-                    data=results,
-                    status=status,
-                    parent_id=int(parent_id) if parent_id else None,
-                    init_org_id=int(annotations["init_org_id"]),
-                )
+            parent_id = annotations["task_parent_id"]
+            result = Result(
+                run_id=run_io.run_id,
+                task_id=int(annotations["task_id"]),
+                logs=logs,
+                data=results,
+                status=status,
+                parent_id=int(parent_id) if parent_id else None,
+                init_org_id=int(annotations["init_org_id"]),
+            )
 
-                self.num_active_tasks -= 1
-
-                delete_run_related_pods(
-                    run_id=run_io.run_id,
-                    container_name=run_io.container_name,
-                    namespace=self.task_namespace,
-                    core_api=self.core_api,
-                    batch_api=self.batch_api,
-                )
-                completed_job = True
+            self._decrement_active_tasks()
+            self._delete_job_resources(run_io)
+            completed_job = True
 
         return result
+
+    def _decrement_active_tasks(self) -> None:
+        # Jobs left by an earlier node process were never counted
+        self.num_active_tasks = max(0, self.num_active_tasks - 1)
 
     def _get_logs(self, run_io: RunIO) -> str:
         """
@@ -1793,8 +1857,7 @@ class ContainerManager:
         """
         Cleanup kubernetes resources created by the node
         """
-        # kill all running algorithm runs
-        self._kill_algorithm_runs()
+        self._kill_algorithm_runs(initiator=KillInitiator.NODE_SHUTDOWN)
 
     def kill_algorithm_runs(
         self, kill_list: list[ToBeKilled] | None = None
@@ -1859,6 +1922,9 @@ class ContainerManager:
                 for to_kill in kill_list
                 if to_kill.organization_id == self.client.whoami.organization_id
             ]
+            if not kill_list:
+                # None of the runs to kill are of this node's organization
+                return []
 
         # get all jobs running on this node
         current_jobs = self.batch_api.list_namespaced_job(
@@ -1951,14 +2017,8 @@ class ContainerManager:
             logs += "\n\nAlgorithm was killed by user request."
         elif initiator == KillInitiator.NODE_SHUTDOWN:
             logs += "\n\nAlgorithm was killed because the node was shut down."
-        self.num_active_tasks -= 1
-        delete_run_related_pods(
-            run_id=run_io.run_id,
-            container_name=run_io.container_name,
-            namespace=self.task_namespace,
-            core_api=self.core_api,
-            batch_api=self.batch_api,
-        )
+        self._decrement_active_tasks()
+        self._delete_job_resources(run_io)
         annotations = job_to_kill.metadata.annotations
         parent_id = annotations["task_parent_id"]
         return KilledRun(

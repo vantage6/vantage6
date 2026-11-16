@@ -65,6 +65,7 @@ from vantage6.node.globals import (
 )
 from vantage6.node.k8s.container_manager import ContainerManager
 from vantage6.node.k8s.data_classes import Result, ToBeKilled
+from vantage6.node.k8s.run_io import RunIO
 from vantage6.node.socket import NodeTaskNamespace
 
 __version__ = importlib.metadata.version(__package__)
@@ -443,7 +444,9 @@ class Node:
         """
         for run_to_execute in runs_to_execute:
             try:
-                if not self.k8s_container_manager.is_running(run_to_execute["id"]):
+                if not self.k8s_container_manager.is_running(
+                    RunIO.container_name_for(run_to_execute["id"])
+                ):
                     self.runs_queue.put(run_to_execute)
                 else:
                     self.log.info(

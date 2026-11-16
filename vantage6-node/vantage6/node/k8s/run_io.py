@@ -89,9 +89,13 @@ class RunIO:
             task_dir_extension=task_dir_extension,
         )
 
+    @staticmethod
+    def container_name_for(run_id: int) -> str:
+        return f"{APPNAME}-run-{run_id}"
+
     @property
     def container_name(self) -> str:
-        return f"{APPNAME}-run-{self.run_id}"
+        return self.container_name_for(self.run_id)
 
     @property
     def output_file(self) -> str:

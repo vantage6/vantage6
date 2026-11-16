@@ -147,7 +147,7 @@ class TestPodStatus(unittest.TestCase):
         )
 
     def test_completed_job(self):
-        self.mock_pod.status.phase = "Succeded"
+        self.mock_pod.status.phase = "Succeeded"
         self.assertEqual(
             compute_run_pod_status(
                 log=self.silent_logger, task_namespace="", label="", pod=self.mock_pod
