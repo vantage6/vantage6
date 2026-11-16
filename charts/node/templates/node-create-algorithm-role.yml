@@ -14,8 +14,11 @@ rules:
 # Pods of algorithm runs: status, logs, clean-up, and the startup permission and
 # network isolation checks.
 - apiGroups: [""]
-  resources: ["pods", "pods/log"]
+  resources: ["pods"]
   verbs: ["create", "delete", "get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["pods/log"]
+  verbs: ["get"]
 
 # Secrets that pass sensitive environment variables and registry credentials to
 # algorithm runs.

@@ -15,7 +15,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: {{ .Values.node.logging.storageSize | default "128M" }}
+      storage: {{ .Values.node.logging.storageSize | default "1Gi" }}
   {{- if $static }}
   storageClassName: {{ .Values.node.logging.storageClass | default "local-storage" }}
   selector:

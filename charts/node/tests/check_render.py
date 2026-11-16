@@ -86,6 +86,12 @@ def assert_restricted(docs: list[dict]) -> None:
             assert key not in HOST_BOUND_KEYS, f"{doc['kind']}{path}.{key}"
     for claim in of_kind(docs, "PersistentVolumeClaim"):
         assert "selector" not in claim["spec"], claim["metadata"]["name"]
+        size = claim["spec"]["resources"]["requests"]["storage"]
+        assert size.endswith(("Gi", "Ti")), f"{claim['metadata']['name']}: {size}"
+    # A namespace admin cannot grant verbs it does not hold, e.g. create on pods/log
+    for rule in of_kind(docs, "Role")[0]["rules"]:
+        if "pods/log" in rule["resources"]:
+            assert rule["verbs"] == ["get"], rule
     for spec in pod_specs(docs):
         for container in spec["containers"]:
             for kind in ("requests", "limits"):
@@ -121,7 +127,10 @@ def check_restricted(docs: list[dict]) -> None:
     assert config["node_pod_labels"]["component"] == "node"
     assert config["algorithm_pods"]["ttl_seconds_after_finished"] == 86400
     assert config["network_isolation"]["verify"] is True
-    assert of_kind(docs, "Deployment")[0]["spec"]["strategy"]["type"] == "Recreate"
+    deployment = of_kind(docs, "Deployment")[0]["spec"]
+    assert deployment["strategy"]["type"] == "Recreate"
+    annotations = deployment["template"]["metadata"]["annotations"]
+    assert {"checksum/config", "checksum/secrets"} <= set(annotations), annotations
     db = database_volume(docs)
     assert db["claim"] == "hospital-data", db
     assert db["subPath"] == "exports/data.csv", db

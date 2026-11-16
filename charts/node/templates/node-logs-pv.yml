@@ -10,7 +10,7 @@ metadata:
     app: vantage6-node
 spec:
   capacity:
-    storage: {{ .Values.node.logging.storageSize | default "128M" }}
+    storage: {{ .Values.node.logging.storageSize | default "1Gi" }}
   accessModes:
     - ReadWriteOnce
   storageClassName: {{ .Values.node.logging.storageClass | default "local-storage" }}

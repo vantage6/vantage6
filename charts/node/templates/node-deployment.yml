@@ -20,6 +20,10 @@ spec:
       labels:
 {{ include "node.labels" . | indent 8 }}
         component: node
+      # Restart the node when `helm upgrade` changes its configuration
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/node-configmap.yml") . | sha256sum }}
+        checksum/secrets: {{ include (print $.Template.BasePath "/node-secrets.yml") . | sha256sum }}
     spec:
       {{- include "common.imagePullSecrets" (dict "Values" .Values "indent" 6) }}
       serviceAccountName: {{ include "node.serviceAccountName" . }}

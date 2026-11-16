@@ -82,7 +82,8 @@ node:
     persistent: true
     # Use an existing claim instead of creating one.
     existingClaim: ""
-    storageSize: "128M"
+    # Many clusters refuse claims smaller than 1Gi.
+    storageSize: "1Gi"
     # Empty uses the cluster's default storage class.
     storageClass: ""
     # Development only: store logs in this directory on `k8sNodeName`.
