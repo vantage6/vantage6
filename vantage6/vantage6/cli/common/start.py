@@ -168,10 +168,10 @@ def helm_install(
     if values_file:
         command.extend(["-f", str(values_file)])
 
-    if k8s_config.context:
+    if k8s_config and k8s_config.context:
         command.extend(["--kube-context", k8s_config.context])
 
-    if k8s_config.namespace:
+    if k8s_config and k8s_config.namespace:
         command.extend(["--namespace", k8s_config.namespace])
 
     if custom_values:

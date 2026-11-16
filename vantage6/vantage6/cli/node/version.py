@@ -1,7 +1,6 @@
 import sys
 
 import click
-from kubernetes.config.config_exception import ConfigException
 from kubernetes.stream import stream
 
 from vantage6.common import error, info
@@ -51,7 +50,12 @@ def cli_node_version(
     k8s_config = select_k8s_config(context=context, namespace=namespace)
 
     ctx = get_and_select_ctx(
-        InstanceType.NODE, name, system_folders, k8s_config, is_sandbox
+        InstanceType.NODE,
+        name,
+        system_folders,
+        k8s_config.context,
+        k8s_config.namespace,
+        is_sandbox,
     )
     version = _get_node_version_from_k8s(ctx.helm_release_name, k8s_config)
     info("")
@@ -69,7 +73,7 @@ def _get_node_version_from_k8s(
     pod = _get_pod_name_for_helm_release(helm_release, k8s_config)
     output = _exec_pod_command(
         pod_name=pod,
-        namespace=k8s_config.namespace,
+        k8s_config=k8s_config,
         command=["vnode-local", "version"],
     )
     return output.strip()
@@ -83,16 +87,7 @@ def _get_pod_name_for_helm_release(
     Returns the first pod name for a given Helm release in a namespace.
     Looks up pods using the standard Helm label 'app.kubernetes.io/instance'.
     """
-    try:
-        # Load kubeconfig (context optional). Falls back to in-cluster if not available.
-        try:
-            k8s_config.load_kube_config(context=k8s_config.context)  # desktop/dev
-        except ConfigException:
-            k8s_config.load_incluster_config()  # in-cluster
-    except ConfigException as exc:
-        raise RuntimeError(f"Failed to load Kubernetes config: {exc}") from exc
-
-    core = get_core_api_with_ssl_handling()
+    core = get_core_api_with_ssl_handling(context=k8s_config.context)
     selector = f"app={APPNAME}-node,release={helm_release}"
     pods = core.list_namespaced_pod(
         namespace=k8s_config.namespace, label_selector=selector
@@ -114,17 +109,17 @@ def _get_pod_name_for_helm_release(
 
 def _exec_pod_command(
     pod_name: str,
-    namespace: str,
+    k8s_config: KubernetesConfig,
     command: list[str],
 ) -> str:
     """
     Executes a command inside the specified pod (and optional container) and returns stdout.
     """
-    core = get_core_api_with_ssl_handling()
+    core = get_core_api_with_ssl_handling(context=k8s_config.context)
     resp = stream(
         core.connect_get_namespaced_pod_exec,
         pod_name,
-        namespace,
+        k8s_config.namespace,
         command=command,
         stderr=True,
         stdin=False,
