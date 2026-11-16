@@ -13,9 +13,16 @@ def _kubernetes() -> type[ContainerRuntime]:
     return KubernetesRuntime
 
 
+def _docker() -> type[ContainerRuntime]:
+    from vantage6.node.runtime.docker.runtime import DockerRuntime
+
+    return DockerRuntime
+
+
 # Imported lazily, so that a node only needs the client library of its own runtime
 RUNTIMES: dict[str, Callable[[], type[ContainerRuntime]]] = {
     "kubernetes": _kubernetes,
+    "docker": _docker,
 }
 
 

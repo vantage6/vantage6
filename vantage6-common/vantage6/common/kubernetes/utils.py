@@ -15,6 +15,14 @@ def running_in_pod() -> bool:
     return os.environ.get("KUBERNETES_SERVICE_HOST") is not None
 
 
+def running_in_container() -> bool:
+    """
+    Detect if running inside a vantage6 container, either a Kubernetes pod or a
+    container started by `v6` with Docker (which sets V6_IN_CONTAINER).
+    """
+    return running_in_pod() or os.environ.get("V6_IN_CONTAINER") == "1"
+
+
 def running_in_wsl() -> bool:
     """
     Detect if running inside a WSL environment.
