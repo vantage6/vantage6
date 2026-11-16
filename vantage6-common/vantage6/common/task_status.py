@@ -1,7 +1,7 @@
-from enum import Enum
+from vantage6.common.enum import StrEnumBase
 
 
-class TaskStatus(str, Enum):
+class TaskStatus(StrEnumBase):
     """Enum to represent the status of a task"""
 
     # Task has not yet been started (usually, node is offline)

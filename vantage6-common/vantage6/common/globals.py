@@ -1,6 +1,8 @@
 from enum import Enum
 from pathlib import Path
 
+from vantage6.common.enum import StrEnumBase
+
 #
 #   PACKAGE GLOBALS
 #
@@ -70,7 +72,7 @@ HTTP_UPLOAD_CHUNK_SIZE = 256 * 1024  # 256 KiB
 MAX_CHUNKED_INPUT_PART = 16 * 1024 * 1024  # 16 MiB
 
 
-class InstanceType(str, Enum):
+class InstanceType(StrEnumBase):
     """The types of instances that can be created."""
 
     NODE = "node"
@@ -79,7 +81,7 @@ class InstanceType(str, Enum):
     UI = "ui"
 
 
-class NodePolicy(str, Enum):
+class NodePolicy(StrEnumBase):
     """Enum containing the names of the names of the node policies"""
 
     ALLOWED_ALGORITHMS = "allowed_algorithms"
@@ -98,7 +100,7 @@ class Ports(int, Enum):
     DEV_ALGO_STORE = 7602
 
 
-class AuthStatus(str, Enum):
+class AuthStatus(StrEnumBase):
     """Enum containing the different statuses of the authenticable (node/user)"""
 
     ONLINE = "online"

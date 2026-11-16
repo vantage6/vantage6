@@ -2233,11 +2233,7 @@ class TestResources(unittest.TestCase):
         task = Task(
             image="some-image",
             collaboration=node.collaboration,
-            runs=[
-                Run(
-                    organization=node.organization, status=TaskStatus.PENDING.value
-                )
-            ],
+            runs=[Run(organization=node.organization, status=TaskStatus.PENDING.value)],
         )
         task.save()
         headers = self.login_container(node=node, api_key=api_key, task=task)
