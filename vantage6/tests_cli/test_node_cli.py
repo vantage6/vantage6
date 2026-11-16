@@ -21,7 +21,7 @@ from vantage6.cli.node.new import cli_node_new_configuration
 from vantage6.cli.node.remove import cli_node_remove
 from vantage6.cli.node.restart import cli_node_restart
 from vantage6.cli.node.start import cli_node_start
-from vantage6.cli.node.stop import cli_node_stop
+from vantage6.cli.node.stop import _stop_node_tasks, cleanup_task_jobs, cli_node_stop
 
 TEST_PRIVATE_KEY_PEM = RSACryptor.create_new_rsa_key_pem()
 OTHER_PRIVATE_KEY_PEM = RSACryptor.create_new_rsa_key_pem()
@@ -645,3 +645,50 @@ class NodeCLITest(unittest.TestCase):
 
         # should not trigger an exception
         create_client_and_authenticate(ctx)
+
+
+class NodeStopTasksTest(unittest.TestCase):
+    """Algorithm jobs run in the node's own namespace."""
+
+    @patch("vantage6.cli.node.stop.cleanup_task_jobs")
+    @patch("vantage6.cli.node.stop.get_context")
+    def test_tasks_cleaned_up_in_release_namespace(self, get_context, cleanup):
+        ctx = MagicMock()
+        ctx.config = {"node": {}}
+        get_context.return_value = ctx
+
+        _stop_node_tasks(
+            "vantage6-iknl-user-node",
+            KubernetesConfig(context="dsri", namespace="tenant"),
+            system_folders=False,
+            is_sandbox=False,
+        )
+
+        cleanup.assert_called_once_with("tenant", ctx, all_nodes=False, context="dsri")
+
+    @patch("vantage6.cli.node.stop.cleanup_task_jobs")
+    @patch("vantage6.cli.node.stop.get_context")
+    def test_namespace_from_values_takes_precedence(self, get_context, cleanup):
+        ctx = MagicMock()
+        ctx.config = {"namespace": "from-values", "node": {}}
+        get_context.return_value = ctx
+
+        _stop_node_tasks(
+            "vantage6-iknl-user-node",
+            KubernetesConfig(context="dsri", namespace="tenant"),
+            system_folders=False,
+            is_sandbox=False,
+        )
+
+        self.assertEqual(cleanup.call_args.args[0], "from-values")
+
+    @patch("vantage6.cli.node.stop.create_kubernetes_apis_with_ssl_handling")
+    def test_cleanup_uses_selected_context(self, create_apis):
+        core_api, batch_api = MagicMock(), MagicMock()
+        batch_api.list_namespaced_job.return_value.items = []
+        create_apis.return_value = (core_api, batch_api)
+
+        self.assertTrue(cleanup_task_jobs("tenant", MagicMock(), context="dsri"))
+
+        create_apis.assert_called_once_with("dsri")
+        batch_api.list_namespaced_job.assert_called_once_with(namespace="tenant")
