@@ -49,9 +49,11 @@ RUN CFLAGS="-I/usr/local/opt/openssl/include" \
 
 RUN chmod +x /vantage6/vantage6-hq/server.sh
 
-# Create directories to mount on the host
-RUN mkdir -p /mnt/log
-RUN mkdir -p /mnt/data
+# Directories the application writes to. OpenShift runs containers under a random user
+# in group 0, so give that group the owner's permissions.
+RUN mkdir -p /mnt/log /mnt/data \
+    && chgrp -R 0 /mnt/log /mnt/data \
+    && chmod -R g=u /mnt/log /mnt/data
 
 # expose the proxy server port
 ARG port=80

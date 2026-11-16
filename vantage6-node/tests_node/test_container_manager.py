@@ -5,10 +5,50 @@ import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+from kubernetes.client.rest import ApiException
+
 from vantage6.common.enum import AlgorithmStepType, TaskDatabaseType
 from vantage6.common.globals import ContainerEnvNames, NodePolicy
 
-from vantage6.node.k8s.container_manager import ContainerManager
+from vantage6.node.globals import (
+    TASK_JOB_INPUT_PATH,
+    TASK_JOB_OUTPUT_PATH,
+    TASK_JOB_SESSION_FOLDER_PATH,
+)
+from vantage6.node.k8s.container_manager import (
+    ContainerManager,
+    algorithm_pod_labels,
+)
+from vantage6.node.k8s.exceptions import PermanentAlgorithmStartFail
+from vantage6.node.k8s.run_io import RunIO
+
+NODE_POD_LABELS = {"app": "node", "release": "my-node", "component": "node"}
+
+
+def _manager() -> ContainerManager:
+    """ContainerManager configured like the Helm chart does, without a cluster."""
+    manager = ContainerManager.__new__(ContainerManager)
+    manager.log = _get_null_logger()
+    manager.task_namespace = "tenant"
+    manager.task_claim_name = "node-task-pvc"
+    manager.task_claim_sub_path = ""
+    manager.colocate_with_node = False
+    manager.node_pod_labels = NODE_POD_LABELS
+    manager.algorithm_pod_config = {}
+    manager.algorithm_pod_labels = algorithm_pod_labels("my-node")
+    return manager
+
+
+def _run_io(action: AlgorithmStepType) -> MagicMock:
+    """RunIO for run 7 in session 3 of dev node 'node_1', without touching disk."""
+    run_io = MagicMock(spec=RunIO)
+    run_io.action = action
+    run_io.run_id = 7
+    run_io.create_files.return_value = ("node_1/7/input", "node_1/7/output")
+    run_io.session_file_manager = MagicMock()
+    run_io.session_file_manager.session_folder = "node_1/sessions/session000000003"
+    run_io.session_file_manager.session_state_file_name = "state.parquet"
+    return run_io
 
 
 def _get_null_logger(name="null_logger_container_manager"):
@@ -226,7 +266,8 @@ class TestDatabaseMountMode(unittest.TestCase):
     original.
     """
 
-    HOST_DATA_DIR = "/host/tasks"
+    TASK_CLAIM = "node-task-pvc"
+    DB_CLAIM = "hospital-data"
 
     def setUp(self):
         tmp_dir = tempfile.TemporaryDirectory()
@@ -245,20 +286,19 @@ class TestDatabaseMountMode(unittest.TestCase):
             patcher.start()
             self.addCleanup(patcher.stop)
 
-        self.manager = ContainerManager.__new__(ContainerManager)
-        self.manager.log = _get_null_logger()
-        self.manager.host_data_dir = self.HOST_DATA_DIR
+        self.manager = _manager()
 
     def _get_databases(self, env: dict) -> dict:
         with patch.dict(os.environ, env, clear=True):
             return self.manager._get_database_metadata()
 
-    @staticmethod
-    def _file_db_env(mount_mode: str | None = None) -> dict:
+    @classmethod
+    def _file_db_env(cls, mount_mode: str | None = None) -> dict:
         env = {
             "DATABASE_LABELS": "file_db",
-            "DATABASE_FILE_DB_URI": "/data/file_db.csv",
             "DATABASE_FILE_DB_TYPE": "csv",
+            "DATABASE_FILE_DB_CLAIM_NAME": cls.DB_CLAIM,
+            "DATABASE_FILE_DB_SUB_PATH": "exports/file_db.csv",
         }
         if mount_mode is not None:
             env["DATABASE_FILE_DB_MOUNT_MODE"] = mount_mode
@@ -268,7 +308,8 @@ class TestDatabaseMountMode(unittest.TestCase):
         db = self._get_databases(self._file_db_env("ro"))["file_db"]
 
         self.assertEqual(db.mount_mode, "ro")
-        self.assertEqual(db.uri, "/data/file_db.csv")
+        self.assertEqual(db.claim_name, self.DB_CLAIM)
+        self.assertEqual(db.sub_path, "exports/file_db.csv")
         self.assertEqual(db.local_uri, str(self.db_dir / "file_db.csv"))
         self.assertFalse((self.tasks_dir / "databases").exists())
 
@@ -276,14 +317,15 @@ class TestDatabaseMountMode(unittest.TestCase):
         db = self._get_databases(self._file_db_env())["file_db"]
 
         self.assertEqual(db.mount_mode, "ro")
-        self.assertEqual(db.uri, "/data/file_db.csv")
         self.assertFalse((self.tasks_dir / "databases").exists())
 
-    def test_copy_mode_copies_file(self):
+    def test_copy_mode_copies_file_to_task_claim(self):
+        self.manager.task_claim_sub_path = "base"
         db = self._get_databases(self._file_db_env("copy"))["file_db"]
 
         self.assertEqual(db.mount_mode, "copy")
-        self.assertEqual(db.uri, f"{self.HOST_DATA_DIR}/databases/file_db.csv")
+        self.assertEqual(db.claim_name, self.TASK_CLAIM)
+        self.assertEqual(db.sub_path, "base/databases/file_db.csv")
         self.assertEqual(db.local_uri, str(self.db_dir / "file_db.csv"))
         self.assertEqual(
             (self.tasks_dir / "databases" / "file_db.csv").read_text(), "a,b\n1,2\n"
@@ -296,21 +338,22 @@ class TestDatabaseMountMode(unittest.TestCase):
     def test_copy_mode_directory_is_not_copied(self):
         env = {
             "DATABASE_LABELS": "dir_db",
-            "DATABASE_DIR_DB_URI": "/data/dir_db",
             "DATABASE_DIR_DB_TYPE": "parquet",
             "DATABASE_DIR_DB_MOUNT_MODE": "copy",
+            "DATABASE_DIR_DB_CLAIM_NAME": self.DB_CLAIM,
+            "DATABASE_DIR_DB_SUB_PATH": "dir_db",
         }
         db = self._get_databases(env)["dir_db"]
 
         self.assertEqual(db.mount_mode, "copy")
-        self.assertEqual(db.uri, "/data/dir_db")
+        self.assertEqual(db.claim_name, self.DB_CLAIM)
         self.assertFalse((self.tasks_dir / "databases").exists())
 
     def test_invalid_mount_mode_raises(self):
         with self.assertRaises(ValueError):
             self._get_databases(self._file_db_env("rw"))
 
-    def test_mount_mode_not_passed_to_algorithm_env(self):
+    def test_storage_settings_not_passed_to_algorithm_env(self):
         env = self._file_db_env("ro")
         env["DATABASE_FILE_DB_SOME_KEY"] = "some_value"
         db = self._get_databases(env)["file_db"]
@@ -319,42 +362,47 @@ class TestDatabaseMountMode(unittest.TestCase):
 
     def _create_extraction_mounts(self, env: dict, label: str):
         self.manager.databases = self._get_databases(env)
-        run_io = MagicMock()
-        run_io.action = AlgorithmStepType.DATA_EXTRACTION
-        run_io.run_id = 1
-        run_io.create_files.return_value = ("1/input", "1/output")
-        run_io.session_file_manager.session_folder = "session"
-        run_io.session_file_manager.session_state_file_name = "state.parquet"
         databases_to_use = [{"label": label, "type": TaskDatabaseType.SOURCE}]
 
         with patch.object(self.manager, "_validate_source_database"):
-            return self.manager._create_volume_mounts(run_io, b"", databases_to_use)
+            return self.manager._create_volume_mounts(
+                _run_io(AlgorithmStepType.DATA_EXTRACTION), b"", databases_to_use
+            )
 
     def _get_extraction_db_mount(self, mount_mode: str):
         volumes, vol_mounts, _, _ = self._create_extraction_mounts(
             self._file_db_env(mount_mode), "file_db"
         )
-
-        volume = next(v for v in volumes if v.name == "task-1-db-file_db")
-        vol_mount = next(m for m in vol_mounts if m.name == "task-1-db-file_db")
+        vol_mount = next(
+            m for m in vol_mounts if m.mount_path.startswith(str(self.db_dir))
+        )
+        volume = next(v for v in volumes if v.name == vol_mount.name)
         return volume, vol_mount
 
     def test_read_only_database_mounted_read_only(self):
         volume, vol_mount = self._get_extraction_db_mount("ro")
 
         self.assertTrue(vol_mount.read_only)
-        self.assertEqual(volume.host_path.path, "/data/file_db.csv")
+        self.assertIsNone(volume.host_path)
+        self.assertEqual(volume.persistent_volume_claim.claim_name, self.DB_CLAIM)
+        self.assertEqual(vol_mount.sub_path, "exports/file_db.csv")
 
     def test_copy_database_mounts_copy_read_write(self):
         volume, vol_mount = self._get_extraction_db_mount("copy")
 
         self.assertFalse(vol_mount.read_only)
-        self.assertEqual(
-            volume.host_path.path, f"{self.HOST_DATA_DIR}/databases/file_db.csv"
-        )
+        self.assertEqual(volume.persistent_volume_claim.claim_name, self.TASK_CLAIM)
+        self.assertEqual(vol_mount.sub_path, "databases/file_db.csv")
         self.assertEqual(vol_mount.mount_path, str(self.db_dir / "file_db.csv"))
 
-    def test_service_database_ignores_default_read_only(self):
+    def test_file_database_without_claim_fails_run(self):
+        env = self._file_db_env("ro")
+        del env["DATABASE_FILE_DB_CLAIM_NAME"]
+
+        with self.assertRaises(PermanentAlgorithmStartFail):
+            self._create_extraction_mounts(env, "file_db")
+
+    def test_service_database_gets_no_volume(self):
         env = {
             "DATABASE_LABELS": "pg_db",
             "DATABASE_PG_DB_URI": "postgresql://host:5432/db",
@@ -362,10 +410,127 @@ class TestDatabaseMountMode(unittest.TestCase):
         }
         volumes, _, env_vars, _ = self._create_extraction_mounts(env, "pg_db")
 
-        self.assertFalse(any(v.name == "task-1-db-pg_db" for v in volumes))
+        self.assertEqual(
+            [v.persistent_volume_claim.claim_name for v in volumes], [self.TASK_CLAIM]
+        )
         self.assertEqual(
             env_vars[ContainerEnvNames.DATABASE_URI.value], "postgresql://host:5432/db"
         )
+
+
+class TestRunMounts(unittest.TestCase):
+    """Algorithm pods only mount the files of their own run from the task claim."""
+
+    def _mounts(self, sub_path: str = ""):
+        manager = _manager()
+        manager.task_claim_sub_path = sub_path
+        manager.databases = {}
+        run_io = _run_io(AlgorithmStepType.FEDERATED_COMPUTE)
+        with patch.object(manager, "_validate_dataframes"):
+            volumes, mounts, _, _ = manager._create_volume_mounts(run_io, b"", [])
+        return volumes, {m.mount_path: m for m in mounts}
+
+    def test_single_claim_volume_without_host_paths(self):
+        volumes, _ = self._mounts()
+
+        self.assertEqual(len(volumes), 1)
+        self.assertIsNone(volumes[0].host_path)
+        self.assertEqual(volumes[0].persistent_volume_claim.claim_name, "node-task-pvc")
+
+    def test_sub_paths_point_at_run_files(self):
+        _, mounts = self._mounts()
+
+        self.assertEqual(mounts[TASK_JOB_INPUT_PATH].sub_path, "node_1/7/input")
+        self.assertTrue(mounts[TASK_JOB_INPUT_PATH].read_only)
+        self.assertEqual(mounts[TASK_JOB_OUTPUT_PATH].sub_path, "node_1/7/output")
+        self.assertFalse(mounts[TASK_JOB_OUTPUT_PATH].read_only)
+        self.assertEqual(
+            mounts[TASK_JOB_SESSION_FOLDER_PATH].sub_path,
+            "node_1/sessions/session000000003",
+        )
+
+    def test_base_sub_path_is_prepended(self):
+        _, mounts = self._mounts(sub_path="/vantage6/")
+
+        self.assertEqual(
+            mounts[TASK_JOB_INPUT_PATH].sub_path, "vantage6/node_1/7/input"
+        )
+
+
+class TestAlgorithmPodSpec(unittest.TestCase):
+    def test_defaults(self):
+        spec = _manager().algorithm_pod_spec(containers=[])
+
+        self.assertEqual(spec.restart_policy, "Never")
+        self.assertFalse(spec.automount_service_account_token)
+        self.assertIsNone(spec.affinity)
+        self.assertIsNone(spec.service_account_name)
+
+    def test_colocate_with_node_adds_pod_affinity(self):
+        manager = _manager()
+        manager.colocate_with_node = True
+
+        term = manager.algorithm_pod_spec(
+            containers=[]
+        ).affinity.pod_affinity.required_during_scheduling_ignored_during_execution[0]
+
+        self.assertEqual(term.label_selector.match_labels, NODE_POD_LABELS)
+        self.assertEqual(term.topology_key, "kubernetes.io/hostname")
+
+    def test_configured_pod_settings_applied(self):
+        manager = _manager()
+        resources = {"limits": {"cpu": "1", "memory": "1Gi"}}
+        manager.algorithm_pod_config = {
+            "resources": resources,
+            "service_account_name": "anyuid",
+            "runtime_class_name": "selinux",
+            "pod_security_context": {"runAsNonRoot": True},
+            "security_context": {"allowPrivilegeEscalation": False},
+        }
+
+        spec = manager.algorithm_pod_spec(
+            containers=[manager.algorithm_container(name="c", image="i")]
+        )
+
+        self.assertEqual(spec.service_account_name, "anyuid")
+        self.assertEqual(spec.runtime_class_name, "selinux")
+        self.assertEqual(spec.security_context, {"runAsNonRoot": True})
+        self.assertEqual(spec.containers[0].resources, resources)
+        self.assertEqual(
+            spec.containers[0].security_context, {"allowPrivilegeEscalation": False}
+        )
+
+    def test_algorithm_pod_labels(self):
+        self.assertEqual(
+            algorithm_pod_labels("my-node"),
+            {"v6-pod-type": "algorithm", "v6-node-release": "my-node"},
+        )
+        self.assertEqual(algorithm_pod_labels(None), {"v6-pod-type": "algorithm"})
+
+
+class TestCanCreateAlgorithmPods(unittest.TestCase):
+    def test_test_pod_uses_algorithm_pod_settings(self):
+        manager = _manager()
+        manager.core_api = MagicMock()
+
+        self.assertTrue(manager.can_create_algorithm_pods())
+
+        pod = manager.core_api.create_namespaced_pod.call_args.kwargs["body"]
+        self.assertEqual(
+            manager.core_api.create_namespaced_pod.call_args.kwargs["namespace"],
+            "tenant",
+        )
+        self.assertEqual(pod.metadata.labels, manager.algorithm_pod_labels)
+        self.assertEqual(pod.spec.restart_policy, "Never")
+        manager.core_api.read_namespace.assert_not_called()
+        manager.core_api.create_namespace.assert_not_called()
+
+    def test_rejected_test_pod(self):
+        manager = _manager()
+        manager.core_api = MagicMock()
+        manager.core_api.create_namespaced_pod.side_effect = ApiException(status=403)
+
+        self.assertFalse(manager.can_create_algorithm_pods())
 
 
 if __name__ == "__main__":

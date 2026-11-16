@@ -1,7 +1,13 @@
 # override the chart name
 nameOverride: {{ nameOverride | default('vantage6-node') }}
-# Optional, by default the Release.Namespace is used
+# The node and the algorithms it runs live in one Kubernetes namespace. By default
+# that is the namespace you start the node in (`v6 node start --namespace`).
+{# `namespace` is also a Jinja global, so test for a string #}
+{% if namespace is string %}
+namespace: {{ namespace }}
+{% else %}
 # namespace: vantage6-node
+{% endif %}
 node:
 
   name: {{ node.name | default('put-your-node-name-here') }}
@@ -40,12 +46,41 @@ node:
   # - Never: never pull the image from the registry
   imagePullPolicy: {{ node.imagePullPolicy | default('Always') }}
 
-  # Namespace in which the task kubernetes resources are created. This must be a
-  # namespace where the node has access to create pods.
-  taskNamespace: {{ node.taskNamespace | default('vantage6-tasks') }}
+  {% if node.k8sNodeName is defined %}
+  # Development only: Kubernetes machine that holds the host path volumes.
+  k8sNodeName: {{ node.k8sNodeName }}
+  {% endif %}
 
-  # Kubernetes node name, used for local persistent volumes
-  k8sNodeName: {{ node.k8sNodeName | default('docker-desktop') }}
+  # Service account of the node pod. The chart binds it to a Role that lets it
+  # manage jobs, pods and secrets of algorithm runs in the node's namespace.
+  {% set sa = node.serviceAccount | default({}) %}
+  serviceAccount:
+    create: {{ sa.create | default(true) }}
+    {% if sa.name is defined %}
+    name: {{ sa.name }}
+    {% endif %}
+
+  # Resource requests and limits, security context and runtime class of the node
+  # pod. Some clusters reject pods without resource requests and limits.
+  resources: {{ node.resources | default({}) | tojson }}
+  podSecurityContext: {{ node.podSecurityContext | default({}) | tojson }}
+  securityContext: {{ node.securityContext | default({}) | tojson }}
+  runtimeClassName: "{{ node.runtimeClassName | default('') }}"
+
+  # Settings of the pods (Kubernetes jobs) that run algorithms. These also apply to
+  # the short-lived pods the node starts to check its permissions and network
+  # isolation.
+  {% set ap = node.algorithmPods | default({}) %}
+  algorithmPods:
+    resources: {{ ap.resources | default({}) | tojson }}
+    # Remove finished jobs after this many seconds, even when the node did not do
+    # so itself. Set to null to disable.
+    ttlSecondsAfterFinished: {{ ap.ttlSecondsAfterFinished | default(86400) | tojson }}
+    # Service account to run algorithm pods with. Its token is never mounted.
+    serviceAccountName: "{{ ap.serviceAccountName | default('') }}"
+    runtimeClassName: "{{ ap.runtimeClassName | default('') }}"
+    podSecurityContext: {{ ap.podSecurityContext | default({}) | tojson }}
+    securityContext: {{ ap.securityContext | default({}) | tojson }}
 
   logging:
     # Controls the logging output level. Could be one of the following
@@ -55,14 +90,23 @@ node:
     # Location to the log file
     file: {{ node.logging.file | default('node.log') }}
 
-    # Size of the kubernetes persistent volume claim for logs
+    # Store log files on a PersistentVolumeClaim. If false, log files only last as
+    # long as the pod (console logging is unaffected).
+    persistent: {{ node.logging.persistent | default(true) }}
+
+    # Use an existing claim instead of creating one
+    existingClaim: "{{ node.logging.existingClaim | default('') }}"
+
+    # Size of the claim for logs
     storageSize: {{ node.logging.storageSize | default('1Gi') }}
 
-    # Storage class to use for the kubernetes persistent volume claim for logs
-    storageClass: {{ node.logging.storageClass | default('local-storage') }}
+    # Storage class of the claim for logs. Empty uses the cluster default.
+    storageClass: "{{ node.logging.storageClass | default('') }}"
 
-    # Host path for storing the logs (required for local-storage PV)
-    volumeHostPath: {{ node.logging.volumeHostPath | default('/var/log/vantage6-node') }}
+    {% if node.logging.volumeHostPath is defined %}
+    # Development only: store logs in this directory on `k8sNodeName`
+    volumeHostPath: {{ node.logging.volumeHostPath }}
+    {% endif %}
 
     # Size in kb of a single log file
     max_size: {{ node.logging.max_size | default(1024) }}
@@ -118,28 +162,43 @@ node:
   # Port for the node proxy to run on
   proxyPort: {{ node.proxyPort | default(7654) }}
 
-  # Storage settings on host of the node machine. This defines where the database is
-  # stored as well as the task directory (which will contain the input/output of the
-  # tasks).
+  # Storage shared by the node and its algorithm pods, holding the input, output and
+  # session files of algorithm runs. Each algorithm pod only mounts the files of its
+  # own run.
+  {% set tasks = (node.persistence | default({})).tasks | default({}) %}
   persistence:
     tasks:
-      {% if node.persistence is defined and node.persistence.tasks is defined %}
-      storageClass: {{ node.persistence.tasks.storageClass | default('local-storage') }}
-      size: {{ node.persistence.tasks.size | default('10Gi') }}
-      hostPath: {{ node.persistence.tasks.hostPath | default('/path/to/where/task/files/are/stored') }}
-      {% else %}
-      storageClass: local-storage
-      size: 10Gi
-      hostPath: /path/to/where/task/files/are/stored
+      # Use an existing PersistentVolumeClaim instead of creating one
+      existingClaim: "{{ tasks.existingClaim | default('') }}"
+      # Folder inside the claim to use. Empty uses the root of the claim.
+      subPath: "{{ tasks.subPath | default('') }}"
+      # Storage class of the claim. Empty uses the cluster default.
+      storageClass: "{{ tasks.storageClass | default('') }}"
+      # ReadWriteOnce: algorithm pods run on the same machine as the node.
+      # ReadWriteMany: algorithm pods can run on any machine (needs a storage class
+      # that supports it).
+      accessMode: {{ tasks.accessMode | default('ReadWriteOnce') }}
+      size: {{ tasks.size | default('10Gi') }}
+      {% if tasks.hostPath is defined %}
+      # Development only: store task files in this directory on `k8sNodeName`
+      hostPath: {{ tasks.hostPath }}
       {% endif %}
-    database:
-      {% if node.persistence is defined and node.persistence.database is defined %}
-      storageClass: {{ node.persistence.database.storageClass | default('local-storage') }}
-      size: {{ node.persistence.database.size | default('5Gi') }}
-      {% else %}
-      storageClass: local-storage
-      size: 5Gi
-      {% endif %}
+
+  # Network policies that isolate algorithm pods: they may only reach the node proxy
+  # and DNS, plus what is added in `whitelist` below.
+  {% set np = node.networkPolicy | default({}) %}
+  networkPolicy:
+    # Set to false if you are not allowed to create NetworkPolicies. Your cluster
+    # administrator must then isolate algorithm pods in another way.
+    enabled: {{ np.enabled | default(true) }}
+    # Check at startup that algorithm pods cannot reach the internet. With
+    # `production: true` the node refuses to start if they can. Only disable this
+    # when isolation is enforced in another way.
+    verifyIsolation: {{ np.verifyIsolation | default(true) }}
+    # Where the cluster DNS runs. On OpenShift: namespace openshift-dns, ports [5353]
+    dns: {{ np.dns | default({"namespace": "kube-system", "ports": [53]}) | tojson }}
+    # Image for the isolation check. Empty uses the curl image published with vantage6.
+    probeImage: "{{ np.probeImage | default('') }}"
 
 
   # It is also possible not to specify the details of the service-based databases
@@ -167,14 +226,22 @@ node:
     fileBased:
     {% for db in node.databases.fileBased %}
     - name: {{ db.name }}
-      uri: {{ db.uri }}
       type: {{ db.type }}
+      {% if db.existingClaim is defined %}
+      # PersistentVolumeClaim in the node's namespace that holds the data
+      existingClaim: {{ db.existingClaim }}
+      # File or folder inside the claim
+      subPath: "{{ db.subPath | default('') }}"
+      {% endif %}
+      {% if db.volumePath is defined %}
+      # Development only: directory on `k8sNodeName` and the file in it
       volumePath: {{ db.volumePath }}
       originalName: {{ db.originalName }}
+      {% endif %}
       # OPTIONAL: controls how file/folder databases are exposed to algorithm
       # containers.
-      # - ro (default): bind-mount host path read-only into algorithm containers
-      # - copy: copy file data into the node data volume
+      # - ro (default): mounted read-only in algorithm containers
+      # - copy: algorithms get a writable copy of the file
       mount_mode: {{ db.mount_mode | default('ro') }}
     {% endfor %}
     {% endif %}
@@ -383,6 +450,9 @@ node:
   #   namespace of this pod is whitelisted)
   # - ipBlock: to allow connections to IP addresses or CIDR ranges (e.g. a database
   #   server that is not part of the cluster)
+  {% if node.whitelist is defined %}
+  whitelist: {{ node.whitelist | tojson }}
+  {% endif %}
   # whitelist:
   #   data_extraction:
   #     egress:

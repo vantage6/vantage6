@@ -14,3 +14,6 @@
 # Exclude VSCode files
 .vscode/
 *.code-workspace
+
+# Render checks of this chart, not part of it
+tests/

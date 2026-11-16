@@ -281,9 +281,6 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                         "hostPath": str(path_to_data_dir),
                         "size": "1Gi",
                     },
-                    "database": {
-                        "size": "1Gi",
-                    },
                 },
                 "k8sNodeName": self.k8s_config.k8s_node,
                 "databases": {

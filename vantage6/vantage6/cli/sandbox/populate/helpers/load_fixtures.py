@@ -12,7 +12,6 @@ from vantage6.client import Client
 from vantage6.cli.globals import APPNAME, PACKAGE_FOLDER
 from vantage6.cli.sandbox.populate.helpers.utils import (
     NodeConfigCreationDetails,
-    replace_wsl_path,
 )
 
 
@@ -173,8 +172,8 @@ def create_node_config(
     node_number: int,
     node_name: str,
     dev_dir: Path,
-    task_directory: str,
-    task_namespace: str,
+    task_claim_name: str,
+    release_name: str,
     node_starting_port_number: int,
     organization: dict,
     node: dict,
@@ -209,10 +208,10 @@ def create_node_config(
             "logging": {"file": f"node_{node_number}.log"},
             "port": 7601,
             "hq_url": "http://vantage6-hq-hq",  # Note this is the internal k8s address
-            "task_dir": f"{task_directory}/node_{node_number}",
+            "task_claim_name": task_claim_name,
+            "release_name": release_name,
             "task_dir_extension": f"node_{node_number}",
             "api_path": "/hq",
-            "task_namespace": task_namespace,
             "node_proxy_port": node_starting_port_number + (node_number - 1),
             "prometheus_enabled": str(prometheus_enabled).lower(),
         }
@@ -220,11 +219,6 @@ def create_node_config(
     config_file = node_dev_dir / f"node_org_{node_number}.yaml"
     with open(config_file, "w") as f:
         f.write(node_config)
-
-    # also make sure the task directory exists
-    task_dir = Path(f"{task_directory}/node_{node_number}")
-    task_dir = replace_wsl_path(task_dir)
-    task_dir.mkdir(parents=True, exist_ok=True)
 
     # Create .env file for the node
     env_file = node_dev_dir / ".env"
@@ -454,8 +448,10 @@ def create_fixtures(
                             node_number=i,
                             node_name=name,
                             dev_dir=node_config_creation_details.dev_dir,
-                            task_directory=node_config_creation_details.task_directory,
-                            task_namespace=node_config_creation_details.task_namespace,
+                            task_claim_name=(
+                                node_config_creation_details.task_claim_name
+                            ),
+                            release_name=node_config_creation_details.release_name,
                             node_starting_port_number=(
                                 node_config_creation_details.node_starting_port_number
                             ),

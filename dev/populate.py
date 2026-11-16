@@ -15,13 +15,19 @@ parser = argparse.ArgumentParser(
     description="Load basic fixtures for a given number of nodes"
 )
 parser.add_argument(
-    "--task-directory", type=str, help="Directory to store tasks on the host"
+    "--task-claim-name",
+    type=str,
+    default="vantage6-node-task-pvc",
+    help="PersistentVolumeClaim with the task files of the dev nodes",
 )
 parser.add_argument(
     "--number-of-nodes", type=int, default=3, help="Number of nodes to create"
 )
 parser.add_argument(
-    "--task-namespace", type=str, default="vantage6-tasks", help="Task namespace"
+    "--release-name",
+    type=str,
+    default="vantage6-node",
+    help="Helm release of the pod the dev nodes run in",
 )
 parser.add_argument(
     "--starting-port-number",
@@ -47,8 +53,8 @@ parser.add_argument(
 args = parser.parse_args()
 
 number_of_nodes = args.number_of_nodes
-task_directory = args.task_directory
-task_namespace = args.task_namespace
+task_claim_name = args.task_claim_name
+release_name = args.release_name
 node_starting_port_number = args.starting_port_number
 populate_marker = args.populate_marker
 prometheus_enabled = args.prometheus_enabled
@@ -65,8 +71,8 @@ dev_data_dir.mkdir(exist_ok=True)
 node_config_creation_details = NodeConfigCreationDetails(
     node_starting_port_number=node_starting_port_number,
     dev_dir=dev_data_dir,
-    task_directory=task_directory,
-    task_namespace=task_namespace,
+    task_claim_name=task_claim_name,
+    release_name=release_name,
     prometheus_enabled=prometheus_enabled,
 )
 

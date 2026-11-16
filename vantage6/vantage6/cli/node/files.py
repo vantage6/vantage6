@@ -22,9 +22,10 @@ def cli_node_files(ctx: NodeContext) -> None:
     info(f"Data folders       = {ctx.data_dir}")
     info("Database labels and files")
     for db in ctx.databases.get("fileBased", []):
-        info(
-            f" - {db['name']:15} = {db['volumePath']}/{db['originalName']} "
-            f"(type: {db['type']})"
-        )
+        if db.get("existingClaim"):
+            location = f"claim {db['existingClaim']}: {db.get('subPath', '')}"
+        else:
+            location = f"{db.get('volumePath')}/{db.get('originalName')}"
+        info(f" - {db['name']:15} = {location} (type: {db['type']})")
     for db in ctx.databases.get("serviceBased", []):
         info(f" - {db['name']:15} = {db['uri']} (type: {db['type']})")

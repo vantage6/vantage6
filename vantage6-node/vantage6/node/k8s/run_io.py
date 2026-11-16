@@ -64,13 +64,12 @@ class RunIO:
         self.db_label = dataframe_details.get("db_label") if dataframe_details else None
         self.client = client
 
-        # This run needs its own directory to store the IO files
-        if task_dir_extension:
-            self.run_folder = os.path.join(
-                TASK_FILES_ROOT, task_dir_extension, str(self.run_id)
-            )
-        else:
-            self.run_folder = os.path.join(TASK_FILES_ROOT, str(self.run_id))
+        # This run needs its own directory to store the IO files. The relative path is
+        # relative to the root of the task storage, as mounted in the node pod.
+        self.relative_run_folder = os.path.join(
+            task_dir_extension or "", str(self.run_id)
+        )
+        self.run_folder = os.path.join(TASK_FILES_ROOT, self.relative_run_folder)
 
     @classmethod
     def from_dict(
@@ -89,18 +88,6 @@ class RunIO:
             client=client,
             task_dir_extension=task_dir_extension,
         )
-
-    @property
-    def input_volume_name(self) -> str:
-        return f"{APPNAME}-run-{self.run_id}-input"
-
-    @property
-    def token_volume_name(self) -> str:
-        return f"{APPNAME}-run-{self.run_id}-token"
-
-    @property
-    def output_volume_name(self) -> str:
-        return f"{APPNAME}-run-{self.run_id}-output"
 
     @property
     def container_name(self) -> str:
@@ -149,13 +136,16 @@ class RunIO:
         """
         self.log.debug("Creating file %s for run %s", filename, self.run_id)
 
-        relative_path = Path(str(self.run_id)) / filename
+        relative_path = Path(self.relative_run_folder) / filename
         file_path = Path(self.run_folder) / filename
 
         file_dir = Path(file_path).parent
         file_dir.mkdir(parents=True, exist_ok=True)
         with open(file_path, "wb") as file_:
             file_.write(content)
+        # The algorithm may run under a different user than the node, and must be
+        # able to write its output.
+        file_path.chmod(0o666)
 
         return str(relative_path)
 

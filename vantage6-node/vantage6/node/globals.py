@@ -59,6 +59,10 @@ TASK_JOB_SESSION_FOLDER_PATH = "/app/vantage6/task/session"
 TASK_FILES_ROOT = "/app/tasks"
 DATABASE_BASE_PATH = "/app/databases/"
 
+SERVICE_ACCOUNT_NAMESPACE_FILE = (
+    "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
+)
+
 # Default proxy server port. It may be changed when starting the proxy if
 # the port is already in use
 DEFAULT_PROXY_PORT = 7654
