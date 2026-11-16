@@ -17,6 +17,7 @@ as much).
 -  Python v3.13
 -  Helm
 - A Kubernetes environment (e.g. Microk8s, Docker Desktop, Kubernetes Cluster)
+  or, for a node only, Docker (see :ref:`node-docker`)
 
 Below, we provide more details on the software requirements.
 

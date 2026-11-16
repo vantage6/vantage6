@@ -1,0 +1,607 @@
+{
+  "central_compute": {
+    "job": {
+      "apiVersion": "batch/v1",
+      "kind": "Job",
+      "metadata": {
+        "annotations": {
+          "action": "central_compute",
+          "df_id": "",
+          "df_label": "",
+          "df_name": "",
+          "init_org_id": "1",
+          "run_id": "103",
+          "session_id": "3",
+          "task_id": "603",
+          "task_parent_id": ""
+        },
+        "labels": {
+          "node_id": "abc123"
+        },
+        "name": "vantage6-run-103"
+      },
+      "spec": {
+        "backoffLimit": 3,
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "vantage6-run-103",
+              "role": "central_compute",
+              "v6-node-release": "rel",
+              "v6-pod-type": "algorithm"
+            }
+          },
+          "spec": {
+            "affinity": {
+              "podAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": [
+                  {
+                    "labelSelector": {
+                      "matchLabels": {
+                        "app": "vantage6-node",
+                        "release": "rel"
+                      }
+                    },
+                    "topologyKey": "kubernetes.io/hostname"
+                  }
+                ]
+              }
+            },
+            "automountServiceAccountToken": false,
+            "containers": [
+              {
+                "env": [
+                  {
+                    "name": "OUTPUT_FILE",
+                    "value": "F5QXA4BPOZQW45DBM5STML3UMFZWWL3POV2HA5LU"
+                  },
+                  {
+                    "name": "INPUT_FILE",
+                    "value": "F5QXA4BPOZQW45DBM5STML3UMFZWWL3JNZYHK5A!"
+                  },
+                  {
+                    "name": "SESSION_FOLDER",
+                    "value": "F5QXA4BPOZQW45DBM5STML3UMFZWWL3TMVZXG2LPNY!!!!!!"
+                  },
+                  {
+                    "name": "SESSION_FILE",
+                    "value": "F5QXA4BPOZQW45DBM5STML3UMFZWWL3TMVZXG2LPNYXXG5DBORSS44DBOJYXKZLU"
+                  },
+                  {
+                    "name": "USER_REQUESTED_DATAFRAMES",
+                    "value": "MRTDC!!!"
+                  },
+                  {
+                    "name": "HOST",
+                    "value": "NB2HI4B2F4XXEZLMFZ2GK3TBNZ2C443WMMXGG3DVON2GK4RONRXWGYLM"
+                  },
+                  {
+                    "name": "PORT",
+                    "value": "G43DONQ!"
+                  },
+                  {
+                    "name": "API_PATH",
+                    "value": ""
+                  },
+                  {
+                    "name": "ALGORITHM_METHOD",
+                    "value": "NV4V63LFORUG6ZA!"
+                  },
+                  {
+                    "name": "FUNCTION_ACTION",
+                    "value": "MNSW45DSMFWF6Y3PNVYHK5DF"
+                  },
+                  {
+                    "name": "TASK_ID",
+                    "value": "GYYDG!!!"
+                  },
+                  {
+                    "name": "NODE_ID",
+                    "value": "GEYQ!!!!"
+                  },
+                  {
+                    "name": "ORGANIZATION_ID",
+                    "value": "GIZA!!!!"
+                  },
+                  {
+                    "name": "COLLABORATION_ID",
+                    "value": "GMZQ!!!!"
+                  },
+                  {
+                    "name": "threshold",
+                    "value": "GEYA!!!!"
+                  }
+                ],
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "vantage6-run-103"
+                    }
+                  }
+                ],
+                "image": "reg.example.org/algo:1",
+                "imagePullPolicy": "IfNotPresent",
+                "name": "vantage6-run-103",
+                "resources": {
+                  "limits": {
+                    "cpu": "1",
+                    "memory": "1Gi"
+                  }
+                },
+                "securityContext": {
+                  "runAsNonRoot": true
+                },
+                "tty": true,
+                "volumeMounts": [
+                  {
+                    "mountPath": "/app/vantage6/task/output",
+                    "name": "claim-0",
+                    "readOnly": false,
+                    "subPath": "node-a/103/output"
+                  },
+                  {
+                    "mountPath": "/app/vantage6/task/input",
+                    "name": "claim-0",
+                    "readOnly": true,
+                    "subPath": "node-a/103/input"
+                  },
+                  {
+                    "mountPath": "/app/vantage6/task/session",
+                    "name": "claim-0",
+                    "readOnly": false,
+                    "subPath": "node-a/sessions/session000000003"
+                  }
+                ]
+              }
+            ],
+            "imagePullSecrets": [
+              {
+                "name": "docker-login-secret-run-id-103"
+              }
+            ],
+            "restartPolicy": "Never",
+            "runtimeClassName": "gvisor",
+            "securityContext": {
+              "fsGroup": 0
+            },
+            "serviceAccountName": "algo",
+            "volumes": [
+              {
+                "name": "claim-0",
+                "persistentVolumeClaim": {
+                  "claimName": "tasks-pvc"
+                }
+              }
+            ]
+          }
+        },
+        "ttlSecondsAfterFinished": 600
+      }
+    },
+    "job_namespace": "tenant",
+    "secrets": [
+      {
+        "metadata": {
+          "name": "vantage6-run-103"
+        },
+        "stringData": {
+          "CONTAINER_TOKEN": "container-token"
+        }
+      },
+      {
+        "metadata": {
+          "name": "docker-login-secret-run-id-103",
+          "namespace": "tenant"
+        },
+        "stringData": {
+          ".dockerconfigjson": "{\"auths\": {\"reg.example.org\": {\"username\": \"u\", \"password\": \"p\", \"auth\": \"dTpw\"}}}"
+        },
+        "type": "kubernetes.io/dockerconfigjson"
+      }
+    ]
+  },
+  "data_extraction": {
+    "job": {
+      "apiVersion": "batch/v1",
+      "kind": "Job",
+      "metadata": {
+        "annotations": {
+          "action": "data_extraction",
+          "df_id": "3",
+          "df_label": "csv",
+          "df_name": "df1",
+          "init_org_id": "1",
+          "run_id": "101",
+          "session_id": "3",
+          "task_id": "601",
+          "task_parent_id": ""
+        },
+        "labels": {
+          "node_id": "abc123"
+        },
+        "name": "vantage6-run-101"
+      },
+      "spec": {
+        "backoffLimit": 3,
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "vantage6-run-101",
+              "role": "data_extraction",
+              "v6-node-release": "rel",
+              "v6-pod-type": "algorithm"
+            }
+          },
+          "spec": {
+            "affinity": {
+              "podAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": [
+                  {
+                    "labelSelector": {
+                      "matchLabels": {
+                        "app": "vantage6-node",
+                        "release": "rel"
+                      }
+                    },
+                    "topologyKey": "kubernetes.io/hostname"
+                  }
+                ]
+              }
+            },
+            "automountServiceAccountToken": false,
+            "containers": [
+              {
+                "env": [
+                  {
+                    "name": "OUTPUT_FILE",
+                    "value": "F5QXA4BPOZQW45DBM5STML3UMFZWWL3POV2HA5LU"
+                  },
+                  {
+                    "name": "INPUT_FILE",
+                    "value": "F5QXA4BPOZQW45DBM5STML3UMFZWWL3JNZYHK5A!"
+                  },
+                  {
+                    "name": "SESSION_FOLDER",
+                    "value": "F5QXA4BPOZQW45DBM5STML3UMFZWWL3TMVZXG2LPNY!!!!!!"
+                  },
+                  {
+                    "name": "SESSION_FILE",
+                    "value": "F5QXA4BPOZQW45DBM5STML3UMFZWWL3TMVZXG2LPNYXXG5DBORSS44DBOJYXKZLU"
+                  },
+                  {
+                    "name": "DATABASE_URI",
+                    "value": "F5QXA4BPMRQXIYLCMFZWK4ZPMNZXMLTDON3A!!!!"
+                  },
+                  {
+                    "name": "DATABASE_TYPE",
+                    "value": "MNZXM!!!"
+                  },
+                  {
+                    "name": "HOST",
+                    "value": "NB2HI4B2F4XXEZLMFZ2GK3TBNZ2C443WMMXGG3DVON2GK4RONRXWGYLM"
+                  },
+                  {
+                    "name": "PORT",
+                    "value": "G43DONQ!"
+                  },
+                  {
+                    "name": "API_PATH",
+                    "value": ""
+                  },
+                  {
+                    "name": "ALGORITHM_METHOD",
+                    "value": "NV4V63LFORUG6ZA!"
+                  },
+                  {
+                    "name": "FUNCTION_ACTION",
+                    "value": "MRQXIYK7MV4HI4TBMN2GS33O"
+                  },
+                  {
+                    "name": "TASK_ID",
+                    "value": "GYYDC!!!"
+                  },
+                  {
+                    "name": "NODE_ID",
+                    "value": "GEYQ!!!!"
+                  },
+                  {
+                    "name": "ORGANIZATION_ID",
+                    "value": "GIZA!!!!"
+                  },
+                  {
+                    "name": "COLLABORATION_ID",
+                    "value": "GMZQ!!!!"
+                  },
+                  {
+                    "name": "threshold",
+                    "value": "GEYA!!!!"
+                  }
+                ],
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "vantage6-run-101"
+                    }
+                  }
+                ],
+                "image": "reg.example.org/algo:1",
+                "imagePullPolicy": "IfNotPresent",
+                "name": "vantage6-run-101",
+                "resources": {
+                  "limits": {
+                    "cpu": "1",
+                    "memory": "1Gi"
+                  }
+                },
+                "securityContext": {
+                  "runAsNonRoot": true
+                },
+                "tty": true,
+                "volumeMounts": [
+                  {
+                    "mountPath": "/app/vantage6/task/output",
+                    "name": "claim-0",
+                    "readOnly": false,
+                    "subPath": "node-a/101/output"
+                  },
+                  {
+                    "mountPath": "/app/vantage6/task/input",
+                    "name": "claim-0",
+                    "readOnly": true,
+                    "subPath": "node-a/101/input"
+                  },
+                  {
+                    "mountPath": "/app/vantage6/task/session",
+                    "name": "claim-0",
+                    "readOnly": false,
+                    "subPath": "node-a/sessions/session000000003"
+                  },
+                  {
+                    "mountPath": "/app/databases/csv.csv",
+                    "name": "claim-1",
+                    "readOnly": true,
+                    "subPath": "hospital/data.csv"
+                  }
+                ]
+              }
+            ],
+            "imagePullSecrets": [
+              {
+                "name": "docker-login-secret-run-id-101"
+              }
+            ],
+            "restartPolicy": "Never",
+            "runtimeClassName": "gvisor",
+            "securityContext": {
+              "fsGroup": 0
+            },
+            "serviceAccountName": "algo",
+            "volumes": [
+              {
+                "name": "claim-0",
+                "persistentVolumeClaim": {
+                  "claimName": "tasks-pvc"
+                }
+              },
+              {
+                "name": "claim-1",
+                "persistentVolumeClaim": {
+                  "claimName": "data-pvc"
+                }
+              }
+            ]
+          }
+        },
+        "ttlSecondsAfterFinished": 600
+      }
+    },
+    "job_namespace": "tenant",
+    "secrets": [
+      {
+        "metadata": {
+          "name": "vantage6-run-101"
+        },
+        "stringData": {
+          "DB_PARAM_USER": "reader"
+        }
+      },
+      {
+        "metadata": {
+          "name": "docker-login-secret-run-id-101",
+          "namespace": "tenant"
+        },
+        "stringData": {
+          ".dockerconfigjson": "{\"auths\": {\"reg.example.org\": {\"username\": \"u\", \"password\": \"p\", \"auth\": \"dTpw\"}}}"
+        },
+        "type": "kubernetes.io/dockerconfigjson"
+      }
+    ]
+  },
+  "federated_compute": {
+    "job": {
+      "apiVersion": "batch/v1",
+      "kind": "Job",
+      "metadata": {
+        "annotations": {
+          "action": "federated_compute",
+          "df_id": "",
+          "df_label": "",
+          "df_name": "",
+          "init_org_id": "1",
+          "run_id": "102",
+          "session_id": "3",
+          "task_id": "602",
+          "task_parent_id": ""
+        },
+        "labels": {
+          "node_id": "abc123"
+        },
+        "name": "vantage6-run-102"
+      },
+      "spec": {
+        "backoffLimit": 3,
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "vantage6-run-102",
+              "role": "federated_compute",
+              "v6-node-release": "rel",
+              "v6-pod-type": "algorithm"
+            }
+          },
+          "spec": {
+            "affinity": {
+              "podAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": [
+                  {
+                    "labelSelector": {
+                      "matchLabels": {
+                        "app": "vantage6-node",
+                        "release": "rel"
+                      }
+                    },
+                    "topologyKey": "kubernetes.io/hostname"
+                  }
+                ]
+              }
+            },
+            "automountServiceAccountToken": false,
+            "containers": [
+              {
+                "env": [
+                  {
+                    "name": "OUTPUT_FILE",
+                    "value": "F5QXA4BPOZQW45DBM5STML3UMFZWWL3POV2HA5LU"
+                  },
+                  {
+                    "name": "INPUT_FILE",
+                    "value": "F5QXA4BPOZQW45DBM5STML3UMFZWWL3JNZYHK5A!"
+                  },
+                  {
+                    "name": "SESSION_FOLDER",
+                    "value": "F5QXA4BPOZQW45DBM5STML3UMFZWWL3TMVZXG2LPNY!!!!!!"
+                  },
+                  {
+                    "name": "SESSION_FILE",
+                    "value": "F5QXA4BPOZQW45DBM5STML3UMFZWWL3TMVZXG2LPNYXXG5DBORSS44DBOJYXKZLU"
+                  },
+                  {
+                    "name": "USER_REQUESTED_DATAFRAMES",
+                    "value": "MRTDCO3EMYZA!!!!"
+                  },
+                  {
+                    "name": "HOST",
+                    "value": "NB2HI4B2F4XXEZLMFZ2GK3TBNZ2C443WMMXGG3DVON2GK4RONRXWGYLM"
+                  },
+                  {
+                    "name": "PORT",
+                    "value": "G43DONQ!"
+                  },
+                  {
+                    "name": "API_PATH",
+                    "value": ""
+                  },
+                  {
+                    "name": "ALGORITHM_METHOD",
+                    "value": "NV4V63LFORUG6ZA!"
+                  },
+                  {
+                    "name": "FUNCTION_ACTION",
+                    "value": "MZSWIZLSMF2GKZC7MNXW24DVORSQ!!!!"
+                  },
+                  {
+                    "name": "TASK_ID",
+                    "value": "GYYDE!!!"
+                  },
+                  {
+                    "name": "NODE_ID",
+                    "value": "GEYQ!!!!"
+                  },
+                  {
+                    "name": "ORGANIZATION_ID",
+                    "value": "GIZA!!!!"
+                  },
+                  {
+                    "name": "COLLABORATION_ID",
+                    "value": "GMZQ!!!!"
+                  },
+                  {
+                    "name": "threshold",
+                    "value": "GEYA!!!!"
+                  }
+                ],
+                "envFrom": [],
+                "image": "reg.example.org/algo:1",
+                "imagePullPolicy": "IfNotPresent",
+                "name": "vantage6-run-102",
+                "resources": {
+                  "limits": {
+                    "cpu": "1",
+                    "memory": "1Gi"
+                  }
+                },
+                "securityContext": {
+                  "runAsNonRoot": true
+                },
+                "tty": true,
+                "volumeMounts": [
+                  {
+                    "mountPath": "/app/vantage6/task/output",
+                    "name": "claim-0",
+                    "readOnly": false,
+                    "subPath": "node-a/102/output"
+                  },
+                  {
+                    "mountPath": "/app/vantage6/task/input",
+                    "name": "claim-0",
+                    "readOnly": true,
+                    "subPath": "node-a/102/input"
+                  },
+                  {
+                    "mountPath": "/app/vantage6/task/session",
+                    "name": "claim-0",
+                    "readOnly": false,
+                    "subPath": "node-a/sessions/session000000003"
+                  }
+                ]
+              }
+            ],
+            "imagePullSecrets": [
+              {
+                "name": "docker-login-secret-run-id-102"
+              }
+            ],
+            "restartPolicy": "Never",
+            "runtimeClassName": "gvisor",
+            "securityContext": {
+              "fsGroup": 0
+            },
+            "serviceAccountName": "algo",
+            "volumes": [
+              {
+                "name": "claim-0",
+                "persistentVolumeClaim": {
+                  "claimName": "tasks-pvc"
+                }
+              }
+            ]
+          }
+        },
+        "ttlSecondsAfterFinished": 600
+      }
+    },
+    "job_namespace": "tenant",
+    "secrets": [
+      {
+        "metadata": {
+          "name": "docker-login-secret-run-id-102",
+          "namespace": "tenant"
+        },
+        "stringData": {
+          ".dockerconfigjson": "{\"auths\": {\"reg.example.org\": {\"username\": \"u\", \"password\": \"p\", \"auth\": \"dTpw\"}}}"
+        },
+        "type": "kubernetes.io/dockerconfigjson"
+      }
+    ]
+  }
+}

@@ -1,0 +1,249 @@
+# This node runs with Docker: `v6 node start` starts it as a container that starts
+# the algorithm containers next to it.
+runtime: docker
+node:
+
+  name: {{ node.name | default('put-your-node-name-here') }}
+  apiKey: {{ node.apiKey | default('put-your-api-key-here') }}
+
+  # When true, the node verifies at startup that algorithm containers cannot reach
+  # the internet, and refuses to start if they can.
+  production: {{ node.production | default(true) }}
+
+  # Keycloak configuration
+  keycloak:
+    url: {{ node.keycloak.url }}
+    realm: {{ node.keycloak.realm | default('vantage6') }}
+
+  # Settings for HQ to connect to.
+  hq:
+    url: {{ node.hq.url }}
+    port: {{ node.hq.port | default(7601) }}
+    path: {{ node.hq.path | default('/hq') }}
+
+  {% if node.image is defined %}
+  # Fixed image to use to run the node. Note that if specified, the node will not
+  # automatically run the version matching the HQ version.
+  image: {{ node.image }}
+  {% else %}
+  # You may specify a fixed image to use to run the node. Note that if specified, the
+  # node will not automatically run the version matching the HQ version.
+  # image: ghcr.io/vantage6/infrastructure/node:uluru
+  {% endif %}
+
+  # Node image pull policy: Always, IfNotPresent or Never
+  imagePullPolicy: {{ node.imagePullPolicy | default('Always') }}
+
+  {% set docker = node.docker | default({}) %}
+  docker:
+    {% if docker.host is defined %}
+    # Docker API to use. By default the usual socket locations are tried.
+    host: {{ docker.host }}
+    {% else %}
+    # Docker API to use. By default the usual socket locations are tried.
+    # host: unix:///var/run/docker.sock
+    {% endif %}
+    {% if docker.socketPath is defined %}
+    # Path of the Docker socket on the Docker host, which is mounted in the node
+    # container. Only needed when it cannot be derived from `host`.
+    socketPath: {{ docker.socketPath }}
+    {% endif %}
+
+    {% set isolation = docker.networkIsolation | default({}) %}
+    networkIsolation:
+      # Check at startup that algorithm containers cannot reach the internet.
+      verify: {{ isolation.verify | default(true) }}
+      # Image for this check. Empty uses the curl image published with vantage6.
+      probeImage: "{{ isolation.probeImage | default('') }}"
+
+    # Image of the proxy that is started for algorithm steps with a whitelist. Empty
+    # uses the squid image published with vantage6.
+    squidImage: "{{ docker.squidImage | default('') }}"
+
+    # Image of the container that checks at startup that algorithm containers can
+    # read the task files. Empty uses the alpine image published with vantage6.
+    preflightImage: "{{ docker.preflightImage | default('') }}"
+
+    # Limits and security options of algorithm containers. Supported: cpus, memory,
+    # memory_reservation, pids_limit, gpus (a number or "all"), runtime, user,
+    # read_only, cap_drop, shm_size and security_opt (default
+    # ["no-new-privileges:true"]).
+    algorithmContainers: {{ docker.algorithmContainers | default({}) | tojson }}
+
+  {% set logging = node.logging | default({}) %}
+  logging:
+    # Controls the logging output level. Could be one of the following
+    # levels: CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
+    level: {{ logging.level | default('INFO') }}
+
+    # Location to the log file
+    file: {{ logging.file | default('node.log') }}
+
+    # Size in kb of a single log file
+    max_size: {{ logging.max_size | default(1024) }}
+    use_console: {{ logging.use_console | default(true) }}
+
+    # Date format for the log file
+    datefmt: "{{ logging.datefmt | default('%Y-%m-%d %H:%M:%S') }}"
+
+    # Format for the log file
+    format: "{{ logging.format | default('%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s') }}"
+
+    # Maximum number of log files to keep. Log files are rotated when the size of the
+    # current log file exceeds `max_size`.
+    backup_count: {{ logging.backup_count | default(5) }}
+
+    # Loggers to include in the log file
+    loggers:
+    {% if logging.loggers is defined %}
+    {% for logger in logging.loggers %}
+    - level: {{ logger.level }}
+      name: {{ logger.name }}
+    {% endfor %}
+    {% else %}
+    - level: warning
+      name: urllib3
+    - level: warning
+      name: socketIO-client
+    - level: warning
+      name: socketio.server
+    - level: warning
+      name: engineio.server
+    {% endif %}
+
+  encryption:
+    # Whether encryption is enabled or not. This should be the same as the `encrypted`
+    # setting on HQ of the collaboration to which this node belongs. If enabled, create
+    # the private key with `v6 node create-private-key`.
+    enabled: {{ (node.encryption | default({})).enabled | default(false) }}
+
+  # Port for the node proxy to run on
+  proxyPort: {{ node.proxyPort | default(7654) }}
+
+  # Databases. File databases are files or folders on this machine; they are
+  # mounted read-only in algorithm containers unless `mount_mode` is `copy`, in
+  # which case algorithms get a writable copy. Databases reachable by URI must be
+  # reachable from the algorithm containers, which have no network access unless
+  # whitelisted below; this only works for HTTP(S) services.
+  {% set databases = node.databases | default({}) %}
+  databases:
+    fileBased:
+    {% for db in databases.fileBased | default([]) %}
+    - name: {{ db.name }}
+      type: {{ db.type }}
+      path: {{ db.path }}
+      mount_mode: {{ db.mount_mode | default('ro') }}
+    {% endfor %}
+    serviceBased:
+    {% for db in databases.serviceBased | default([]) %}
+    - name: {{ db.name }}
+      uri: {{ db.uri }}
+      type: {{ db.type }}
+      env: {{ db.env | default({}) | tojson }}
+    {% endfor %}
+
+  # Whether or not your node shares some configuration (e.g. which images are
+  # allowed to run on your node) with HQ. No sensitive data is shared.
+  share_config: {{ node.share_config | default(true) }}
+
+  # Whether or not to share algorithm logs with HQ. Otherwise they will
+  # only be displayed as part of the node logs.
+  # NOTE: It's recommented to set this to false when using sensitive data
+  share_algorithm_logs: {{ node.share_algorithm_logs | default(true) }}
+
+  # Whether the node may fall back to HTTP long-polling for its socket connection
+  # with HQ. Only set this to true if your network does not support websockets.
+  allow_http_polling: {{ node.allow_http_polling | default(false) }}
+
+  # Define who is allowed to run which algorithms on this node.
+  {% set policies = node.policies | default({}) %}
+  policies:
+    {% if policies.allowed_algorithms is defined %}
+    allowed_algorithms:
+      {% for algo in policies.allowed_algorithms %}
+      - {{ algo }}
+      {% endfor %}
+    {% else %}
+    # allowed_algorithms:
+    #   - ^ghcr\.io/vantage6/algorithm/[a-zA-Z]+/[a-zA-Z]+
+    {% endif %}
+    {% if policies.allowed_algorithm_stores is defined %}
+    allowed_algorithm_stores:
+      {% for store in policies.allowed_algorithm_stores %}
+      - {{ store }}
+      {% endfor %}
+    {% else %}
+    # allowed_algorithm_stores:
+    #   - https://store.uluru.vantage6.ai
+    {% endif %}
+    allow_either_whitelist_or_store: {{ policies.allow_either_whitelist_or_store | default(false) }}
+    {% if policies.allowed_users is defined %}
+    allowed_users:
+      {% for user in policies.allowed_users %}
+      - {{ user }}
+      {% endfor %}
+    {% endif %}
+    {% if policies.allowed_organizations is defined %}
+    allowed_organizations:
+      {% for org in policies.allowed_organizations %}
+      - {{ org }}
+      {% endfor %}
+    {% endif %}
+    # Always pull the algorithm image. Set to false to test with local images.
+    require_algorithm_pull: {{ policies.require_algorithm_pull | default(true) }}
+
+  # Prometheus settings, for sending system metadata to HQ.
+  {% set prometheus = node.prometheus | default({}) %}
+  prometheus:
+    enabled: {{ prometheus.enabled | default(false) }}
+    report_interval_seconds: {{ prometheus.report_interval_seconds | default(45) }}
+
+  {% if node.private_docker_registries is defined %}
+  # Private Docker registries to pull algorithm images from.
+  private_docker_registries:
+    {% for registry in node.private_docker_registries %}
+    - registry: {{ registry.registry }}
+      username: {{ registry.username }}
+      password: {{ registry.password }}
+    {% endfor %}
+  {% else %}
+  # private_docker_registries:
+  #   - registry: my-private-registry.com
+  #     username: my-username
+  #     password: my-password
+  {% endif %}
+
+  {% if node.algorithm_env is defined %}
+  # Additional environment variables for the algorithm containers.
+  algorithm_env: {{ node.algorithm_env | tojson }}
+  {% else %}
+  # algorithm_env:
+  #     threshold_example: 10
+  {% endif %}
+
+  # Algorithm containers cannot reach anything but the node proxy. A whitelist lets
+  # the containers of one algorithm step reach HTTP(S) destinations through a proxy
+  # that the node starts. The steps are: data_extraction, preprocessing,
+  # federated_compute, central_compute and postprocessing. Only add destinations
+  # that are absolutely necessary for your algorithm to function.
+  {% if node.whitelist is defined %}
+  whitelist: {{ node.whitelist | tojson }}
+  {% else %}
+  # whitelist:
+  #   data_extraction:
+  #     http:
+  #       domains: [".example.org"]
+  #       ips: ["10.0.0.0/8"]
+  #       ports: [443]
+  {% endif %}
+
+  {% if node.debug is defined %}
+  debug:
+    socketio: {{ node.debug.socketio | default(false) }}
+    proxy_server: {{ node.debug.proxy_server | default(false) }}
+  {% endif %}
+
+  {% if node.dev is defined %}
+  dev:
+    task_dir_extension: {{ node.dev.task_dir_extension }}
+  {% endif %}

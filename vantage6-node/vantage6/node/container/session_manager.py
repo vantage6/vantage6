@@ -35,15 +35,11 @@ class SessionFileManager:
         self.session_name = f"session{self.session_id:09d}"
         self.session_state_file_name = f"{SESSION_STATE_FILENAME}.parquet"
 
-        self.session_folder = os.path.join("sessions", self.session_name)
-        if task_dir_extension:
-            self.local_session_folder = os.path.join(
-                TASK_FILES_ROOT, task_dir_extension, self.session_folder
-            )
-        else:
-            self.local_session_folder = os.path.join(
-                TASK_FILES_ROOT, self.session_folder
-            )
+        # Relative to the root of the task storage, as mounted in the node pod
+        self.session_folder = os.path.join(
+            task_dir_extension or "", "sessions", self.session_name
+        )
+        self.local_session_folder = os.path.join(TASK_FILES_ROOT, self.session_folder)
         os.makedirs(self.local_session_folder, exist_ok=True)
         self.session_state_file = os.path.join(
             self.local_session_folder, self.session_state_file_name

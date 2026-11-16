@@ -35,7 +35,6 @@ class Result(NamedTuple):
     init_org_id: int
 
 
-# Taken from docker_manager.py
 class ToBeKilled(NamedTuple):
     """Data class to store which tasks should be killed"""
 
@@ -44,7 +43,6 @@ class ToBeKilled(NamedTuple):
     organization_id: int
 
 
-# Taken from docker_manager.py
 class KilledRun(NamedTuple):
     """Data class to store which algorithms have been killed"""
 

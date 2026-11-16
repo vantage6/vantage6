@@ -11,9 +11,10 @@ from vantage6.common.globals import InstanceType
 
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.context.node import NodeContext
+from vantage6.cli.deployment import is_docker
 from vantage6.cli.k8s_config import select_k8s_config
 from vantage6.cli.node.common.private_key import (
-    private_key_secret_name,
+    private_key_location,
     read_private_key_secret,
 )
 
@@ -57,7 +58,11 @@ def cli_node_get_private_key(
     to decrypt results. The key is printed, or written to a file that only you can
     read if --to-file is given.
     """
-    k8s_config = select_k8s_config(context=context, namespace=namespace)
+    k8s_config = (
+        None
+        if is_docker(ctx)
+        else select_k8s_config(context=context, namespace=namespace)
+    )
     try:
         pem = read_private_key_secret(ctx, k8s_config)
     except (RuntimeError, ApiException, HTTPError) as e:
@@ -66,10 +71,7 @@ def cli_node_get_private_key(
         sys.exit(1)
 
     if pem is None:
-        error(
-            f"Private key secret '{private_key_secret_name(ctx)}' does not exist in "
-            f"namespace '{k8s_config.namespace}'."
-        )
+        error(f"The node has no private key ({private_key_location(ctx)}).")
         sys.exit(1)
 
     if to_file is None:

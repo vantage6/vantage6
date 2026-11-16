@@ -193,7 +193,11 @@ def get_main_cli_command_name(instance_type: InstanceType) -> str:
 
 
 def check_running(
-    helm_release_name: str, instance_type: InstanceType, name: str, system_folders: bool
+    helm_release_name: str,
+    instance_type: InstanceType,
+    name: str,
+    system_folders: bool,
+    k8s_config: KubernetesConfig | None = None,
 ) -> bool:
     """
     Check if the instance is already running.
@@ -208,6 +212,9 @@ def check_running(
         The name of the instance to check
     system_folders : bool
         Whether to use system folders or not
+    k8s_config : KubernetesConfig, optional
+        Only look in this context and namespace. Otherwise, all namespaces of the
+        current context are searched, which requires cluster-wide permissions.
 
     Returns
     -------
@@ -218,6 +225,7 @@ def check_running(
         instance_type=instance_type,
         only_system_folders=system_folders,
         only_user_folders=not system_folders,
+        k8s_config=k8s_config,
     )
     return helm_release_name in running_services
 

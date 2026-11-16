@@ -21,10 +21,14 @@ from vantage6.common.globals import (
 
 from vantage6.cli.common.new import new
 from vantage6.cli.context.node import NodeContext
+from vantage6.cli.deployment import DOCKER, KUBERNETES, RUNTIMES, is_docker
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
 from vantage6.cli.k8s_config import select_k8s_config
 from vantage6.cli.node.common import create_client_and_authenticate
-from vantage6.cli.node.common.private_key import validate_private_key_pem
+from vantage6.cli.node.common.private_key import (
+    private_key_location,
+    validate_private_key_pem,
+)
 from vantage6.cli.node.create_private_key import (
     create_and_store_private_key,
     get_organization_public_key,
@@ -47,9 +51,17 @@ from vantage6.cli.utils import prompt_config_name
     default=N_FOL,
     help="Store this configuration in the user folders. This is the default.",
 )
+@click.option(
+    "--runtime",
+    type=click.Choice(RUNTIMES),
+    default=KUBERNETES,
+    show_default=True,
+    help="Run the node on Kubernetes or with Docker",
+)
 def cli_node_new_configuration(
     name: str,
     system_folders: bool,
+    runtime: str,
 ) -> None:
     """
     Create a new node configuration.
@@ -63,7 +75,7 @@ def cli_node_new_configuration(
     default_log_dir = str(dirs["log"])
     config = new(
         config_producing_func=node_configuration_questionaire,
-        config_producing_func_args=(default_data_dir, default_log_dir, name),
+        config_producing_func_args=(default_data_dir, default_log_dir, name, runtime),
         name=name,
         system_folders=system_folders,
         type_=InstanceType.NODE,
@@ -75,7 +87,7 @@ def cli_node_new_configuration(
 
 def _offer_private_key_creation(name: str, system_folders: bool) -> None:
     """
-    Offer to set up the node's private key, stored in a Kubernetes secret.
+    Offer to set up the node's private key.
 
     If the organization already has a public key at HQ, the organization's existing
     private key is asked for instead of generating a new one, so that the other nodes
@@ -122,24 +134,27 @@ def _offer_private_key_creation(name: str, system_folders: bool) -> None:
             return
     elif not q.confirm(
         "Encryption is enabled. Create the node's private key now? It will be "
-        "stored in a Kubernetes secret and its public key uploaded to HQ.",
+        f"stored in {private_key_location(ctx)} and its public key uploaded to HQ.",
         default=True,
     ).unsafe_ask():
         warning(later_hint)
         return
 
     try:
-        create_and_store_private_key(ctx, select_k8s_config(), pem=pem, client=client)
+        k8s_config = None if is_docker(ctx) else select_k8s_config()
+        create_and_store_private_key(ctx, k8s_config, pem=pem, client=client)
     except SystemExit:
         warning("The private key could not be stored.")
         warning(later_hint)
 
 
 def node_configuration_questionaire(
-    data_dir: str, log_dir: str, instance_name: str
+    data_dir: str, log_dir: str, instance_name: str, runtime: str = KUBERNETES
 ) -> dict:
     """
     Questionary to generate a config file for the node instance.
+
+    For Kubernetes, the answers are shaped as the values of the node Helm chart.
 
     Parameters
     ----------
@@ -149,15 +164,24 @@ def node_configuration_questionaire(
         Path to the log directory of the node instance.
     instance_name : str
         Name of the node instance.
+    runtime : str
+        Where the node runs: kubernetes or docker
 
     Returns
     -------
     dict
         Dictionary with the new node configuration
     """
-    config = q.unsafe_prompt(
+    docker = runtime == DOCKER
+    answers = q.unsafe_prompt(
         [
             {"type": "text", "name": "api_key", "message": "Enter given api-key:"},
+            {
+                "type": "text",
+                "name": "name",
+                "message": "Name of the node's account at HQ:",
+                "default": instance_name,
+            },
             {
                 "type": "text",
                 "name": "hq_url",
@@ -167,14 +191,12 @@ def node_configuration_questionaire(
         ]
     )
     # remove trailing slash from hq_url if entered by user
-    config["hq_url"] = config["hq_url"].rstrip("/")
+    hq_url = answers["hq_url"].rstrip("/")
 
     # set default port to the https port if hq_url is https
-    default_port = (
-        str(Ports.HTTPS) if config["hq_url"].startswith("https") else str(Ports.DEV_HQ)
-    )
+    default_port = str(Ports.HTTPS) if hq_url.startswith("https") else str(Ports.DEV_HQ)
 
-    config = config | q.unsafe_prompt(
+    answers = answers | q.unsafe_prompt(
         [
             {
                 "type": "text",
@@ -186,16 +208,26 @@ def node_configuration_questionaire(
                 "type": "text",
                 "name": "api_path",
                 "message": "Path of the api:",
-                "default": "/api",
+                "default": "/hq",
             },
             {
                 "type": "text",
-                "name": "task_dir",
-                "message": "Task directory path:",
-                "default": data_dir,
+                "name": "keycloak_url",
+                "message": "URL of the authentication service (Keycloak):",
+                "default": os.environ.get(RequiredNodeEnvVars.KEYCLOAK_URL.value, ""),
             },
         ]
     )
+    config = {
+        "name": answers["name"],
+        "apiKey": answers["api_key"],
+        "hq": {"url": hq_url, "port": answers["port"], "path": answers["api_path"]},
+        "keycloak": {"url": answers["keycloak_url"].rstrip("/")},
+    }
+
+    if not docker:
+        config["persistence"] = {"tasks": _get_task_storage_config()}
+
     config["databases"] = {"fileBased": [], "serviceBased": []}
     while q.confirm("Do you want to add a database?").unsafe_ask():
         db_label = q.select(
@@ -203,7 +235,9 @@ def node_configuration_questionaire(
             choices=["File database", "Database reachable by URI"],
         ).unsafe_ask()
 
-        if db_label == "File database":
+        if db_label == "File database" and docker:
+            config["databases"]["fileBased"].append(_get_docker_file_database_config())
+        elif db_label == "File database":
             config["databases"]["fileBased"].append(_get_file_based_database_config())
         else:
             config["databases"]["serviceBased"].append(
@@ -211,6 +245,12 @@ def node_configuration_questionaire(
             )
 
     config["policies"] = _get_algorithm_policies()
+
+    if docker:
+        config["docker"] = _get_docker_config()
+    else:
+        config["networkPolicy"] = _get_network_policy_config()
+        config.update(_get_resources_config())
 
     res = q.select(
         "Which level of logging would you like?",
@@ -229,15 +269,14 @@ def node_configuration_questionaire(
             {"name": "requests", "level": "warning"},
             {"name": "engineio.client", "level": "warning"},
         ],
-        "volumeHostPath": log_dir,
     }
 
     # Check if we can login to HQ to retrieve collaboration settings
     client = NodeClient(
-        instance_name,
-        config["api_key"],
-        hq_url=f"{config['hq_url']}:{config['port']}{config['api_path']}",
-        auth_url=os.environ.get(RequiredNodeEnvVars.KEYCLOAK_URL.value),
+        answers["name"],
+        answers["api_key"],
+        hq_url=f"{hq_url}:{answers['port']}{answers['api_path']}",
+        auth_url=config["keycloak"]["url"],
     )
     try:
         client.authenticate()
@@ -270,7 +309,137 @@ def node_configuration_questionaire(
     }
 
     # pack the entire config in a dict with the 'node' key at top level
+    if docker:
+        return {"runtime": DOCKER, "node": config}
     return {"node": config}
+
+
+def _get_task_storage_config() -> dict:
+    """
+    Prompt for the PersistentVolumeClaim that the node shares with its algorithm pods.
+    """
+    info(
+        "The node and the algorithms it runs share a PersistentVolumeClaim for the "
+        "input, output and session files of algorithm runs."
+    )
+    if q.confirm(
+        "Use an existing PersistentVolumeClaim for this?", default=False
+    ).unsafe_ask():
+        answers = q.unsafe_prompt(
+            [
+                {"type": "text", "name": "existingClaim", "message": "Claim name:"},
+                {
+                    "type": "text",
+                    "name": "subPath",
+                    "message": "Folder inside the claim (empty for its root):",
+                    "default": "",
+                },
+            ]
+        )
+    else:
+        answers = q.unsafe_prompt(
+            [
+                {
+                    "type": "text",
+                    "name": "storageClass",
+                    "message": "Storage class (empty for the cluster default):",
+                    "default": "",
+                },
+                {
+                    "type": "text",
+                    "name": "size",
+                    "message": "Size of the claim:",
+                    "default": "10Gi",
+                },
+            ]
+        )
+    answers["accessMode"] = q.select(
+        "Which access mode does this storage support? With ReadWriteOnce, algorithms "
+        "run on the same machine as the node.",
+        choices=["ReadWriteOnce", "ReadWriteMany"],
+    ).unsafe_ask()
+    return answers
+
+
+def _get_network_policy_config() -> dict:
+    """
+    Prompt whether the node may create NetworkPolicies to isolate algorithm pods.
+    """
+    if q.confirm(
+        "May the node create Kubernetes NetworkPolicies in its namespace? These "
+        "prevent algorithms from reaching anything but the node.",
+        default=True,
+    ).unsafe_ask():
+        return {"enabled": True, "verifyIsolation": True}
+    warning(
+        "Without NetworkPolicies, your cluster administrator must make sure that "
+        "algorithm pods cannot reach the internet. The node will not verify this."
+    )
+    return {"enabled": False, "verifyIsolation": False}
+
+
+def _get_resources_config() -> dict:
+    """
+    Prompt for resource requests and limits, which some clusters require on every pod.
+    """
+    if not q.confirm(
+        "Does your cluster require resource requests and limits on every pod?",
+        default=False,
+    ).unsafe_ask():
+        return {}
+
+    def ask(target: str, defaults: dict) -> dict:
+        info(f"Resources for {target}:")
+        answers = q.unsafe_prompt(
+            [
+                {
+                    "type": "text",
+                    "name": f"{kind}_{resource}",
+                    "message": f"{kind.capitalize()} {resource}:",
+                    "default": defaults[kind][resource],
+                }
+                for kind in ("requests", "limits")
+                for resource in ("cpu", "memory", "ephemeral-storage")
+            ]
+        )
+        return {
+            kind: {
+                resource: answers[f"{kind}_{resource}"]
+                for resource in ("cpu", "memory", "ephemeral-storage")
+            }
+            for kind in ("requests", "limits")
+        }
+
+    return {
+        "resources": ask(
+            "the node",
+            {
+                "requests": {
+                    "cpu": "250m",
+                    "memory": "1Gi",
+                    "ephemeral-storage": "1Gi",
+                },
+                "limits": {"cpu": "2", "memory": "4Gi", "ephemeral-storage": "4Gi"},
+            },
+        ),
+        "algorithmPods": {
+            "resources": ask(
+                "each algorithm run",
+                {
+                    "requests": {
+                        "cpu": "500m",
+                        "memory": "1Gi",
+                        "ephemeral-storage": "1Gi",
+                    },
+                    "limits": {
+                        "cpu": "4",
+                        "memory": "8Gi",
+                        "ephemeral-storage": "10Gi",
+                    },
+                },
+            )
+        },
+    }
 
 
 def _get_file_based_database_config() -> dict:
@@ -278,25 +447,79 @@ def _get_file_based_database_config() -> dict:
     Prompt the user for the file-based database configuration
     """
     db_label = _get_database_label()
-    while True:
-        db_path = q.text(
-            "Path to the database file:",
-        ).unsafe_ask()
-        if Path(db_path).exists():
-            break
-        else:
-            error("The path to the database file does not exist. Please try again.")
-    db_path_resolved = Path(db_path).resolve()
-    db_dir = db_path_resolved.parent
-    db_filename = db_path_resolved.name
+    info(
+        "File-based databases are read from a PersistentVolumeClaim in the node's "
+        "namespace."
+    )
+    answers = q.unsafe_prompt(
+        [
+            {"type": "text", "name": "existingClaim", "message": "Claim name:"},
+            {
+                "type": "text",
+                "name": "subPath",
+                "message": "Path of the file or folder inside the claim:",
+            },
+        ]
+    )
     db_type = q.select("Database type:", choices=FILE_BASED_DATABASE_TYPES).unsafe_ask()
     return {
         "name": db_label,
-        "uri": db_path,
         "type": db_type,
-        "volumePath": db_dir,
-        "originalName": db_filename,
+        "existingClaim": answers["existingClaim"],
+        "subPath": answers["subPath"],
     }
+
+
+def _get_docker_file_database_config() -> dict:
+    """Prompt for a file or folder database on this machine, for a Docker node."""
+    db_label = _get_database_label()
+    while True:
+        path = Path(q.text("Path of the file or folder:").unsafe_ask()).expanduser()
+        if path.exists():
+            break
+        error(f"'{path}' does not exist. Please try again.")
+    db_type = q.select("Database type:", choices=FILE_BASED_DATABASE_TYPES).unsafe_ask()
+    copy = q.confirm(
+        "Should algorithms get a writable copy of the database instead of read-only "
+        "access? Only needed for algorithms that modify the data.",
+        default=False,
+    ).unsafe_ask()
+    return {
+        "name": db_label,
+        "type": db_type,
+        "path": str(path.resolve()),
+        "mount_mode": "copy" if copy else "ro",
+    }
+
+
+def _get_docker_config() -> dict:
+    """Prompt for the limits of the algorithm containers of a Docker node."""
+    config = {"networkIsolation": {"verify": True}}
+    if q.confirm(
+        "Do you want to limit the CPU and memory each algorithm container may use?",
+        default=True,
+    ).unsafe_ask():
+        answers = q.unsafe_prompt(
+            [
+                {
+                    "type": "text",
+                    "name": "cpus",
+                    "message": "Number of CPUs per algorithm container:",
+                    "default": "4",
+                },
+                {
+                    "type": "text",
+                    "name": "memory",
+                    "message": "Memory per algorithm container (e.g. 8g):",
+                    "default": "8g",
+                },
+            ]
+        )
+        config["algorithmContainers"] = {
+            "cpus": float(answers["cpus"]),
+            "memory": answers["memory"],
+        }
+    return config
 
 
 def _get_service_based_database_config() -> dict:

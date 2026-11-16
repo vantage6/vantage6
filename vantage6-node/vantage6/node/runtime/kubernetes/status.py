@@ -15,7 +15,7 @@ from vantage6.common.enum import RunStatus
 POST_PENDING_K8S_PHASE_TO_V6_STATUS_MAP: dict[str, RunStatus] = {
     "Running": RunStatus.ACTIVE,
     "Failed": RunStatus.FAILED,
-    "Succeded": RunStatus.COMPLETED,
+    "Succeeded": RunStatus.COMPLETED,
     "Unknown": RunStatus.UNKNOWN_ERROR,
 }
 
@@ -91,7 +91,7 @@ def compute_run_pod_status(
             - RunStatus.INITIALIZING: If the pod is still initializing.
             - RunStatus.UNKNOWN_ERROR: If the pod is in an unexpected or unknown state.
             - RunStatus.COMPLETED: Not expected to happen but still possible: the task
-              pod is reported as Succeded shortly after being created.
+              pod is reported as Succeeded shortly after being created.
 
 
     """

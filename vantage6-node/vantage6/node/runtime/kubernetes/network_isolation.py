@@ -1,5 +1,6 @@
 import time
 import uuid
+from collections.abc import Callable
 from logging import Logger
 
 from kubernetes import client as k8s_client
@@ -9,26 +10,32 @@ from vantage6.common.enum import AlgorithmStepType
 
 from vantage6.node.globals import (
     ISOLATION_PROBE_CANDIDATES,
-    ISOLATION_PROBE_CURL_MAX_TIME_SECONDS,
     ISOLATION_PROBE_IMAGE,
     ISOLATION_PROBE_TIMEOUT_SECONDS,
 )
+from vantage6.node.runtime.probe import probe_args
 
 
-def _build_probe_command() -> list[str]:
+def _probe_containers(
+    image: str, build_container: Callable[..., k8s_client.V1Container]
+) -> list[k8s_client.V1Container]:
     """
-    Build a shell command that tries every probe candidate in turn, stopping as
-    soon as one succeeds.
+    One container per probe candidate, each trying to reach it.
 
     Probing all candidates - rather than trusting a single one - avoids
     mistaking a blocked proxy or a single unreachable domain for network
-    isolation.
+    isolation. Each candidate gets its own container because the hardened curl
+    image has no shell to chain the attempts.
     """
-    checks = " || ".join(
-        f"curl -s -o /dev/null --max-time {ISOLATION_PROBE_CURL_MAX_TIME_SECONDS} {url}"
-        for url in ISOLATION_PROBE_CANDIDATES
-    )
-    return ["sh", "-c", checks]
+    return [
+        build_container(
+            name=f"probe-{idx}",
+            image=image,
+            command=["curl"],
+            args=probe_args(url),
+        )
+        for idx, url in enumerate(ISOLATION_PROBE_CANDIDATES)
+    ]
 
 
 def _wait_for_probe_pod(
@@ -57,20 +64,29 @@ def _probe_pod_reached_target(pod: k8s_client.V1Pod) -> bool:
     if not pod.status or not pod.status.container_statuses:
         return False
 
-    state = pod.status.container_statuses[0].state
-    if state and state.terminated is not None:
-        return state.terminated.exit_code == 0
-
-    return False
+    return any(
+        status.state
+        and status.state.terminated is not None
+        and status.state.terminated.exit_code == 0
+        for status in pod.status.container_statuses
+    )
 
 
 def validate_algorithm_isolation(
     core_api: k8s_client.CoreV1Api,
     task_namespace: str,
     log: Logger,
+    labels: dict[str, str] | None = None,
+    build_pod_spec: Callable[[list], k8s_client.V1PodSpec] | None = None,
+    build_container: Callable[..., k8s_client.V1Container] | None = None,
+    image: str = ISOLATION_PROBE_IMAGE,
 ) -> tuple[bool, str]:
     """
     Verify that central_compute pods cannot reach the public internet.
+
+    ``labels``, ``build_pod_spec`` and ``build_container`` make the probe pod look
+    like a central_compute algorithm pod, so that the same network policies,
+    resources and security settings apply to it.
 
     Returns
     -------
@@ -78,6 +94,18 @@ def validate_algorithm_isolation(
         (is_isolated, message) where is_isolated is True when egress to all
         probe targets is blocked.
     """
+    if labels is None:
+        labels = {
+            "role": AlgorithmStepType.CENTRAL_COMPUTE.value,
+            "app": "v6-isolation-probe",
+        }
+    if build_container is None:
+        build_container = k8s_client.V1Container
+    if build_pod_spec is None:
+
+        def build_pod_spec(containers: list) -> k8s_client.V1PodSpec:
+            return k8s_client.V1PodSpec(restart_policy="Never", containers=containers)
+
     pod_name = "v6-isolation-probe-" + str(uuid.uuid4())[:8]
     log.info(
         "Running algorithm network isolation probe in namespace '%s' using %s",
@@ -89,23 +117,8 @@ def validate_algorithm_isolation(
         core_api.create_namespaced_pod(
             namespace=task_namespace,
             body=k8s_client.V1Pod(
-                metadata=k8s_client.V1ObjectMeta(
-                    name=pod_name,
-                    labels={
-                        "role": AlgorithmStepType.CENTRAL_COMPUTE.value,
-                        "app": "v6-isolation-probe",
-                    },
-                ),
-                spec=k8s_client.V1PodSpec(
-                    restart_policy="Never",
-                    containers=[
-                        k8s_client.V1Container(
-                            name="probe",
-                            image=ISOLATION_PROBE_IMAGE,
-                            command=_build_probe_command(),
-                        )
-                    ],
-                ),
+                metadata=k8s_client.V1ObjectMeta(name=pod_name, labels=labels),
+                spec=build_pod_spec(_probe_containers(image, build_container)),
             ),
         )
     except ApiException as exc:

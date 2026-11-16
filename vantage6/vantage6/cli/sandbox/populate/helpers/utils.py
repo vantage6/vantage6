@@ -8,8 +8,10 @@ from vantage6.common.kubernetes.utils import running_on_windows
 class NodeConfigCreationDetails:
     node_starting_port_number: int
     dev_dir: Path
-    task_directory: str
-    task_namespace: str
+    # Claim with the task files, mounted at the same root by all dev nodes
+    task_claim_name: str
+    # Helm release of the pod the dev nodes run in
+    release_name: str
     prometheus_enabled: bool = False
 
 

@@ -77,13 +77,16 @@ def prestart_checks(
     instance_type: InstanceType,
     name: str,
     system_folders: bool,
+    k8s_config: KubernetesConfig | None = None,
 ) -> None:
     """
     Run pre-start checks for an instance.
     """
     check_config_name_allowed(name)
 
-    if check_running(ctx.helm_release_name, instance_type, name, system_folders):
+    if check_running(
+        ctx.helm_release_name, instance_type, name, system_folders, k8s_config
+    ):
         error(f"Instance '{name}' is already running.")
         sys.exit(1)
 
@@ -165,10 +168,10 @@ def helm_install(
     if values_file:
         command.extend(["-f", str(values_file)])
 
-    if k8s_config.context:
+    if k8s_config and k8s_config.context:
         command.extend(["--kube-context", k8s_config.context])
 
-    if k8s_config.namespace:
+    if k8s_config and k8s_config.namespace:
         command.extend(["--namespace", k8s_config.namespace])
 
     if custom_values:

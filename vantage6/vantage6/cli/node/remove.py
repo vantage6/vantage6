@@ -11,6 +11,8 @@ from vantage6.common.globals import InstanceType
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.remove import execute_remove
 from vantage6.cli.context.node import NodeContext
+from vantage6.cli.deployment import is_docker
+from vantage6.cli.deployment.docker import DockerNodeDeployment
 from vantage6.cli.globals import InfraComponentName
 from vantage6.cli.k8s_config import select_k8s_config
 from vantage6.cli.node.common.private_key import (
@@ -47,15 +49,28 @@ def cli_node_remove(
     the node, including the Kubernetes secret with the node's private key.
     """
 
+    docker = DockerNodeDeployment(ctx) if is_docker(ctx) else None
     execute_remove(
-        ctx, InstanceType.NODE, InfraComponentName.NODE, name, system_folders, force
+        ctx,
+        InstanceType.NODE,
+        InfraComponentName.NODE,
+        name,
+        system_folders,
+        force,
+        is_running=docker.is_running() if docker else None,
     )
 
-    # remove the folder: if it hasn't been started yet this won't exist...
+    if docker:
+        # Leftover algorithm containers, helpers and networks
+        docker.cleanup_runs()
+
+    # remove the folder: if it hasn't been started yet this won't exist. For a Docker
+    # node this includes its private key.
     if Path.exists(ctx.config_dir / name):
         rmtree(ctx.config_dir / name)
 
-    _remove_private_key_secret(ctx, context, namespace)
+    if not docker:
+        _remove_private_key_secret(ctx, context, namespace)
 
 
 def _remove_private_key_secret(

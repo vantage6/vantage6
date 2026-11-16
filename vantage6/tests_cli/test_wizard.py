@@ -1,13 +1,23 @@
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from vantage6.common.globals import FILE_BASED_DATABASE_TYPES, InstanceType, NodePolicy
+import yaml
+from jinja2 import Environment, FileSystemLoader
+
+from vantage6.common.globals import (
+    APPNAME,
+    FILE_BASED_DATABASE_TYPES,
+    InstanceType,
+    NodePolicy,
+)
 
 from vantage6.cli.configuration_create import (
     make_configuration,
     select_configuration_questionnaire,
 )
+from vantage6.cli.globals import PACKAGE_FOLDER
 from vantage6.cli.hq.new import hq_configuration_questionaire
 from vantage6.cli.node.new import (
     _get_algorithm_policies,
@@ -15,6 +25,42 @@ from vantage6.cli.node.new import (
 )
 
 module_path = "vantage6.cli.configuration_create"
+
+
+class _ScriptedQuestionary:
+    """
+    Stand-in for the questionary module. Prompts are answered from ``prompts`` or
+    their defaults; confirm, select and text questions from their queues in order.
+    """
+
+    def __init__(self, prompts: dict, confirms: list, selects: list, texts: list):
+        self.prompts = prompts
+        self.confirms = list(confirms)
+        self.selects = list(selects)
+        self.texts = list(texts)
+
+    def unsafe_prompt(self, questions: list[dict]) -> dict:
+        return {
+            question["name"]: self.prompts.get(
+                question["name"], question.get("default")
+            )
+            for question in questions
+        }
+
+    @staticmethod
+    def _answer(queue: list) -> MagicMock:
+        question = MagicMock()
+        question.unsafe_ask.side_effect = lambda: queue.pop(0)
+        return question
+
+    def confirm(self, *args, **kwargs) -> MagicMock:
+        return self._answer(self.confirms)
+
+    def select(self, *args, **kwargs) -> MagicMock:
+        return self._answer(self.selects)
+
+    def text(self, *args, **kwargs) -> MagicMock:
+        return self._answer(self.texts)
 
 
 class WizardTest(unittest.TestCase):
@@ -32,63 +78,182 @@ class WizardTest(unittest.TestCase):
                     result[name] = None
         return result
 
-    @patch("vantage6.cli.node.new.q")
     @patch("vantage6.cli.node.new.NodeClient.authenticate")
-    def test_node_wizard(self, authenticate, q):
-        """Check the node wizard runs without errors."""
-        q.unsafe_prompt.side_effect = self.prompts
-        q.confirm.return_value.unsafe_ask.side_effect = [
-            True,  # add a database
-            "Database reachable by URI",  # type of database to add
-            "http://localhost:5000",  # URI of database
-            FILE_BASED_DATABASE_TYPES[0],  # type of database
-            False,  # don't add environment variables
-            False,  # don't add another database
-            True,  # add list of allowed_algorithms
-            "some-image",  # algorithm image to whitelist
-            False,  # don't add another algorithm image
-            True,  # add algorithm stores to allowed_algorithm_stores
-            "some-store",  # algorithm store to whitelist
-            False,  # don't add another algorithm store
-            False,  # answer question on combining policies on store level and
-            # single algorithm level
-            "DEBUG",  # level of logging
-            True,  # Enable encryption
-        ]
-        authenticate.side_effect = None
-        config = node_configuration_questionaire(
-            data_dir="/data", instance_name="iknl", log_dir="/log"
+    def test_node_wizard(self, authenticate):
+        """The node wizard produces values for the node Helm chart."""
+        config = self._run_node_wizard(authenticate)
+
+        node = config["node"]
+        self.assertEqual(node["name"], "iknl")
+        self.assertEqual(node["apiKey"], "my-api-key")
+        self.assertEqual(node["hq"]["url"], "https://hq.example.org")
+        self.assertEqual(node["keycloak"]["url"], "https://auth.example.org")
+        self.assertEqual(
+            node["persistence"]["tasks"],
+            {"storageClass": "cephfs", "size": "10Gi", "accessMode": "ReadWriteMany"},
+        )
+        self.assertEqual(
+            node["databases"]["fileBased"],
+            [
+                {
+                    "name": "default",
+                    "type": FILE_BASED_DATABASE_TYPES[0],
+                    "existingClaim": "hospital-data",
+                    "subPath": "exports/data.csv",
+                }
+            ],
+        )
+        self.assertEqual(
+            node["networkPolicy"], {"enabled": False, "verifyIsolation": False}
+        )
+        self.assertEqual(node["resources"]["limits"]["memory"], "4Gi")
+        self.assertEqual(
+            node["algorithmPods"]["resources"]["requests"]["ephemeral-storage"], "1Gi"
+        )
+        self.assertEqual(
+            node["policies"][NodePolicy.ALLOWED_ALGORITHMS.value], ["some-image"]
+        )
+        self.assertTrue(node["encryption"]["enabled"])
+        for key in ("task_dir", "api_key", "hq_url", "taskNamespace"):
+            self.assertNotIn(key, node)
+        self.assertNotIn("volumeHostPath", node["logging"])
+        # the private key lives in a Kubernetes secret, not in the configuration
+        self.assertNotIn("private_key", node["encryption"])
+
+    @patch("vantage6.cli.node.new.NodeClient.authenticate")
+    def test_node_wizard_output_renders_chart_values(self, authenticate):
+        """The wizard's answers render to a values file without host paths."""
+        config = self._run_node_wizard(authenticate)
+
+        environment = Environment(
+            loader=FileSystemLoader(PACKAGE_FOLDER / APPNAME / "cli" / "template"),
+            trim_blocks=True,
+            lstrip_blocks=True,
+            autoescape=True,
+        )
+        values = yaml.safe_load(
+            environment.get_template("node_config.j2").render(config)
         )
 
-        keys = [
-            "api_key",
-            "api_path",
-            "databases",
-            "encryption",
-            "logging",
-            "port",
-            "hq_url",
-            "task_dir",
-        ]
-        for key in keys:
-            self.assertIn(key, config["node"])
-        nested_keys = [
-            ["policies", NodePolicy.ALLOWED_ALGORITHMS.value],
-            ["policies", NodePolicy.ALLOWED_ALGORITHM_STORES.value],
-            ["encryption", "enabled"],
-            ["logging", "loggers"],
-            ["databases", "fileBased"],
-            ["databases", "serviceBased"],
-        ]
-        for nesting in nested_keys:
-            current_config = config["node"]
-            for key in nesting:
-                self.assertIn(key, current_config)
-                current_config = current_config[key]
-        assert len(config["node"]["databases"]["fileBased"]) == 0
-        assert len(config["node"]["databases"]["serviceBased"]) == 1
-        # the private key lives in a Kubernetes secret, not in the configuration
-        self.assertNotIn("private_key", config["node"]["encryption"])
+        node = values["node"]
+        self.assertEqual(node["apiKey"], "my-api-key")
+        self.assertEqual(node["keycloak"]["url"], "https://auth.example.org")
+        self.assertEqual(node["persistence"]["tasks"]["storageClass"], "cephfs")
+        self.assertEqual(node["persistence"]["tasks"]["accessMode"], "ReadWriteMany")
+        self.assertNotIn("hostPath", node["persistence"]["tasks"])
+        self.assertNotIn("database", node["persistence"])
+        self.assertNotIn("k8sNodeName", node)
+        self.assertNotIn("taskNamespace", node)
+        self.assertNotIn("volumeHostPath", node["logging"])
+        self.assertEqual(node["logging"]["storageClass"], "")
+        self.assertEqual(
+            node["databases"]["fileBased"][0]["existingClaim"], "hospital-data"
+        )
+        self.assertNotIn("volumePath", node["databases"]["fileBased"][0])
+        self.assertFalse(node["networkPolicy"]["enabled"])
+        self.assertEqual(node["networkPolicy"]["dns"]["ports"], [53])
+        self.assertEqual(node["resources"]["limits"]["cpu"], "2")
+        self.assertEqual(node["algorithmPods"]["ttlSecondsAfterFinished"], 86400)
+        self.assertEqual(node["algorithmPods"]["resources"]["limits"]["memory"], "8Gi")
+
+    @patch("vantage6.cli.node.new.NodeClient.authenticate")
+    def test_docker_node_wizard(self, authenticate):
+        """A Docker node gets host paths and container limits, no Kubernetes keys."""
+        authenticate.side_effect = None
+        with tempfile.TemporaryDirectory() as tmp:
+            db = Path(tmp) / "data.csv"
+            db.write_text("a\n1\n")
+            fake_q = _ScriptedQuestionary(
+                prompts={
+                    "api_key": "my-api-key",
+                    "hq_url": "https://hq.example.org",
+                    "keycloak_url": "https://auth.example.org",
+                    "memory": "2g",
+                },
+                confirms=[
+                    True,  # add a database
+                    False,  # read-only access, no copy
+                    False,  # don't add another database
+                    True,  # add list of allowed_algorithms
+                    False,  # don't add another algorithm image
+                    False,  # no algorithm stores
+                    True,  # limit algorithm containers
+                    False,  # no encryption
+                ],
+                selects=[
+                    "File database",
+                    FILE_BASED_DATABASE_TYPES[0],
+                    "INFO",
+                ],
+                texts=["default", str(db), "some-image"],
+            )
+            with patch("vantage6.cli.node.new.q", fake_q):
+                config = node_configuration_questionaire(
+                    data_dir="/data",
+                    instance_name="iknl",
+                    log_dir="/log",
+                    runtime="docker",
+                )
+            self.assertFalse(fake_q.confirms or fake_q.selects or fake_q.texts)
+
+        self.assertEqual(config["runtime"], "docker")
+        node = config["node"]
+        self.assertEqual(
+            node["databases"]["fileBased"],
+            [
+                {
+                    "name": "default",
+                    "type": FILE_BASED_DATABASE_TYPES[0],
+                    "path": str(db.resolve()),
+                    "mount_mode": "ro",
+                }
+            ],
+        )
+        self.assertEqual(
+            node["docker"]["algorithmContainers"], {"cpus": 4.0, "memory": "2g"}
+        )
+        for key in ("persistence", "networkPolicy", "resources", "algorithmPods"):
+            self.assertNotIn(key, node)
+
+    def _run_node_wizard(self, authenticate) -> dict:
+        authenticate.side_effect = None
+        fake_q = _ScriptedQuestionary(
+            prompts={
+                "api_key": "my-api-key",
+                "hq_url": "https://hq.example.org/",
+                "keycloak_url": "https://auth.example.org",
+                "storageClass": "cephfs",
+                "existingClaim": "hospital-data",
+                "subPath": "exports/data.csv",
+            },
+            confirms=[
+                False,  # no existing claim for the task files
+                True,  # add a database
+                False,  # don't add another database
+                True,  # add list of allowed_algorithms
+                False,  # don't add another algorithm image
+                False,  # no algorithm stores
+                False,  # may not create NetworkPolicies
+                True,  # cluster requires resource requests and limits
+                True,  # enable encryption (HQ cannot be asked, authentication is mocked)
+            ],
+            selects=[
+                "ReadWriteMany",  # access mode of the task storage
+                "File database",  # type of database to add
+                FILE_BASED_DATABASE_TYPES[0],  # type of file database
+                "DEBUG",  # level of logging
+            ],
+            texts=[
+                "default",  # database label
+                "some-image",  # allowed algorithm
+            ],
+        )
+        with patch("vantage6.cli.node.new.q", fake_q):
+            config = node_configuration_questionaire(
+                data_dir="/data", instance_name="iknl", log_dir="/log"
+            )
+        self.assertFalse(fake_q.confirms or fake_q.selects or fake_q.texts)
+        return config
 
     @patch("vantage6.cli.node.new.error")
     @patch("vantage6.cli.node.new._get_allowed_algorithm_stores")

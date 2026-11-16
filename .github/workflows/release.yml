@@ -398,6 +398,7 @@ jobs:
           docker pull ghcr.io/vantage6/infrastructure/algorithm-store:${version}
           docker pull ghcr.io/vantage6/infrastructure/ui:${version}
           docker pull ghcr.io/vantage6/infrastructure/alpine:${version}
+          docker pull ghcr.io/vantage6/infrastructure/squid:${version}
 
       - name: Tag docker images
         # Tag the images with major name for any new release, except prereleases. Only
@@ -439,6 +440,8 @@ jobs:
         run: |
           docker tag ghcr.io/vantage6/infrastructure/alpine:${version} ghcr.io/vantage6/infrastructure/alpine:${major}.${minor}
           docker push ghcr.io/vantage6/infrastructure/alpine:${major}.${minor}
+          docker tag ghcr.io/vantage6/infrastructure/squid:${version} ghcr.io/vantage6/infrastructure/squid:${major}.${minor}
+          docker push ghcr.io/vantage6/infrastructure/squid:${major}.${minor}
 
   # Build an release all the vantage6 infrastructure packages. For all
   # the packages it will (1) update the version as specified in the tag,

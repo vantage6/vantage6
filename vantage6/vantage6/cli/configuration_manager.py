@@ -10,6 +10,7 @@ from vantage6.cli.globals import (
     AUTH_TEMPLATE_FILE,
     HQ_TEMPLATE_FILE,
     HUB_TEMPLATE_FILE,
+    NODE_DOCKER_TEMPLATE_FILE,
     NODE_TEMPLATE_FILE,
 )
 
@@ -121,6 +122,8 @@ class NodeConfigurationManager(ConfigurationManager):
         """
         Get the configuration template for the node.
         """
+        if self.config.get("runtime") == "docker":
+            return super()._get_config_template(NODE_DOCKER_TEMPLATE_FILE)
         return super()._get_config_template(NODE_TEMPLATE_FILE)
 
 

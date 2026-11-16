@@ -39,7 +39,6 @@ vars:
   NUMBER_OF_NODES:
     question: "How many nodes do you want to create for your development environment?"
     default: 3
-  TASK_NAMESPACE: vantage6-tasks
   HQ_DATABASE_MOUNT_PATH: ${HOST_DATA_PATH}/.db/db_pv_hq
   STORE_DATABASE_MOUNT_PATH: ${HOST_DATA_PATH}/.db/db_pv_store
   AUTH_DATABASE_MOUNT_PATH: ${HOST_DATA_PATH}/.db/db_pv_auth
@@ -82,8 +81,6 @@ pipelines:
     run: |-
       python dev/populate.py \
         --number-of-nodes $NUMBER_OF_NODES \
-        --task-directory $TASK_DIRECTORY \
-        --task-namespace $TASK_NAMESPACE \
         --starting-port-number $NODE_PROXY_STARTING_PORT_NUMBER \
         --populate-marker $POPULATE_MARKER \
         --prometheus-enabled
@@ -163,7 +160,7 @@ pipelines:
       purge_deployments --all
       run_dependencies --all --pipeline purge
       dev/purge_keycloak_storage.sh
-      python dev/cleanup_task_jobs.py --namespace ${TASK_NAMESPACE}
+      python dev/cleanup_task_jobs.py --namespace ${CURRENT_NAMESPACE}
       dev/purge_data.sh \
         ${POPULATE_MARKER} \
         ${TASK_DIRECTORY} \
@@ -184,11 +181,6 @@ hooks:
     command: |
       echo "Creating tasks folder"
       python dev/create_mount_directory.py ${TASK_DIRECTORY}
-    events: ["before:deploy:vantage6-node"]
-  - name: "ensure-tasks-namespace"
-    command: |
-      echo "Ensuring tasks namespace '${TASK_NAMESPACE}' exists"
-      kubectl get namespace "${TASK_NAMESPACE}" >/dev/null 2>&1 || kubectl create namespace "${TASK_NAMESPACE}"
     events: ["before:deploy:vantage6-node"]
   - name: "create-hq-database-folder"
     command: |

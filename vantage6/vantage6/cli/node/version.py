@@ -1,7 +1,6 @@
 import sys
 
 import click
-from kubernetes.config.config_exception import ConfigException
 from kubernetes.stream import stream
 
 from vantage6.common import error, info
@@ -12,6 +11,8 @@ from vantage6.cli.common.utils import (
     extract_name_and_is_sandbox,
 )
 from vantage6.cli.common.version import get_and_select_ctx
+from vantage6.cli.deployment import docker_node_context
+from vantage6.cli.deployment.docker import DockerNodeDeployment
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
 from vantage6.cli.k8s_config import KubernetesConfig, select_k8s_config
 from vantage6.cli.utils_kubernetes import get_core_api_with_ssl_handling
@@ -48,10 +49,22 @@ def cli_node_version(
     if is_sandbox:
         system_folders = False
 
+    if ctx := docker_node_context(name, system_folders, is_sandbox):
+        version = DockerNodeDeployment(ctx).exec(["vnode-local", "version"]).strip()
+        info("")
+        info(f"Node version: {version}")
+        info(f"CLI version: {__version__}")
+        return
+
     k8s_config = select_k8s_config(context=context, namespace=namespace)
 
     ctx = get_and_select_ctx(
-        InstanceType.NODE, name, system_folders, k8s_config, is_sandbox
+        InstanceType.NODE,
+        name,
+        system_folders,
+        k8s_config.context,
+        k8s_config.namespace,
+        is_sandbox,
     )
     version = _get_node_version_from_k8s(ctx.helm_release_name, k8s_config)
     info("")
@@ -69,7 +82,7 @@ def _get_node_version_from_k8s(
     pod = _get_pod_name_for_helm_release(helm_release, k8s_config)
     output = _exec_pod_command(
         pod_name=pod,
-        namespace=k8s_config.namespace,
+        k8s_config=k8s_config,
         command=["vnode-local", "version"],
     )
     return output.strip()
@@ -83,16 +96,7 @@ def _get_pod_name_for_helm_release(
     Returns the first pod name for a given Helm release in a namespace.
     Looks up pods using the standard Helm label 'app.kubernetes.io/instance'.
     """
-    try:
-        # Load kubeconfig (context optional). Falls back to in-cluster if not available.
-        try:
-            k8s_config.load_kube_config(context=k8s_config.context)  # desktop/dev
-        except ConfigException:
-            k8s_config.load_incluster_config()  # in-cluster
-    except ConfigException as exc:
-        raise RuntimeError(f"Failed to load Kubernetes config: {exc}") from exc
-
-    core = get_core_api_with_ssl_handling()
+    core = get_core_api_with_ssl_handling(context=k8s_config.context)
     selector = f"app={APPNAME}-node,release={helm_release}"
     pods = core.list_namespaced_pod(
         namespace=k8s_config.namespace, label_selector=selector
@@ -114,17 +118,17 @@ def _get_pod_name_for_helm_release(
 
 def _exec_pod_command(
     pod_name: str,
-    namespace: str,
+    k8s_config: KubernetesConfig,
     command: list[str],
 ) -> str:
     """
     Executes a command inside the specified pod (and optional container) and returns stdout.
     """
-    core = get_core_api_with_ssl_handling()
+    core = get_core_api_with_ssl_handling(context=k8s_config.context)
     resp = stream(
         core.connect_get_namespaced_pod_exec,
         pod_name,
-        namespace,
+        k8s_config.namespace,
         command=command,
         stderr=True,
         stdin=False,

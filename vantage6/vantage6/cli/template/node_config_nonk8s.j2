@@ -22,10 +22,13 @@ logging:
 node_proxy_port: {{ node_proxy_port }}
 port: {{ port }}
 hq_url: {{ hq_url }}
-task_dir: {{ task_dir}}
+release_name: {{ release_name }}
+task_storage:
+  claim_name: {{ task_claim_name }}
+  sub_path: ""
+  colocate_with_node: false
 dev:
   task_dir_extension: {{ task_dir_extension }}
-task_namespace: {{ task_namespace }}
 prometheus:
   enabled: {{ prometheus_enabled }}
   report_interval_seconds: 45

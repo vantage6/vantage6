@@ -1,5 +1,9 @@
 # Note that commented-out values should be provided. No default values are provided
 # because that would not be secure.
+#
+# Everything this chart creates lives in the release namespace: the node, the jobs that
+# run algorithms, their storage and network policies. No cluster-scoped resources are
+# created unless the dev-only host path settings below are used.
 node:
   createSecrets: true
 
@@ -19,11 +23,50 @@ node:
 
   image: ghcr.io/vantage6/infrastructure/node:uluru
 
-  taskNamespace: vantage6-tasks
-  manageTaskNamespace: true
-  k8sNodeName: docker-desktop
+  # Development only: name of the Kubernetes machine that holds the host path volumes
+  # (see `persistence.tasks.hostPath`). Leave empty on any shared or managed cluster.
+  k8sNodeName: ""
+
+  # Service account of the node pod. It is bound to a Role that lets it manage the jobs,
+  # pods and secrets of algorithm runs in the release namespace.
+  serviceAccount:
+    create: true
+    # name: my-existing-service-account
+
+  # Pod scheduling and security settings of the node pod. Some clusters reject pods
+  # without resource requests and limits.
+  resources: {}
+  # resources:
+  #   requests: {cpu: 250m, memory: 1Gi, ephemeral-storage: 1Gi}
+  #   limits: {cpu: "2", memory: 4Gi, ephemeral-storage: 4Gi}
+  podSecurityContext: {}
+  securityContext: {}
+  runtimeClassName: ""
+
+  # Settings for the pods (Kubernetes jobs) that run algorithms. These also apply to the
+  # short-lived pods the node starts to check its permissions and network isolation.
+  algorithmPods:
+    resources: {}
+    # resources:
+    #   requests: {cpu: 500m, memory: 1Gi, ephemeral-storage: 1Gi}
+    #   limits: {cpu: "4", memory: 8Gi, ephemeral-storage: 10Gi}
+    # Remove finished jobs after this many seconds, even if the node did not do so
+    # itself (for example because it was offline). Set to null to disable.
+    ttlSecondsAfterFinished: 86400
+    # Service account to run algorithm pods with. Its API token is never mounted.
+    serviceAccountName: ""
+    runtimeClassName: ""
+    podSecurityContext: {}
+    securityContext: {}
 
   databases:
+    # File-based databases are read from an existing PersistentVolumeClaim in the
+    # release namespace, e.g.
+    #   - name: my-csv
+    #     type: csv
+    #     existingClaim: hospital-data
+    #     subPath: exports/my-data.csv   # file or folder inside the claim
+    #     mount_mode: ro                 # ro (default), rw or copy
     fileBased: []
     serviceBased: []
 
@@ -34,9 +77,17 @@ node:
     use_console: true
     datefmt: "%Y-%m-%d %H:%M:%S"
     format: "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
-    storageSize: "128M"
-    storageClass: "local-storage"
-    volumeHostPath: "/var/log/vantage6-node"
+    # Store log files on a PersistentVolumeClaim. If false, logs are only kept for the
+    # lifetime of the pod (console logging is unaffected).
+    persistent: true
+    # Use an existing claim instead of creating one.
+    existingClaim: ""
+    # Many clusters refuse claims smaller than 1Gi.
+    storageSize: "1Gi"
+    # Empty uses the cluster's default storage class.
+    storageClass: ""
+    # Development only: store logs in this directory on `k8sNodeName`.
+    volumeHostPath: ""
     backup_count: 5
     loggers:
     - level: warning
@@ -61,13 +112,38 @@ node:
     require_algorithm_pull: true
 
   persistence:
+    # Storage shared by the node and its algorithm pods: input, output and session
+    # files of algorithm runs. Each algorithm pod only mounts the files of its own run.
     tasks:
-      storageClass: local-storage
+      # Use an existing claim instead of creating one.
+      existingClaim: ""
+      # Folder inside the claim to use. Empty uses the root of the claim.
+      subPath: ""
+      # Empty uses the cluster's default storage class.
+      storageClass: ""
+      # ReadWriteOnce: algorithm pods are scheduled on the same machine as the node.
+      # ReadWriteMany: algorithm pods can run on any machine.
+      accessMode: ReadWriteOnce
       size: 10Gi
+      # Development only: store task files in this directory on `k8sNodeName`.
       # hostPath: /path/to/where/task/files/are/stored
-    database:
-      storageClass: local-storage
-      size: 5Gi
+
+  # Network policies that isolate algorithm pods: they may only reach the node proxy and
+  # DNS, plus anything added in `whitelist`.
+  networkPolicy:
+    enabled: true
+    # Check at startup that algorithm pods cannot reach the internet. With
+    # `production: true`, the node refuses to start if they can. Only disable this when
+    # the cluster administrator enforces isolation in another way.
+    verifyIsolation: true
+    # Where the cluster DNS runs. On OpenShift use namespace `openshift-dns`, ports
+    # [5353].
+    dns:
+      namespace: kube-system
+      ports: [53]
+    # Image used for the isolation check. Defaults to the curl image published with
+    # vantage6.
+    probeImage: ""
 
   share_config: true
 

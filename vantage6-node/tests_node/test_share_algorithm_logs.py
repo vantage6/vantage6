@@ -4,8 +4,8 @@ from unittest.mock import Mock, patch
 from vantage6.common.enum import RunStatus
 
 from vantage6.node import Node
-from vantage6.node.k8s.container_manager import ContainerManager
-from vantage6.node.k8s.data_classes import KilledRun, Result
+from vantage6.node.container.container_manager import ContainerManager
+from vantage6.node.container.data_classes import KilledRun, Result
 
 
 class TestContainerManagerLogSharing(unittest.TestCase):
@@ -14,39 +14,21 @@ class TestContainerManagerLogSharing(unittest.TestCase):
         manager.log = Mock()
         manager.share_algorithm_logs = share_algorithm_logs
         manager.socket_io = Mock()
-        manager.client = Mock()
-        manager.client.collaboration_id = 7
-        manager.task_namespace = "test-namespace"
-        manager.core_api = Mock()
-        pod = Mock()
-        pod.metadata = Mock()
-        pod.metadata.name = "pod-1"
-        manager.core_api.list_namespaced_pod.return_value.items = [pod]
+        manager.runtime = Mock()
+        manager.runtime.stream_logs.return_value = iter(["hello from algorithm"])
         return manager
 
     def test_log_stream_does_not_emit_when_sharing_disabled(self):
         manager = self._make_manager(False)
         run_io = Mock(run_id=42, container_name="algo-container")
-        fake_watch = Mock()
-        fake_watch.stream.return_value = ["hello from algorithm"]
-
-        with patch(
-            "vantage6.node.k8s.container_manager.watch.Watch", return_value=fake_watch
-        ):
-            manager._ContainerManager__log_stream(run_io=run_io)
+        manager._ContainerManager__log_stream(run_io=run_io)
 
         manager.socket_io.emit.assert_not_called()
 
     def test_log_stream_emits_when_sharing_enabled(self):
         manager = self._make_manager(True)
         run_io = Mock(run_id=42, container_name="algo-container")
-        fake_watch = Mock()
-        fake_watch.stream.return_value = ["hello from algorithm"]
-
-        with patch(
-            "vantage6.node.k8s.container_manager.watch.Watch", return_value=fake_watch
-        ):
-            manager._ContainerManager__log_stream(run_io=run_io)
+        manager._ContainerManager__log_stream(run_io=run_io)
 
         manager.socket_io.emit.assert_called_once_with(
             "algorithm_log",
@@ -60,8 +42,8 @@ class TestFinishedTaskLogSharing(unittest.TestCase):
         node = Node.__new__(Node)
         node.log = Mock()
         node.config = {"share_algorithm_logs": share_algorithm_logs}
-        node.k8s_container_manager = Mock()
-        node.k8s_container_manager.process_next_completed_run.return_value = Result(
+        node.container_manager = Mock()
+        node.container_manager.process_next_completed_run.return_value = Result(
             run_id=1,
             task_id=2,
             logs="sensitive algorithm logs",
@@ -111,8 +93,8 @@ class TestKillContainersLogSharing(unittest.TestCase):
         node.client = Mock()
         node.client.collaboration_id = 7
         node.client.whoami = Mock(id_=1)
-        node.k8s_container_manager = Mock()
-        node.k8s_container_manager.kill_algorithm_runs.return_value = [
+        node.container_manager = Mock()
+        node.container_manager.kill_algorithm_runs.return_value = [
             KilledRun(run_id=1, task_id=2, parent_id=None, logs="sensitive kill logs")
         ]
         return node
