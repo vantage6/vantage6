@@ -9,9 +9,19 @@ from vantage6.cli.common.stop import execute_stop, helm_uninstall
 from vantage6.cli.common.utils import (
     extract_name_and_is_sandbox,
     get_config_name_from_helm_release_name,
+    select_running_service,
 )
 from vantage6.cli.context import get_context
 from vantage6.cli.context.node import NodeContext
+from vantage6.cli.deployment import (
+    KUBERNETES,
+    docker_node_context,
+    node_config_runtimes,
+)
+from vantage6.cli.deployment.docker import (
+    DockerNodeDeployment,
+    running_docker_node_contexts,
+)
 from vantage6.cli.globals import (
     DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL,
     InfraComponentName,
@@ -55,6 +65,27 @@ def cli_node_stop(
     Stop one or all running nodes.
     """
     name, is_sandbox = extract_name_and_is_sandbox(name, is_sandbox)
+
+    if name and not all_nodes:
+        if ctx := docker_node_context(name, system_folders, is_sandbox):
+            DockerNodeDeployment(ctx).stop()
+            return
+    else:
+        running_docker = running_docker_node_contexts(system_folders)
+        uses_kubernetes = KUBERNETES in node_config_runtimes(system_folders)
+        if all_nodes:
+            for ctx in running_docker:
+                DockerNodeDeployment(ctx).stop()
+            if not uses_kubernetes:
+                return
+        elif running_docker and not uses_kubernetes:
+            choice = select_running_service(
+                [ctx.deployment_name for ctx in running_docker], InstanceType.NODE
+            )
+            ctx = next(c for c in running_docker if c.deployment_name == choice)
+            DockerNodeDeployment(ctx).stop()
+            return
+
     execute_stop(
         stop_function=_stop_node,
         stop_function_args={"system_folders": system_folders, "is_sandbox": is_sandbox},

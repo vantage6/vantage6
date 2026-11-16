@@ -51,6 +51,7 @@ where = ["vantage6/cli"]
 [tool.setuptools.package-data]
 "vantage6/cli/" = [
     "template/node_config.j2",
+    "template/node_config_docker.j2",
     "template/node_config_nonk8s.j2",
     "template/hq_config.j2",
     "template/algo_store_config.j2",

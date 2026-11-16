@@ -3,7 +3,20 @@ import click
 from vantage6.common import info
 
 from vantage6.cli.common.attach import attach_logs
+from vantage6.cli.common.utils import (
+    extract_name_and_is_sandbox,
+    select_running_service,
+)
 from vantage6.cli.context import InstanceType
+from vantage6.cli.deployment import (
+    KUBERNETES,
+    docker_node_context,
+    node_config_runtimes,
+)
+from vantage6.cli.deployment.docker import (
+    DockerNodeDeployment,
+    running_docker_node_contexts,
+)
 from vantage6.cli.globals import InfraComponentName
 from vantage6.cli.k8s_config import select_k8s_config
 
@@ -28,6 +41,10 @@ def cli_node_attach(
     Show the node logs in the current console.
     """
     info("Attaching to node logs...")
+    if ctx := _docker_node_to_attach(name, system_folders, is_sandbox):
+        DockerNodeDeployment(ctx).attach_logs()
+        return
+
     k8s_config = select_k8s_config(context=context, namespace=namespace)
     attach_logs(
         name=name,
@@ -37,3 +54,17 @@ def cli_node_attach(
         k8s_config=k8s_config,
         is_sandbox=is_sandbox,
     )
+
+
+def _docker_node_to_attach(name: str | None, system_folders: bool, is_sandbox: bool):
+    """The Docker node to attach to, or None to use Kubernetes."""
+    if name:
+        name, is_sandbox = extract_name_and_is_sandbox(name, is_sandbox)
+        return docker_node_context(name, system_folders, is_sandbox)
+    running = running_docker_node_contexts(system_folders)
+    if not running or KUBERNETES in node_config_runtimes(system_folders):
+        return None
+    choice = select_running_service(
+        [ctx.deployment_name for ctx in running], InstanceType.NODE
+    )
+    return next(ctx for ctx in running if ctx.deployment_name == choice)

@@ -11,6 +11,8 @@ from vantage6.cli.common.utils import (
     extract_name_and_is_sandbox,
 )
 from vantage6.cli.common.version import get_and_select_ctx
+from vantage6.cli.deployment import docker_node_context
+from vantage6.cli.deployment.docker import DockerNodeDeployment
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
 from vantage6.cli.k8s_config import KubernetesConfig, select_k8s_config
 from vantage6.cli.utils_kubernetes import get_core_api_with_ssl_handling
@@ -46,6 +48,13 @@ def cli_node_version(
     name, is_sandbox = extract_name_and_is_sandbox(name, is_sandbox)
     if is_sandbox:
         system_folders = False
+
+    if ctx := docker_node_context(name, system_folders, is_sandbox):
+        version = DockerNodeDeployment(ctx).exec(["vnode-local", "version"]).strip()
+        info("")
+        info(f"Node version: {version}")
+        info(f"CLI version: {__version__}")
+        return
 
     k8s_config = select_k8s_config(context=context, namespace=namespace)
 

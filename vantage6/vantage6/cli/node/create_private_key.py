@@ -15,6 +15,7 @@ from vantage6.common.globals import InstanceType
 from vantage6.cli.common.utils import extract_name_and_is_sandbox
 from vantage6.cli.configuration_create import select_configuration_questionnaire
 from vantage6.cli.context.node import NodeContext
+from vantage6.cli.deployment import is_docker
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
 from vantage6.cli.k8s_config import KubernetesConfig, select_k8s_config
 from vantage6.cli.node.common import create_client_and_authenticate
@@ -130,7 +131,11 @@ def cli_node_create_private_key(
             debug(e)
             sys.exit(1)
 
-    k8s_config = select_k8s_config(context=context, namespace=namespace)
+    k8s_config = (
+        None
+        if is_docker(ctx)
+        else select_k8s_config(context=context, namespace=namespace)
+    )
     create_and_store_private_key(
         ctx, k8s_config, pem=pem, key_policy=KeyPolicy(key_policy)
     )

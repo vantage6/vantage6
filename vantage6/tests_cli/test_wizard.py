@@ -1,3 +1,4 @@
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -154,6 +155,65 @@ class WizardTest(unittest.TestCase):
         self.assertEqual(node["resources"]["limits"]["cpu"], "2")
         self.assertEqual(node["algorithmPods"]["ttlSecondsAfterFinished"], 86400)
         self.assertEqual(node["algorithmPods"]["resources"]["limits"]["memory"], "8Gi")
+
+    @patch("vantage6.cli.node.new.NodeClient.authenticate")
+    def test_docker_node_wizard(self, authenticate):
+        """A Docker node gets host paths and container limits, no Kubernetes keys."""
+        authenticate.side_effect = None
+        with tempfile.TemporaryDirectory() as tmp:
+            db = Path(tmp) / "data.csv"
+            db.write_text("a\n1\n")
+            fake_q = _ScriptedQuestionary(
+                prompts={
+                    "api_key": "my-api-key",
+                    "hq_url": "https://hq.example.org",
+                    "keycloak_url": "https://auth.example.org",
+                    "memory": "2g",
+                },
+                confirms=[
+                    True,  # add a database
+                    False,  # read-only access, no copy
+                    False,  # don't add another database
+                    True,  # add list of allowed_algorithms
+                    False,  # don't add another algorithm image
+                    False,  # no algorithm stores
+                    True,  # limit algorithm containers
+                    False,  # no encryption
+                ],
+                selects=[
+                    "File database",
+                    FILE_BASED_DATABASE_TYPES[0],
+                    "INFO",
+                ],
+                texts=["default", str(db), "some-image"],
+            )
+            with patch("vantage6.cli.node.new.q", fake_q):
+                config = node_configuration_questionaire(
+                    data_dir="/data",
+                    instance_name="iknl",
+                    log_dir="/log",
+                    runtime="docker",
+                )
+            self.assertFalse(fake_q.confirms or fake_q.selects or fake_q.texts)
+
+        self.assertEqual(config["runtime"], "docker")
+        node = config["node"]
+        self.assertEqual(
+            node["databases"]["fileBased"],
+            [
+                {
+                    "name": "default",
+                    "type": FILE_BASED_DATABASE_TYPES[0],
+                    "path": str(db.resolve()),
+                    "mount_mode": "ro",
+                }
+            ],
+        )
+        self.assertEqual(
+            node["docker"]["algorithmContainers"], {"cpus": 4.0, "memory": "2g"}
+        )
+        for key in ("persistence", "networkPolicy", "resources", "algorithmPods"):
+            self.assertNotIn(key, node)
 
     def _run_node_wizard(self, authenticate) -> dict:
         authenticate.side_effect = None

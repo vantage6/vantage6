@@ -14,7 +14,12 @@ from vantage6.cli.common.utils import find_running_service_names
 from vantage6.cli.context import select_context_class
 
 
-def get_configuration_list(instance_type: InstanceType) -> None:
+def get_configuration_list(
+    instance_type: InstanceType,
+    query_helm: bool = True,
+    other_running: list[str] | None = None,
+    show_runtime: bool = False,
+) -> None:
     """
     Print list of available configurations.
 
@@ -22,11 +27,21 @@ def get_configuration_list(instance_type: InstanceType) -> None:
     ----------
     instance_type : InstanceType
         The type of instance to get the configurations for
+    query_helm : bool
+        Whether to ask Helm which instances run
+    other_running : list[str] | None
+        Names of instances that run elsewhere, e.g. with Docker
+    show_runtime : bool
+        Whether to show where each instance runs
     """
     ctx_class = select_context_class(instance_type)
 
-    running_service_names = find_running_service_names(instance_type)
+    running_service_names = list(other_running or [])
+    if query_helm:
+        running_service_names += find_running_service_names(instance_type)
     header = "\nName" + (21 * " ") + "Status" + (10 * " ") + "System/User"
+    if show_runtime:
+        header += (2 * " ") + "Runtime"
 
     click.echo(header)
     click.echo("-" * len(header))
@@ -40,6 +55,7 @@ def get_configuration_list(instance_type: InstanceType) -> None:
             system_folders=False,
             running_service_names=running_service_names,
             instance_type=instance_type,
+            show_runtime=show_runtime,
         )
     else:
         failed_imports_system = _print_configs(
@@ -47,12 +63,14 @@ def get_configuration_list(instance_type: InstanceType) -> None:
             system_folders=True,
             running_service_names=running_service_names,
             instance_type=instance_type,
+            show_runtime=show_runtime,
         )
         failed_imports_user = _print_configs(
             ctx_class=ctx_class,
             system_folders=False,
             running_service_names=running_service_names,
             instance_type=instance_type,
+            show_runtime=show_runtime,
         )
         failed_imports = failed_imports_system + failed_imports_user
 
@@ -66,6 +84,7 @@ def _print_configs(
     system_folders: bool,
     running_service_names: list[str],
     instance_type: InstanceType,
+    show_runtime: bool = False,
 ) -> int:
 
     running = Fore.GREEN + "Running" + Style.RESET_ALL
@@ -86,6 +105,12 @@ def _print_configs(
             in running_service_names
             else stopped
         )
-        click.echo(f"{config.name:25}{status:25}{system_or_user} ")
+        line = f"{config.name:25}{status:25}{system_or_user} "
+        if show_runtime:
+            runtime = None
+            if isinstance(config.config, dict):
+                runtime = config.config.get("runtime")
+            line += f" {runtime or 'kubernetes'}"
+        click.echo(line)
 
     return failed_imports

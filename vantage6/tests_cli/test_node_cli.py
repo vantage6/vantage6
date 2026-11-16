@@ -45,13 +45,11 @@ class NodeCLITest(unittest.TestCase):
         find_running_service_names.return_value = [f"{APPNAME}-{node_name}-user-node"]
 
         # returns a list of configurations and failed inports
-        def side_effect(system_folders):
+        def side_effect(system_folders, is_sandbox=False):
             config = MagicMock()
             config.name = node_name
-            if not system_folders:
-                return [[config], []]
-            else:
-                return [[config], []]
+            config.config = {}
+            return [[config], []]
 
         available_configurations.side_effect = side_effect
 
@@ -65,11 +63,11 @@ class NodeCLITest(unittest.TestCase):
         # check printed lines
         self.assertEqual(
             result.output,
-            "\nName                     Status          System/User\n"
-            "-----------------------------------------------------\n"
-            "iknl                     Not running     System \n"
-            "iknl                     Running         User   \n"
-            "-----------------------------------------------------\n",
+            "\nName                     Status          System/User  Runtime\n"
+            "--------------------------------------------------------------\n"
+            "iknl                     Not running     System  kubernetes\n"
+            "iknl                     Running         User    kubernetes\n"
+            "--------------------------------------------------------------\n",
         )
 
     @patch("vantage6.cli.common.new.make_configuration")
@@ -248,10 +246,10 @@ class NodeCLITest(unittest.TestCase):
         # check for non zero exit-code
         self.assertNotEqual(result.exit_code, 0)
 
-    @patch("vantage6.cli.node.start.select_k8s_config")
+    @patch("vantage6.cli.deployment.kubernetes.select_k8s_config")
     @patch("os.makedirs")
     @patch("vantage6.cli.common.decorator.get_context")
-    @patch("vantage6.cli.node.start.helm_install")
+    @patch("vantage6.cli.deployment.kubernetes.helm_install")
     def test_start(
         self,
         helm_install,
@@ -282,11 +280,11 @@ class NodeCLITest(unittest.TestCase):
 
         self.assertEqual(result.exit_code, 0)
 
-    @patch("vantage6.cli.node.start.private_key_secret_exists")
-    @patch("vantage6.cli.node.start.select_k8s_config")
+    @patch("vantage6.cli.deployment.kubernetes.private_key_secret_exists")
+    @patch("vantage6.cli.deployment.kubernetes.select_k8s_config")
     @patch("os.makedirs")
     @patch("vantage6.cli.common.decorator.get_context")
-    @patch("vantage6.cli.node.start.helm_install")
+    @patch("vantage6.cli.deployment.kubernetes.helm_install")
     def test_start_encrypted_without_private_key_secret(
         self, helm_install, context, os_makedirs, ctx_ns, secret_exists
     ):

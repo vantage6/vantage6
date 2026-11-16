@@ -469,6 +469,11 @@ class AppContext(metaclass=Singleton):
         return f"{APPNAME}-{self.name}-{self.scope}-{self.instance_type.value}"
 
     @property
+    def deployment_name(self) -> str:
+        """Name of the component's Helm release or container."""
+        return self.helm_release_name
+
+    @property
     def config_file_name(self) -> str:
         """Return the name of the configuration file.
 
