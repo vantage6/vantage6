@@ -1,5 +1,4 @@
-ARG PYTHON_VERSION=3.13
-FROM python:${PYTHON_VERSION}-slim-bookworm
+FROM python:3.13-slim-bookworm
 
 LABEL version="4.15"
 LABEL maintainer="Frank Martin <f.martin@iknl.nl>"
