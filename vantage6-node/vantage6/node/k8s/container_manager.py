@@ -2,6 +2,7 @@ import base64
 import json
 import logging
 import os
+import posixpath
 import re
 import shutil
 import threading
@@ -50,7 +51,9 @@ from vantage6.node.globals import (
     DATABASE_BASE_PATH,
     DEFAULT_PROXY_PORT,
     ENV_VARS_NOT_SETTABLE_BY_NODE,
+    ISOLATION_PROBE_IMAGE,
     K8S_EVENT_STREAM_LOOP_TIMEOUT,
+    SERVICE_ACCOUNT_NAMESPACE_FILE,
     TASK_FILES_ROOT,
     TASK_JOB_INPUT_PATH,
     TASK_JOB_OUTPUT_PATH,
@@ -68,6 +71,27 @@ from vantage6.node.k8s.jobpod_state_to_run_status_mapper import (
 from vantage6.node.k8s.network_isolation import validate_algorithm_isolation
 from vantage6.node.k8s.run_io import RunIO
 from vantage6.node.util import get_parent_id
+
+
+def algorithm_pod_labels(release_name: str | None) -> dict[str, str]:
+    """
+    Labels of every pod the node starts for algorithm runs. The node Helm chart
+    selects pods by these labels in its network policies.
+    """
+    labels = {"v6-pod-type": "algorithm"}
+    if release_name:
+        labels["v6-node-release"] = release_name
+    return labels
+
+
+def own_namespace() -> str:
+    """Namespace of the pod this code runs in."""
+    return Path(SERVICE_ACCOUNT_NAMESPACE_FILE).read_text().strip()
+
+
+def join_sub_path(*parts: str | Path) -> str:
+    """Join path parts into a relative ``subPath``, skipping empty parts."""
+    return posixpath.join(*[str(p).strip("/") for p in parts if str(p).strip("/")])
 
 
 class ContainerManager:
@@ -97,8 +121,28 @@ class ContainerManager:
             self.log.exception("Error loading Kubernetes configuration")
             raise
 
-        # Get the location where the file is stored on the host system,
-        self.host_data_dir = self.ctx.config["task_dir"]
+        # The claim that the node pod mounts at TASK_FILES_ROOT. Algorithm pods mount
+        # only the files of their own run from it.
+        task_storage = self.ctx.config.get("task_storage") or {}
+        self.task_claim_name = task_storage.get("claim_name")
+        if not self.task_claim_name:
+            raise ValueError(
+                "The node configuration has no 'task_storage.claim_name'. Please "
+                "restart the node with a version of the node Helm chart that matches "
+                "this node."
+            )
+        self.task_claim_sub_path = task_storage.get("sub_path") or ""
+        self.colocate_with_node = bool(task_storage.get("colocate_with_node", False))
+        self.node_pod_labels = self.ctx.config.get("node_pod_labels") or {}
+        if self.colocate_with_node and not self.node_pod_labels:
+            raise ValueError(
+                "'task_storage.colocate_with_node' requires 'node_pod_labels' in the "
+                "node configuration."
+            )
+        self.algorithm_pod_config = self.ctx.config.get("algorithm_pods") or {}
+        self.algorithm_pod_labels = algorithm_pod_labels(
+            self.ctx.config.get("release_name")
+        )
 
         self.databases = self._get_database_metadata()
 
@@ -109,8 +153,8 @@ class ContainerManager:
         self.batch_api = k8s_client.BatchV1Api()
         # K8S Core API instance
         self.core_api = k8s_client.CoreV1Api()
-        # namespace to run the tasks in
-        self.task_namespace = self.ctx.config["task_namespace"]
+        # Algorithm pods run in the node's own namespace, as they share its claims
+        self.task_namespace = self.ctx.config.get("task_namespace") or own_namespace()
 
         # labels to identify the task jobs of this node
         self.task_job_labels = {"node_id": self.ctx.identifier}
@@ -131,58 +175,29 @@ class ContainerManager:
         """
         self.socket_io = socket_io
 
-    def ensure_task_namespace(self) -> bool:
+    def can_create_algorithm_pods(self) -> bool:
         """
-        Ensure that the namespace for the task exists and jobs can be created in it.
-        If it does not exist, try to create it
+        Check that pods for algorithm runs can be created in the task namespace.
 
         Returns
         -------
         bool
-            True if the namespace exists or was created and is writeable, False
-            otherwise
+            True if a test pod, configured like an algorithm pod, was accepted
         """
-        # TODO consider using hierarchical namespaces, it may be easier to create
-        # those in a large cluster environment
-        # https://kubernetes.io/blog/2020/08/14/introducing-hierarchical-namespaces/
-        task_namespace_exists = False
-        try:
-            self.core_api.read_namespace(self.task_namespace)
-            task_namespace_exists = True
-        except ApiException as exc:
-            # return False if the namespace exists but we cannot read it
-            if exc.status != 404:
-                return False
-
-        if not task_namespace_exists:
-            self.log.warning(
-                "Task namespace '%s' does not exist, creating it now.",
-                self.task_namespace,
-            )
-            namespace = k8s_client.V1Namespace(
-                metadata=k8s_client.V1ObjectMeta(name=self.task_namespace)
-            )
-            try:
-                self.core_api.create_namespace(namespace)
-            except ApiException as exc:
-                self.log.error(
-                    "Failed to create task namespace '%s': %s", self.task_namespace, exc
-                )
-                return False
-
-        # try to see if jobs can be created in the cluster - if not, tasks cannot be
-        # created so we return False
         test_pod_name = "v6-test-pod-" + str(uuid.uuid4())
         try:
             self.core_api.create_namespaced_pod(
                 namespace=self.task_namespace,
                 body=k8s_client.V1Pod(
-                    metadata=k8s_client.V1ObjectMeta(name=test_pod_name),
-                    spec=k8s_client.V1PodSpec(
+                    metadata=k8s_client.V1ObjectMeta(
+                        name=test_pod_name, labels=self.algorithm_pod_labels
+                    ),
+                    spec=self.algorithm_pod_spec(
                         containers=[
-                            k8s_client.V1Container(
+                            self.algorithm_container(
                                 name="test-container",
                                 image=DEFAULT_ALPINE_IMAGE,
+                                command=["true"],
                             )
                         ]
                     ),
@@ -190,15 +205,68 @@ class ContainerManager:
             )
         except ApiException as exc:
             self.log.error(
-                "Failed to create test pod in task namespace '%s': %s",
+                "Failed to create test pod in namespace '%s': %s",
                 self.task_namespace,
                 exc,
             )
             return False
-        # clean up the test pod
         self.core_api.delete_namespaced_pod(test_pod_name, self.task_namespace)
 
         return True
+
+    def algorithm_container(self, **kwargs) -> k8s_client.V1Container:
+        """
+        Container with the resources and security context of algorithm pods.
+
+        Parameters
+        ----------
+        kwargs
+            Passed to ``V1Container``
+        """
+        return k8s_client.V1Container(
+            resources=self.algorithm_pod_config.get("resources") or None,
+            security_context=self.algorithm_pod_config.get("security_context") or None,
+            **kwargs,
+        )
+
+    def algorithm_pod_spec(self, **kwargs) -> k8s_client.V1PodSpec:
+        """
+        Pod spec with the settings shared by all pods for algorithm runs.
+
+        Parameters
+        ----------
+        kwargs
+            Passed to ``V1PodSpec``
+        """
+        cfg = self.algorithm_pod_config
+        return k8s_client.V1PodSpec(
+            restart_policy="Never",
+            # Algorithms have no business with the Kubernetes API
+            automount_service_account_token=False,
+            service_account_name=cfg.get("service_account_name") or None,
+            runtime_class_name=cfg.get("runtime_class_name") or None,
+            security_context=cfg.get("pod_security_context") or None,
+            affinity=self._node_affinity() if self.colocate_with_node else None,
+            **kwargs,
+        )
+
+    def _node_affinity(self) -> k8s_client.V1Affinity:
+        """
+        Schedule a pod on the machine that runs the node pod, so that it can mount
+        the node's ReadWriteOnce claims.
+        """
+        return k8s_client.V1Affinity(
+            pod_affinity=k8s_client.V1PodAffinity(
+                required_during_scheduling_ignored_during_execution=[
+                    k8s_client.V1PodAffinityTerm(
+                        label_selector=k8s_client.V1LabelSelector(
+                            match_labels=self.node_pod_labels
+                        ),
+                        topology_key="kubernetes.io/hostname",
+                    )
+                ]
+            )
+        )
 
     def validate_algorithm_isolation(self) -> tuple[bool, str]:
         """
@@ -209,10 +277,23 @@ class ContainerManager:
         tuple[bool, str]
             (is_isolated, message)
         """
+        image = (self.ctx.config.get("network_isolation") or {}).get(
+            "probe_image"
+        ) or ISOLATION_PROBE_IMAGE
         return validate_algorithm_isolation(
             core_api=self.core_api,
             task_namespace=self.task_namespace,
             log=self.log,
+            labels={
+                **self.algorithm_pod_labels,
+                "role": AlgorithmStepType.CENTRAL_COMPUTE.value,
+                "app": "v6-isolation-probe",
+            },
+            build_pod_spec=lambda containers: self.algorithm_pod_spec(
+                containers=containers
+            ),
+            build_container=self.algorithm_container,
+            image=image,
         )
 
     def _setup_policies(self, config: dict) -> dict:
@@ -329,27 +410,27 @@ class ContainerManager:
                     f"Supported values are: {', '.join(DatabaseMountMode.list())}."
                 )
             mount_mode = DatabaseMountMode(mount_mode)
-            # In case we are dealing with a file or directory and when running the node
-            # instance in a POD, our internal path to that file or folder is different.
-            # At this point we are not sure what the type of database is so we just
-            # see wether it exists or not. In case it does, we create a `local_uri` that
-            # points to the file or folder in the POD. We keep the original URI as we
-            # need it when we are creating new volume mounts for the algorithm
-            # containers
-            local_uri = uri
-            # Note that this path is specified in the helm chart so that we should be
-            # able to find the database here.
-            tmp_uri = Path(DATABASE_BASE_PATH) / f"{label}.{db_type}"
 
+            # File and folder databases live on a claim. The Helm chart mounts them in
+            # the node pod at this path and tells us the claim and the path inside it,
+            # so that algorithm pods can mount the same file.
+            claim_env_var = f"DATABASE_{env_label}_CLAIM_NAME"
+            sub_path_env_var = f"DATABASE_{env_label}_SUB_PATH"
+            claim_name = os.environ.get(claim_env_var) or None
+            sub_path = os.environ.get(sub_path_env_var, "")
+
+            local_uri = uri
+            tmp_uri = Path(DATABASE_BASE_PATH) / f"{label}.{db_type}"
             db_is_file = tmp_uri.exists() and tmp_uri.is_file()
             db_is_dir = tmp_uri.exists() and tmp_uri.is_dir()
-
             if db_is_file or db_is_dir:
                 local_uri = str(tmp_uri)
+                uri = uri or local_uri
 
             if db_is_file and mount_mode == DatabaseMountMode.COPY:
                 # Algorithms get the copy mounted instead of the original file
-                uri = self._copy_database_file(label, tmp_uri)
+                claim_name = self.task_claim_name
+                sub_path = self._copy_database_file(label, tmp_uri)
 
             # Get additional environment variables and remove the DATABASE_[LABEL]_
             # prefix
@@ -359,6 +440,8 @@ class ContainerManager:
                     uri_env_var,
                     db_type_env_var,
                     mount_mode_env_var,
+                    claim_env_var,
+                    sub_path_env_var,
                 ]:
                     env[key.replace(f"DATABASE_{env_label}_", "")] = os.environ[key]
 
@@ -371,6 +454,8 @@ class ContainerManager:
                 type=db_type,
                 env=env,
                 mount_mode=mount_mode,
+                claim_name=claim_name,
+                sub_path=sub_path,
             )
 
         self.log.debug("Databases: %s", databases)
@@ -390,14 +475,15 @@ class ContainerManager:
         Returns
         -------
         str
-            Path to the copy on the host system
+            Path to the copy inside the task claim
         """
         relative_path = Path("databases") / db_path.name
         copy_path = Path(TASK_FILES_ROOT) / relative_path
         copy_path.parent.mkdir(parents=True, exist_ok=True)
         self.log.info("Copying database '%s' to %s", label, copy_path)
         shutil.copy(db_path, copy_path)
-        return str(Path(self.host_data_dir) / relative_path)
+        copy_path.chmod(0o666)
+        return join_sub_path(self.task_claim_sub_path, relative_path)
 
     def run(
         self,
@@ -586,7 +672,7 @@ class ContainerManager:
                 priv_regs, image, run_io.run_id
             )
 
-        container = k8s_client.V1Container(
+        container = self.algorithm_container(
             name=run_io.container_name,
             image=image,
             image_pull_policy=self._get_image_pull_policy(),
@@ -638,16 +724,22 @@ class ContainerManager:
             spec=k8s_client.V1JobSpec(
                 template=k8s_client.V1PodTemplateSpec(
                     metadata=k8s_client.V1ObjectMeta(
-                        labels={"app": run_io.container_name, "role": action}
+                        labels={
+                            **self.algorithm_pod_labels,
+                            "app": run_io.container_name,
+                            "role": action.value,
+                        }
                     ),
-                    spec=k8s_client.V1PodSpec(
+                    spec=self.algorithm_pod_spec(
                         containers=[container],
                         volumes=_volumes,
-                        restart_policy="Never",
                         image_pull_secrets=image_pull_secrets,
                     ),
                 ),
                 backoff_limit=TASK_START_RETRIES,
+                ttl_seconds_after_finished=self.algorithm_pod_config.get(
+                    "ttl_seconds_after_finished"
+                ),
             ),
         )
 
@@ -921,49 +1013,49 @@ class ContainerManager:
         finally:
             w.stop()
 
-    def _create_run_mount(
+    def _claim_mount(
         self,
-        volume_name: str,
-        host_path: str | Path,
+        volumes: dict[str, k8s_client.V1Volume],
+        claim_name: str,
+        sub_path: str,
         mount_path: str,
-        type_: str | None = None,
         read_only: bool = False,
-    ) -> tuple[k8s_client.V1Volume, k8s_client.V1VolumeMount]:
+    ) -> k8s_client.V1VolumeMount:
         """
-        Create a volume and its corresponding volume mount
+        Mount a file or folder from a PersistentVolumeClaim.
 
         Parameters
         ----------
-        volume_name: str
-            Name of the volume
-        host_path: str | Path
-            Path to the host, could be a file or a folder
+        volumes: dict[str, V1Volume]
+            Volumes of the pod by claim name. A volume is added for a claim that is
+            not in it yet.
+        claim_name: str
+            Name of the claim
+        sub_path: str
+            File or folder inside the claim to mount
         mount_path: str
-            Path where the ``host_path`` is going to be mounted
-        type_: str, optional
-            Type of the volume
+            Where to mount it in the algorithm container
         read_only: bool
-            Whether the volume is read-only or not in the mount
+            Whether the mount is read-only
 
         Returns
         -------
-        V1Volume, V1VolumeMount
-            Tuple with the volume and volume mount
+        V1VolumeMount
+            The volume mount
         """
-        host_path = str(host_path)
-
-        volume = k8s_client.V1Volume(
-            name=volume_name,
-            host_path=k8s_client.V1HostPathVolumeSource(path=host_path, type=type_),
-        )
-
-        vol_mount = k8s_client.V1VolumeMount(
-            name=volume_name,
+        if claim_name not in volumes:
+            volumes[claim_name] = k8s_client.V1Volume(
+                name=f"claim-{len(volumes)}",
+                persistent_volume_claim=k8s_client.V1PersistentVolumeClaimVolumeSource(
+                    claim_name=claim_name
+                ),
+            )
+        return k8s_client.V1VolumeMount(
+            name=volumes[claim_name].name,
             mount_path=mount_path,
+            sub_path=sub_path or None,
             read_only=read_only,
         )
-
-        return (volume, vol_mount)
 
     def _create_volume_mounts(
         self,
@@ -978,6 +1070,9 @@ class ContainerManager:
     ]:
         """
         Create all volumes and volume mounts required by the algorithm run.
+
+        Algorithm pods share the node's task claim, but only see the input and output
+        file of their own run and the folder of their session.
 
         Parameters
         ----------
@@ -1000,59 +1095,36 @@ class ContainerManager:
             mounts and (3) the list of the environment variables required by the
             algorithms to use such mounts and (4) the secrets to be passed to the
             container.
-
-        Notes
-        -----
-        In this method volume-claims could be used instead of 'host_path' volumes to
-        decouple vantage6 file management from the storage provider (NFS, GCP, etc).
-        However, persistent-volumes (from which volume-claims are be created), present
-        a risk when used on local file systems. In particular, if two VC are created
-        from the same PV, both would end sharing the same files. e.g. define the volume
-        for temporal data:
-
-        ```python
-        tmp_volume = client.V1Volume(
-            name=f'task-{str_run_id}-tmp',
-            persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(
-                claim_name=tmp_vol_name
-            )
-        )
-        ```
         """
-        volumes: list[k8s_client.V1Volume] = []
-        vol_mounts: list[k8s_client.V1VolumeMount] = []
+        volumes: dict[str, k8s_client.V1Volume] = {}
 
-        # Create algorithm's input and output files before creating volume mounts with
-        # them (relative to the node's file system: task pod or host)
+        # Paths relative to the root of the task storage in the node pod
         input_file_path, output_file_path = run_io.create_files(function_arguments, b"")
 
-        # Create the volumes and corresponding volume mounts for the input and output
-        # files.
-        output_volume, output_mount = self._create_run_mount(
-            volume_name=run_io.output_volume_name,
-            host_path=Path(self.host_data_dir) / output_file_path,
-            mount_path=TASK_JOB_OUTPUT_PATH,
-            type_="File",
-            read_only=False,
-        )
-
-        input_volume, input_mount = self._create_run_mount(
-            volume_name=run_io.input_volume_name,
-            host_path=Path(self.host_data_dir) / input_file_path,
-            type_="File",
-            mount_path=TASK_JOB_INPUT_PATH,
-        )
-
-        session_volume, session_mount = self._create_run_mount(
-            volume_name=run_io.session_name,
-            host_path=Path(self.host_data_dir)
-            / run_io.session_file_manager.session_folder,
-            type_="Directory",
-            mount_path=TASK_JOB_SESSION_FOLDER_PATH,
-        )
-
-        volumes.extend([output_volume, input_volume, session_volume])
-        vol_mounts.extend([output_mount, input_mount, session_mount])
+        vol_mounts = [
+            self._claim_mount(
+                volumes,
+                self.task_claim_name,
+                join_sub_path(self.task_claim_sub_path, output_file_path),
+                TASK_JOB_OUTPUT_PATH,
+            ),
+            self._claim_mount(
+                volumes,
+                self.task_claim_name,
+                join_sub_path(self.task_claim_sub_path, input_file_path),
+                TASK_JOB_INPUT_PATH,
+                read_only=True,
+            ),
+            self._claim_mount(
+                volumes,
+                self.task_claim_name,
+                join_sub_path(
+                    self.task_claim_sub_path,
+                    run_io.session_file_manager.session_folder,
+                ),
+                TASK_JOB_SESSION_FOLDER_PATH,
+            ),
+        ]
 
         # The environment variables are expected by the algorithm containers in order
         # to access the input and output files.
@@ -1098,15 +1170,21 @@ class ContainerManager:
                     self.log.info(
                         f"Binding database {source_database['label']} as read-write"
                     )
-                db_volume, db_mount = self._create_run_mount(
-                    volume_name=f"task-{run_io.run_id}-db-{source_database['label']}",
-                    host_path=db.uri,
-                    mount_path=db.local_uri,
-                    type_="File" if db.is_file else "Directory",
-                    read_only=db.mount_mode == DatabaseMountMode.READ_ONLY,
+                if not db.claim_name:
+                    raise PermanentAlgorithmStartFail(
+                        f"Database '{db.label}' is a file or folder, but the node does "
+                        "not know which volume claim holds it. Please restart the node "
+                        "with a version of the node Helm chart that matches this node."
+                    )
+                vol_mounts.append(
+                    self._claim_mount(
+                        volumes,
+                        db.claim_name,
+                        db.sub_path,
+                        db.local_uri,
+                        read_only=db.mount_mode == DatabaseMountMode.READ_ONLY,
+                    )
                 )
-                volumes.append(db_volume)
-                vol_mounts.append(db_mount)
 
             environment_variables[ContainerEnvNames.DATABASE_URI.value] = db.local_uri
             environment_variables[ContainerEnvNames.DATABASE_TYPE.value] = db.type
@@ -1146,7 +1224,7 @@ class ContainerManager:
                 )
             )
 
-        return volumes, vol_mounts, environment_variables, secrets
+        return list(volumes.values()), vol_mounts, environment_variables, secrets
 
     def _validate_environment_variables(self, environment_variables: dict) -> None:
         """
@@ -1889,55 +1967,3 @@ class ContainerManager:
             parent_id=int(parent_id) if parent_id else None,
             logs=logs,
         )
-
-
-# TODO we need this code when we move to k8s clusters
-# def create_volume(self, volume_name: str) -> None:
-#     """
-#     This method creates a persistent volume through volume claims. However, this method is not being
-#     used yet, as using only host_path volume binds seems to be enough and more convenient
-#     (see details on _create_volume_mounts) - this is to be discussed
-#     """
-
-#     """
-#     @precondition: at least one persistent volume has been provisioned in the (single) kubernetes node
-
-#     """
-
-#     is_valid_vol_name = re.search(
-#         "[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*",
-#         volume_name,
-#     )
-
-#     if not is_valid_vol_name:
-#         # TODO custom exceptions to decouple codebase from kubernetes
-#         raise Exception(f"Invalid volume name; {volume_name}")
-
-#     # create a persistent volume claim with the given name
-#     pvc = client.V1PersistentVolumeClaim(
-#         api_version="v1",
-#         kind="PersistentVolumeClaim",
-#         metadata=client.V1ObjectMeta(name=volume_name),
-#         spec=client.V1PersistentVolumeClaimSpec(
-#             storage_class_name="manual",
-#             access_modes=["ReadWriteOnce"],
-#             resources=client.V1ResourceRequirements(
-#                 # TODO Storage quota to be defined in system properties
-#                 requests={"storage": "1Gi"}
-#             ),
-#         ),
-#     )
-
-#     """
-#     If the volume was not claimed with the given name yet, there won't be exception.
-#     If the volume was already claimed with the same name, (which should not make the function to fail),
-#         the API is expected to return an 409 error code.
-#     """
-#     try:
-#         self.core_api.create_namespaced_persistent_volume_claim(self.task_namespace), body=pvc)
-#     except client.rest.ApiException as e:
-#         if e.status != 409:
-#             # TODO custom exceptions to decouple codebase from kubernetes
-#             raise Exception(
-#                 f"Unexpected kubernetes API error code {e.status}"
-#             ) from e

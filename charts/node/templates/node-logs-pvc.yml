@@ -1,21 +1,28 @@
-{{- if not (lookup "v1" "PersistentVolumeClaim" "" (printf "%s-logs-pvc" .Release.Name)) }}
+{{- if and .Values.node.logging.persistent (not .Values.node.logging.existingClaim) }}
+{{- $static := include "node.logsStatic" . }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ .Release.Name }}-logs-pvc
-  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  name: {{ include "node.logsClaimName" . }}
+  namespace: {{ include "node.namespace" . }}
   labels:
 {{ include "node.labels" . | indent 4 }}
     component: vantage6-node-logs
+  annotations:
+    helm.sh/resource-policy: keep
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
       storage: {{ .Values.node.logging.storageSize | default "128M" }}
-  storageClassName: {{ .Values.node.logging.storageClass }}
+  {{- if $static }}
+  storageClassName: {{ .Values.node.logging.storageClass | default "local-storage" }}
   selector:
     matchLabels:
       type: local-logs
       app: vantage6-node
+  {{- else if .Values.node.logging.storageClass }}
+  storageClassName: {{ .Values.node.logging.storageClass }}
+  {{- end }}
 {{- end }}

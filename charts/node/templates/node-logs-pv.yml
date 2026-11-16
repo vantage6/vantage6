@@ -1,9 +1,9 @@
-{{- if and (not (lookup "v1" "PersistentVolume" "" (printf "%s-logs-pv" .Release.Name))) (eq .Values.node.logging.storageClass "local-storage") }}
+{{- /* Development only: log files in a directory on one machine. */}}
+{{- if and .Values.node.logging.persistent (include "node.logsStatic" .) (not (lookup "v1" "PersistentVolume" "" (printf "%s-logs-pv" .Release.Name))) }}
 apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: {{ .Release.Name }}-logs-pv
-  namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels:
 {{ include "node.labels" . | indent 4 }}
     type: local-logs
@@ -24,5 +24,5 @@ spec:
             - key: kubernetes.io/hostname
               operator: In
               values:
-                - {{ .Values.node.k8sNodeName }}
+                - {{ required "node.k8sNodeName is required with logging.volumeHostPath" .Values.node.k8sNodeName }}
 {{- end }}

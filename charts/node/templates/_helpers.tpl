@@ -36,6 +36,58 @@ Match labels
 {{- end }}
 
 {{/*
+Labels of the node pod. Algorithm pods use these for pod affinity and network policies.
+*/}}
+{{- define "node.podLabels" -}}
+{{ include "node.matchLabels" . }}
+component: node
+{{- end }}
+
+{{/*
+Labels that the node puts on every pod it starts for algorithm runs. Must match
+ContainerManager.algorithm_pod_labels.
+*/}}
+{{- define "node.algorithmPodLabels" -}}
+v6-pod-type: algorithm
+v6-node-release: {{ .Release.Name }}
+{{- end }}
+
+{{- define "node.namespace" -}}
+{{- .Values.namespace | default .Release.Namespace -}}
+{{- end }}
+
+{{- define "node.serviceAccountName" -}}
+{{- if .Values.node.serviceAccount.create -}}
+{{- printf "%s-sa" .Release.Name -}}
+{{- else -}}
+{{- required "node.serviceAccount.name is required when node.serviceAccount.create is false" .Values.node.serviceAccount.name -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Static (host path) storage is only meant for single-machine development clusters.
+*/}}
+{{- define "node.tasksStatic" -}}
+{{- if .Values.node.persistence.tasks.hostPath }}true{{ end -}}
+{{- end }}
+
+{{- define "node.logsStatic" -}}
+{{- if .Values.node.logging.volumeHostPath }}true{{ end -}}
+{{- end }}
+
+{{- define "node.databasesStatic" -}}
+{{- range .Values.node.databases.fileBased }}{{ if and .volumePath (not .existingClaim) }}true{{ end }}{{ end -}}
+{{- end }}
+
+{{- define "node.taskClaimName" -}}
+{{- .Values.node.persistence.tasks.existingClaim | default (printf "%s-task-pvc" .Release.Name) -}}
+{{- end }}
+
+{{- define "node.logsClaimName" -}}
+{{- .Values.node.logging.existingClaim | default (printf "%s-logs-pvc" .Release.Name) -}}
+{{- end }}
+
+{{/*
 Kubernetes env-var suffix for a file-based database label (underscores only).
 */}}
 {{- define "node.databaseEnvLabel" -}}
@@ -43,7 +95,7 @@ Kubernetes env-var suffix for a file-based database label (underscores only).
 {{- end }}
 
 {{/*
-Kubernetes resource name for a file-based database volume.
+Kubernetes resource name for a dev-only host path database volume.
 */}}
 {{- define "node.databasePvName" -}}
 {{- $name := printf "%s-db-pv-%s" .releaseName .databaseName -}}
@@ -51,7 +103,7 @@ Kubernetes resource name for a file-based database volume.
 {{- end }}
 
 {{/*
-Kubernetes resource name for a file-based database volume claim.
+Kubernetes resource name for a dev-only host path database volume claim.
 */}}
 {{- define "node.databasePvcName" -}}
 {{- $name := printf "%s-db-pvc-%s" .releaseName .databaseName -}}
@@ -59,43 +111,23 @@ Kubernetes resource name for a file-based database volume claim.
 {{- end }}
 
 {{/*
-Returns "true" if .Values.node.taskNamespace already exists in the cluster and is Helm-owned
-by a release other than this one (per its meta.helm.sh/release-name and
-meta.helm.sh/release-namespace annotations), "false" otherwise.
-
-A namespace that exists but carries no Helm ownership annotations at all (e.g. provisioned
-by a platform team outside Helm, specifically for this node) is NOT treated as a collision —
-only a namespace already claimed by a genuinely different release is. Multiple node releases
-intentionally sharing one task namespace (e.g. for local development) is a supported,
-non-default setup; see task-namespace.yml and NOTES.txt for how this is surfaced.
-
-Requires the root context (.) as input. Relies on the `lookup` function, which only has
-cluster access during `helm install`/`upgrade` — it returns nothing during offline
-`helm template`, so this check is inert there.
+Claim that holds a file-based database: the user's existing claim, or in dev mode the
+claim on top of the host path volume.
+Usage: include "node.databaseClaimName" (dict "releaseName" .Release.Name "db" $db)
 */}}
-{{- define "node.taskNamespaceOwnedByOtherRelease" -}}
-{{- $existingNs := lookup "v1" "Namespace" "" .Values.node.taskNamespace -}}
-{{- $owned := false -}}
-{{- if $existingNs -}}
-  {{- $releaseName := "" -}}
-  {{- $releaseNamespace := "" -}}
-  {{- if $existingNs.metadata.annotations -}}
-    {{- $releaseName = index $existingNs.metadata.annotations "meta.helm.sh/release-name" | default "" -}}
-    {{- $releaseNamespace = index $existingNs.metadata.annotations "meta.helm.sh/release-namespace" | default "" -}}
-  {{- end -}}
-  {{- if and (ne $releaseName "") (or (ne $releaseName .Release.Name) (ne $releaseNamespace .Release.Namespace)) -}}
-    {{- $owned = true -}}
-  {{- end -}}
+{{- define "node.databaseClaimName" -}}
+{{- if .db.existingClaim -}}
+{{- .db.existingClaim -}}
+{{- else if .db.volumePath -}}
+{{- include "node.databasePvcName" (dict "releaseName" .releaseName "databaseName" .db.name) -}}
+{{- else -}}
+{{- fail (printf "File-based database '%s' needs 'existingClaim' (or 'volumePath' in development)" .db.name) -}}
 {{- end -}}
-{{- if $owned }}true{{- else }}false{{- end -}}
 {{- end }}
 
 {{/*
-Returns "true" if .Values.node.taskNamespace already exists in the cluster (regardless of
-who owns it), "false" otherwise. Used to skip declaring the Namespace resource when it's
-already there, rather than asking Helm to manage/adopt a resource that may not carry this
-release's ownership metadata - Helm refuses to do that by default. See task-namespace.yml.
+Path of a file-based database inside its claim.
 */}}
-{{- define "node.taskNamespaceExists" -}}
-{{- if lookup "v1" "Namespace" "" .Values.node.taskNamespace }}true{{- else }}false{{- end -}}
+{{- define "node.databaseSubPath" -}}
+{{- .db.subPath | default .db.originalName | default "" -}}
 {{- end }}

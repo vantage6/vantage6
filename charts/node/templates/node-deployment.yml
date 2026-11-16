@@ -2,13 +2,15 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Release.Name }}
-  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  namespace: {{ include "node.namespace" . }}
   labels:
 {{ include "node.labels" . | indent 4 }}
-    name: {{ .Values.namespace | default .Release.Namespace }}
-    app: v6-node-hq-proxy
     component: node
 spec:
+  # Never run two instances: a ReadWriteOnce task volume cannot follow a new pod to
+  # another machine while the old pod still holds it.
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
 {{ include "node.matchLabels" . | indent 6 }}
@@ -20,29 +22,47 @@ spec:
         component: node
     spec:
       {{- include "common.imagePullSecrets" (dict "Values" .Values "indent" 6) }}
-    #   hostAliases:
-    #   - ip: "172.17.0.1" # Default bridge network gateway for docker/k8s
-    #     hostnames:
-    #     - "host.docker.internal" # Defining it explicitly for environments where Docker is not installed
-      serviceAccountName: {{ .Release.Name }}-sa
+      serviceAccountName: {{ include "node.serviceAccountName" . }}
+      {{- with .Values.node.runtimeClassName }}
+      runtimeClassName: {{ . }}
+      {{- end }}
+      {{- with .Values.node.podSecurityContext }}
+      securityContext:
+{{ toYaml . | indent 8 }}
+      {{- end }}
       containers:
       - name: vantage6-node
         image: {{ .Values.node.image | default "ghcr.io/vantage6/infrastructure/node:uluru" }}
         imagePullPolicy: {{ .Values.node.imagePullPolicy | default "Always" }}
+        {{- with .Values.node.resources }}
+        resources:
+{{ toYaml . | indent 10 }}
+        {{- end }}
+        {{- with .Values.node.securityContext }}
+        securityContext:
+{{ toYaml . | indent 10 }}
+        {{- end }}
         env:
         - name: V6_PROXY_PORT
           value: "{{ .Values.node.proxyPort }}"
         - name: V6_PROXY_HOST
-          value: http://{{ .Release.Name }}.{{ .Values.namespace | default .Release.Namespace }}.svc.cluster.local
+          value: http://{{ .Release.Name }}.{{ include "node.namespace" . }}.svc.cluster.local
         - name: KEYCLOAK_URL
           value: {{ .Values.node.keycloak.url | quote }}
         - name: KEYCLOAK_REALM
           value: {{ .Values.node.keycloak.realm | quote }}
+        {{- if .Values.node.k8sNodeName }}
         - name: V6_K8S_NODE_NAME
-          value: {{ .Values.node.k8sNodeName | default "" | quote }}
+          value: {{ .Values.node.k8sNodeName | quote }}
+        {{- end }}
         {{- range .Values.node.databases.fileBased }}
-        - name: DATABASE_{{ include "node.databaseEnvLabel" (dict "databaseName" .name) }}_MOUNT_MODE
+        {{- $envLabel := include "node.databaseEnvLabel" (dict "databaseName" .name) }}
+        - name: DATABASE_{{ $envLabel }}_MOUNT_MODE
           value: {{ default "ro" .mount_mode | quote }}
+        - name: DATABASE_{{ $envLabel }}_CLAIM_NAME
+          value: {{ include "node.databaseClaimName" (dict "releaseName" $.Release.Name "db" .) | quote }}
+        - name: DATABASE_{{ $envLabel }}_SUB_PATH
+          value: {{ include "node.databaseSubPath" (dict "db" .) | quote }}
         {{- end }}
         envFrom:
         - secretRef:
@@ -51,6 +71,9 @@ spec:
         volumeMounts:
         - name: task-files-root
           mountPath: /app/tasks
+          {{- with .Values.node.persistence.tasks.subPath }}
+          subPath: {{ . }}
+          {{- end }}
         # Single-file mount (like Docker: `/mnt/config/<name>.yaml` only), not whole dir
         - name: config-volume
           mountPath: /app/config/config.yml
@@ -66,7 +89,9 @@ spec:
         {{- range .Values.node.databases.fileBased }}
         - name: database-volume-{{ .name }}
           mountPath: /app/databases/{{ .name }}.{{ .type }}
-          subPath: {{ .originalName }}
+          {{- with include "node.databaseSubPath" (dict "db" .) }}
+          subPath: {{ . }}
+          {{- end }}
           {{- if eq (default "ro" .mount_mode) "ro" }}
           readOnly: true
           {{- end }}
@@ -74,13 +99,17 @@ spec:
       volumes:
       - name: task-files-root
         persistentVolumeClaim:
-          claimName: {{ .Release.Name }}-task-pvc
+          claimName: {{ include "node.taskClaimName" . }}
       - name: config-volume
         configMap:
           name: {{ .Release.Name }}-configmap
       - name: node-logs
+        {{- if .Values.node.logging.persistent }}
         persistentVolumeClaim:
-          claimName: {{ .Release.Name }}-logs-pvc
+          claimName: {{ include "node.logsClaimName" . }}
+        {{- else }}
+        emptyDir: {}
+        {{- end }}
       {{- if .Values.node.encryption.enabled }}
       # Secret is created by `v6 node create-private-key` (not by this chart). This
       # means secret is kept when the node is stopped (but deleted by `v6 node remove`).
@@ -95,5 +124,5 @@ spec:
       {{- range .Values.node.databases.fileBased }}
       - name: database-volume-{{ .name }}
         persistentVolumeClaim:
-          claimName: {{ include "node.databasePvcName" (dict "releaseName" $.Release.Name "databaseName" .name) }}
+          claimName: {{ include "node.databaseClaimName" (dict "releaseName" $.Release.Name "db" .) }}
       {{- end }}

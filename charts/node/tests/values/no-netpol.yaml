@@ -1,0 +1,17 @@
+# Tenant that may not create NetworkPolicies; isolation is the cluster admin's job.
+node:
+  name: test-node
+  apiKey: test-api-key
+  keycloak:
+    url: https://auth.example.org
+  hq:
+    url: https://hq.example.org
+  persistence:
+    tasks:
+      existingClaim: vantage6-tasks
+      subPath: node-1
+  logging:
+    persistent: false
+  networkPolicy:
+    enabled: false
+    verifyIsolation: false

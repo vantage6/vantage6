@@ -1,17 +1,27 @@
-{{- if not (lookup "v1" "PersistentVolumeClaim" "" (printf "%s-task-pvc" .Release.Name)) }}
+{{- if not .Values.node.persistence.tasks.existingClaim }}
+{{- $static := include "node.tasksStatic" . }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ .Release.Name }}-task-pvc
-  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  name: {{ include "node.taskClaimName" . }}
+  namespace: {{ include "node.namespace" . }}
+  labels:
+{{- include "node.labels" . | nindent 4 }}
+  annotations:
+    # Sessions and results must survive a restart of the node.
+    helm.sh/resource-policy: keep
 spec:
   accessModes:
-    - ReadWriteOnce
+    - {{ if $static }}ReadWriteOnce{{ else }}{{ .Values.node.persistence.tasks.accessMode }}{{ end }}
   resources:
     requests:
       storage: {{ .Values.node.persistence.tasks.size }}
-  storageClassName: {{ .Values.node.persistence.tasks.storageClass }}
+  {{- if $static }}
+  storageClassName: {{ .Values.node.persistence.tasks.storageClass | default "local-storage" }}
   selector:
     matchLabels:
       type: local-tasks
+  {{- else if .Values.node.persistence.tasks.storageClass }}
+  storageClassName: {{ .Values.node.persistence.tasks.storageClass }}
+  {{- end }}
 {{- end }}

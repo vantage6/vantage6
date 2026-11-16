@@ -2,56 +2,23 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: {{ .Release.Name }}-create-tasks-role
-  namespace: {{ .Values.node.taskNamespace }}
+  namespace: {{ include "node.namespace" . }}
   labels:
 {{- include "node.labels" . | nindent 4 }}
 rules:
-# The core permission needed since vantage6 node runs all algorithms as Kubernetes Jobs.
-# Needs full management capabilities (create/delete) and monitoring capabilities
-# (get/list/watch) to track job status and completion.
+# Algorithms run as Kubernetes jobs, which the node starts, watches and removes.
 - apiGroups: ["batch"]
   resources: ["jobs"]
   verbs: ["create", "delete", "get", "list", "watch"]
 
-# The vantage6 node needs permissions to manage pods and access their logs to monitor
-# algorithm execution, collect results, and handle any issues that arise during task
-# processing
+# Pods of algorithm runs: status, logs, clean-up, and the startup permission and
+# network isolation checks.
 - apiGroups: [""]
   resources: ["pods", "pods/log"]
   verbs: ["create", "delete", "get", "list", "watch"]
 
-# Algorithms might need persistent storage to store temporary or output data.
-# The node needs to manage persistent volume claims (PVCs) to provide this storage
-# to algorithm containers.
-- apiGroups: [""]
-  resources: ["persistentvolumeclaims"]
-  verbs: ["create", "delete", "get", "list"]
-
-# Some algorithms might need network services for communication between components.
-# The node needs to be able to create and manage these services for algorithm networking requirements.
-- apiGroups: [""]
-  resources: ["services"]
-  verbs: ["create", "delete", "get", "list"]
-
-# The node needs to be able to create and manage secrets for storing sensitive data
-# that algorithms might need, such as credentials or configuration.
+# Secrets that pass sensitive environment variables and registry credentials to
+# algorithm runs.
 - apiGroups: [""]
   resources: ["secrets"]
   verbs: ["create", "delete", "get", "list", "watch"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: {{ .Release.Name }}-get-task-namespace-role
-  labels:
-{{- include "node.labels" . | nindent 4 }}
-rules:
-# Namespace is a cluster-scoped resource, so reading it can't be granted via a namespaced
-# Role. ensure_task_namespace() only ever calls read_namespace() (verb: get); the chart now
-# creates the task namespace itself (see task-namespace.yml), so the node no longer needs
-# create/list/watch here. resourceNames restricts this to exactly the one task namespace
-# this node uses, not namespaces in general.
-- apiGroups: [""]
-  resources: ["namespaces"]
-  resourceNames: [{{ .Values.node.taskNamespace }}]
-  verbs: ["get"]
