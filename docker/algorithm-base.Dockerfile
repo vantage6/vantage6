@@ -1,4 +1,4 @@
-FROM python:3.10-slim-bookworm
+FROM python:3.13-slim-bookworm
 
 LABEL version=${TAG}
 LABEL maintainer="F.C. Martin <f.martin@iknl.nl>"
