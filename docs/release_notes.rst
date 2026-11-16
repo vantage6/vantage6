@@ -6,6 +6,9 @@ Unreleased
 
 - **Upgrade notes**
 
+  - Jobs that a node started before the upgrade are recognised after it, as their
+    names, labels and annotations are unchanged.
+
   - The node now runs algorithms in its own namespace instead of a separate task
     namespace. The settings ``taskNamespace`` and ``manageTaskNamespace`` are removed.
     Jobs that are still running in the old task namespace are not cleaned up; remove
@@ -26,6 +29,12 @@ Unreleased
 
 - **Feature**
 
+  - A node can run with Docker instead of Kubernetes: ``v6 node new --runtime
+    docker``. The node starts algorithm containers next to it, isolates them with
+    Docker networks and offers an HTTP(S) whitelist through a Squid proxy. See
+    :ref:`node-docker`.
+  - The node runs algorithms through a container runtime interface, so that other
+    container platforms can be added.
   - The node can run in a single namespace on a managed Kubernetes cluster: its chart
     creates no Namespaces, ClusterRoles, ClusterRoleBindings, PersistentVolumes or
     StorageClasses, and no pod is tied to a specific machine.

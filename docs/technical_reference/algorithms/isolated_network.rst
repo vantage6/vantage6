@@ -29,6 +29,12 @@ another way. Then also set ``networkPolicy.verifyIsolation: false``: the node th
 skips its startup check and logs a warning instead. Only do so when you are sure that
 isolation is enforced, as the node can no longer detect that it is not.
 
+A node that runs with Docker (see :ref:`node-docker`) isolates algorithm containers
+with Docker networks instead: they get no network at all, except central compute
+containers, which share an internal network with the node only. Whitelisted HTTP(S)
+destinations are reached through a proxy on an internal network of the step. The
+node checks isolation at startup in the same way.
+
 .. note::
 
   Before version 5, vantage6 did not use Kubernetes. Then, algorithms were run in
