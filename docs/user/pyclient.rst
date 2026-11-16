@@ -16,8 +16,8 @@ the Python client talks to the server API to achieve this.
 Requirements
 ^^^^^^^^^^^^
 
-You need Python to use the Python client. The client is tested with Python
-3.13 and supports Python 3.10 and higher.
+You need Python to use the Python client. The client is developed and tested
+with Python 3.13.
 
 Install
 ^^^^^^^
