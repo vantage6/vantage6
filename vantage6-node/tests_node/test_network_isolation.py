@@ -7,7 +7,7 @@ from vantage6.common.globals import NodePolicy
 
 from vantage6.node import Node
 from vantage6.node.globals import ISOLATION_PROBE_CANDIDATES
-from vantage6.node.k8s.network_isolation import (
+from vantage6.node.runtime.kubernetes.network_isolation import (
     _probe_pod_reached_target,
     validate_algorithm_isolation,
 )
@@ -49,7 +49,7 @@ class TestProbePodReachedTarget:
 
 
 class TestValidateAlgorithmIsolation:
-    @patch("vantage6.node.k8s.network_isolation._wait_for_probe_pod")
+    @patch("vantage6.node.runtime.kubernetes.network_isolation._wait_for_probe_pod")
     def test_reachable_target_returns_not_isolated(self, mock_wait):
         mock_wait.return_value = TestProbePodReachedTarget()._pod_with_exit_code(0)
         core_api = MagicMock()
@@ -64,7 +64,7 @@ class TestValidateAlgorithmIsolation:
         assert "example.com" in message
         core_api.delete_namespaced_pod.assert_called_once()
 
-    @patch("vantage6.node.k8s.network_isolation._wait_for_probe_pod")
+    @patch("vantage6.node.runtime.kubernetes.network_isolation._wait_for_probe_pod")
     def test_blocked_target_returns_isolated(self, mock_wait):
         mock_wait.return_value = TestProbePodReachedTarget()._pod_with_exit_code(28)
         core_api = MagicMock()
@@ -78,7 +78,7 @@ class TestValidateAlgorithmIsolation:
         assert isolated is True
         assert "verified" in message
 
-    @patch("vantage6.node.k8s.network_isolation._wait_for_probe_pod")
+    @patch("vantage6.node.runtime.kubernetes.network_isolation._wait_for_probe_pod")
     def test_probe_pod_is_shell_free_and_configurable(self, mock_wait):
         mock_wait.return_value = TestProbePodReachedTarget()._pod_with_exit_code(28)
         core_api = MagicMock()
@@ -114,7 +114,7 @@ class TestNodeProductionGating:
             patch("vantage6.node.ContainerManager") as mock_cm_cls,
         ):
             mock_cm = mock_cm_cls.return_value
-            mock_cm.can_create_algorithm_pods.return_value = True
+            mock_cm.preflight.return_value = (True, "ok")
             mock_cm.validate_algorithm_isolation.return_value = (
                 False,
                 "probe failed",
@@ -145,7 +145,7 @@ class TestNodeProductionGating:
             patch("vantage6.node.ContainerManager") as mock_cm_cls,
         ):
             mock_cm = mock_cm_cls.return_value
-            mock_cm.can_create_algorithm_pods.return_value = True
+            mock_cm.preflight.return_value = (True, "ok")
             mock_cm.validate_algorithm_isolation.return_value = (
                 False,
                 "probe failed",
@@ -181,7 +181,7 @@ class TestNodeProductionGating:
             patch("vantage6.node.ContainerManager") as mock_cm_cls,
         ):
             mock_cm = mock_cm_cls.return_value
-            mock_cm.can_create_algorithm_pods.return_value = True
+            mock_cm.preflight.return_value = (True, "ok")
             with patch("vantage6.node.sys.exit") as mock_exit:
                 with (
                     patch.object(Node, "_setup_node_client", return_value=MagicMock()),
@@ -197,7 +197,7 @@ class TestNodeProductionGating:
             mock_cm.validate_algorithm_isolation.assert_not_called()
         assert "NOT verified" in caplog.text
 
-    def test_exits_when_algorithm_pods_cannot_be_created(self):
+    def test_exits_when_algorithm_containers_cannot_be_started(self):
         ctx = MagicMock()
         ctx.config = {"production": True, "policies": _ALGORITHM_POLICY}
 
@@ -205,7 +205,7 @@ class TestNodeProductionGating:
             patch("vantage6.node.validate_required_env_vars"),
             patch("vantage6.node.ContainerManager") as mock_cm_cls,
         ):
-            mock_cm_cls.return_value.can_create_algorithm_pods.return_value = False
+            mock_cm_cls.return_value.preflight.return_value = (False, "denied")
             with patch(
                 "vantage6.node.sys.exit", side_effect=SystemExit(1)
             ) as mock_exit:

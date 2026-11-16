@@ -48,14 +48,12 @@ ENV_VARS_NOT_SETTABLE_BY_NODE = ["PKG_NAME"]
 # default policies
 DEFAULT_REQUIRE_ALGO_IMAGE_PULL = True
 
-# Mount paths within the algorithm containers. Algorithms containers are run as
-# jobs in the Kubernetes cluster.
+# Mount paths within the algorithm containers
 TASK_JOB_INPUT_PATH = "/app/vantage6/task/input"
 TASK_JOB_OUTPUT_PATH = "/app/vantage6/task/output"
 TASK_JOB_SESSION_FOLDER_PATH = "/app/vantage6/task/session"
 
-# The mount location of the tasks files, databases and kube config in the node
-# container.
+# The mount location of the task files and databases in the node container
 TASK_FILES_ROOT = "/app/tasks"
 DATABASE_BASE_PATH = "/app/databases/"
 

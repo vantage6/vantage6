@@ -10,32 +10,55 @@ from kubernetes.client.rest import ApiException
 from vantage6.common.enum import AlgorithmStepType, TaskDatabaseType
 from vantage6.common.globals import ContainerEnvNames, NodePolicy
 
+from vantage6.node.container.container_manager import ContainerManager
+from vantage6.node.container.exceptions import PermanentAlgorithmStartFail
+from vantage6.node.container.run_io import RunIO
 from vantage6.node.globals import (
     TASK_JOB_INPUT_PATH,
     TASK_JOB_OUTPUT_PATH,
     TASK_JOB_SESSION_FOLDER_PATH,
 )
-from vantage6.node.k8s.container_manager import (
-    ContainerManager,
+from vantage6.node.runtime.base import PullPolicy
+from vantage6.node.runtime.kubernetes.runtime import (
+    PULL_POLICIES,
+    KubernetesRuntime,
     algorithm_pod_labels,
 )
-from vantage6.node.k8s.exceptions import PermanentAlgorithmStartFail
-from vantage6.node.k8s.run_io import RunIO
 
 NODE_POD_LABELS = {"app": "node", "release": "my-node", "component": "node"}
 
 
-def _manager() -> ContainerManager:
-    """ContainerManager configured like the Helm chart does, without a cluster."""
+def _k8s_runtime() -> KubernetesRuntime:
+    """KubernetesRuntime configured like the Helm chart does, without a cluster."""
+    runtime = KubernetesRuntime.__new__(KubernetesRuntime)
+    runtime.log = _get_null_logger()
+    runtime.ctx = MagicMock()
+    runtime.ctx.config = {}
+    runtime.task_namespace = "tenant"
+    runtime.task_claim_name = "node-task-pvc"
+    runtime.task_claim_sub_path = ""
+    runtime.colocate_with_node = False
+    runtime.node_pod_labels = NODE_POD_LABELS
+    runtime.algorithm_pod_config = {}
+    runtime.algorithm_pod_labels = algorithm_pod_labels("my-node")
+    runtime.core_api = MagicMock()
+    runtime.batch_api = MagicMock()
+    runtime.task_job_labels = {"node_id": "abc"}
+    runtime.task_job_label_selector = "node_id=abc"
+    return runtime
+
+
+def _manager(runtime=None) -> ContainerManager:
+    """ContainerManager without a container platform."""
     manager = ContainerManager.__new__(ContainerManager)
     manager.log = _get_null_logger()
-    manager.task_namespace = "tenant"
-    manager.task_claim_name = "node-task-pvc"
-    manager.task_claim_sub_path = ""
-    manager.colocate_with_node = False
-    manager.node_pod_labels = NODE_POD_LABELS
-    manager.algorithm_pod_config = {}
-    manager.algorithm_pod_labels = algorithm_pod_labels("my-node")
+    manager.ctx = MagicMock()
+    manager.ctx.config = {}
+    manager.client = MagicMock()
+    manager._policies = {}
+    manager.databases = {}
+    manager.share_algorithm_logs = True
+    manager.runtime = runtime if runtime is not None else _k8s_runtime()
     return manager
 
 
@@ -69,10 +92,7 @@ class TestIsImageAllowed(unittest.TestCase):
     """
 
     def setUp(self):
-        self.manager = ContainerManager.__new__(ContainerManager)
-        self.manager.log = _get_null_logger()
-        self.manager.client = MagicMock()
-        self.manager._policies = {}
+        self.manager = _manager()
 
     @staticmethod
     def _task_info(store_id: int | None = None) -> dict:
@@ -239,7 +259,7 @@ class TestIsImageAllowed(unittest.TestCase):
         )
 
 
-class TestGetImagePullPolicy:
+class TestGetPullPolicy:
     def _manager_with_policies(self, policies: dict) -> ContainerManager:
         manager = ContainerManager.__new__(ContainerManager)
         manager._policies = policies
@@ -247,15 +267,19 @@ class TestGetImagePullPolicy:
 
     def test_require_algorithm_pull_false_means_if_not_present(self):
         manager = self._manager_with_policies({"require_algorithm_pull": False})
-        assert manager._get_image_pull_policy() == "IfNotPresent"
+        assert manager._get_pull_policy() == PullPolicy.IF_NOT_PRESENT
 
     def test_require_algorithm_pull_true_means_always(self):
         manager = self._manager_with_policies({"require_algorithm_pull": True})
-        assert manager._get_image_pull_policy() == "Always"
+        assert manager._get_pull_policy() == PullPolicy.ALWAYS
 
     def test_require_algorithm_pull_absent_defaults_to_always(self):
         manager = self._manager_with_policies({})
-        assert manager._get_image_pull_policy() == "Always"
+        assert manager._get_pull_policy() == PullPolicy.ALWAYS
+
+    def test_kubernetes_pull_policies(self):
+        assert PULL_POLICIES[PullPolicy.ALWAYS] == "Always"
+        assert PULL_POLICIES[PullPolicy.IF_NOT_PRESENT] == "IfNotPresent"
 
 
 class TestDatabaseMountMode(unittest.TestCase):
@@ -282,7 +306,7 @@ class TestDatabaseMountMode(unittest.TestCase):
             ("DATABASE_BASE_PATH", str(self.db_dir)),
             ("TASK_FILES_ROOT", str(self.tasks_dir)),
         ]:
-            patcher = patch(f"vantage6.node.k8s.container_manager.{name}", value)
+            patcher = patch(f"vantage6.node.container.container_manager.{name}", value)
             patcher.start()
             self.addCleanup(patcher.stop)
 
@@ -319,13 +343,12 @@ class TestDatabaseMountMode(unittest.TestCase):
         self.assertEqual(db.mount_mode, "ro")
         self.assertFalse((self.tasks_dir / "databases").exists())
 
-    def test_copy_mode_copies_file_to_task_claim(self):
-        self.manager.task_claim_sub_path = "base"
+    def test_copy_mode_copies_file_to_task_storage(self):
         db = self._get_databases(self._file_db_env("copy"))["file_db"]
 
         self.assertEqual(db.mount_mode, "copy")
-        self.assertEqual(db.claim_name, self.TASK_CLAIM)
-        self.assertEqual(db.sub_path, "base/databases/file_db.csv")
+        self.assertIsNone(db.claim_name)
+        self.assertEqual(db.sub_path, "databases/file_db.csv")
         self.assertEqual(db.local_uri, str(self.db_dir / "file_db.csv"))
         self.assertEqual(
             (self.tasks_dir / "databases" / "file_db.csv").read_text(), "a,b\n1,2\n"
@@ -365,9 +388,11 @@ class TestDatabaseMountMode(unittest.TestCase):
         databases_to_use = [{"label": label, "type": TaskDatabaseType.SOURCE}]
 
         with patch.object(self.manager, "_validate_source_database"):
-            return self.manager._create_volume_mounts(
+            mounts, env_vars, secrets = self.manager._create_mounts(
                 _run_io(AlgorithmStepType.DATA_EXTRACTION), b"", databases_to_use
             )
+        volumes, vol_mounts = self.manager.runtime.volumes_for(mounts)
+        return volumes, vol_mounts, env_vars, secrets
 
     def _get_extraction_db_mount(self, mount_mode: str):
         volumes, vol_mounts, _, _ = self._create_extraction_mounts(
@@ -394,6 +419,20 @@ class TestDatabaseMountMode(unittest.TestCase):
         self.assertEqual(volume.persistent_volume_claim.claim_name, self.TASK_CLAIM)
         self.assertEqual(vol_mount.sub_path, "databases/file_db.csv")
         self.assertEqual(vol_mount.mount_path, str(self.db_dir / "file_db.csv"))
+
+    def test_copy_database_is_inside_the_task_sub_path(self):
+        self.manager.runtime.task_claim_sub_path = "base"
+        _, vol_mount = self._get_extraction_db_mount("copy")
+
+        self.assertEqual(vol_mount.sub_path, "base/databases/file_db.csv")
+
+    def test_host_path_database_cannot_be_mounted_on_kubernetes(self):
+        env = self._file_db_env("ro")
+        del env["DATABASE_FILE_DB_CLAIM_NAME"]
+        env["DATABASE_FILE_DB_HOST_PATH"] = "/data/file_db.csv"
+
+        with self.assertRaises(PermanentAlgorithmStartFail):
+            self._create_extraction_mounts(env, "file_db")
 
     def test_file_database_without_claim_fails_run(self):
         env = self._file_db_env("ro")
@@ -423,12 +462,12 @@ class TestRunMounts(unittest.TestCase):
 
     def _mounts(self, sub_path: str = ""):
         manager = _manager()
-        manager.task_claim_sub_path = sub_path
-        manager.databases = {}
+        manager.runtime.task_claim_sub_path = sub_path
         run_io = _run_io(AlgorithmStepType.FEDERATED_COMPUTE)
         with patch.object(manager, "_validate_dataframes"):
-            volumes, mounts, _, _ = manager._create_volume_mounts(run_io, b"", [])
-        return volumes, {m.mount_path: m for m in mounts}
+            mounts, _, _ = manager._create_mounts(run_io, b"", [])
+        volumes, vol_mounts = manager.runtime.volumes_for(mounts)
+        return volumes, {m.mount_path: m for m in vol_mounts}
 
     def test_single_claim_volume_without_host_paths(self):
         volumes, _ = self._mounts()
@@ -459,7 +498,7 @@ class TestRunMounts(unittest.TestCase):
 
 class TestAlgorithmPodSpec(unittest.TestCase):
     def test_defaults(self):
-        spec = _manager().algorithm_pod_spec(containers=[])
+        spec = _k8s_runtime().algorithm_pod_spec(containers=[])
 
         self.assertEqual(spec.restart_policy, "Never")
         self.assertFalse(spec.automount_service_account_token)
@@ -467,7 +506,7 @@ class TestAlgorithmPodSpec(unittest.TestCase):
         self.assertIsNone(spec.service_account_name)
 
     def test_colocate_with_node_adds_pod_affinity(self):
-        manager = _manager()
+        manager = _k8s_runtime()
         manager.colocate_with_node = True
 
         term = manager.algorithm_pod_spec(
@@ -478,7 +517,7 @@ class TestAlgorithmPodSpec(unittest.TestCase):
         self.assertEqual(term.topology_key, "kubernetes.io/hostname")
 
     def test_configured_pod_settings_applied(self):
-        manager = _manager()
+        manager = _k8s_runtime()
         resources = {"limits": {"cpu": "1", "memory": "1Gi"}}
         manager.algorithm_pod_config = {
             "resources": resources,
@@ -508,12 +547,11 @@ class TestAlgorithmPodSpec(unittest.TestCase):
         self.assertEqual(algorithm_pod_labels(None), {"v6-pod-type": "algorithm"})
 
 
-class TestCanCreateAlgorithmPods(unittest.TestCase):
+class TestKubernetesPreflight(unittest.TestCase):
     def test_test_pod_uses_algorithm_pod_settings(self):
-        manager = _manager()
-        manager.core_api = MagicMock()
+        manager = _k8s_runtime()
 
-        self.assertTrue(manager.can_create_algorithm_pods())
+        self.assertTrue(manager.preflight()[0])
 
         pod = manager.core_api.create_namespaced_pod.call_args.kwargs["body"]
         self.assertEqual(
@@ -526,11 +564,12 @@ class TestCanCreateAlgorithmPods(unittest.TestCase):
         manager.core_api.create_namespace.assert_not_called()
 
     def test_rejected_test_pod(self):
-        manager = _manager()
-        manager.core_api = MagicMock()
+        manager = _k8s_runtime()
         manager.core_api.create_namespaced_pod.side_effect = ApiException(status=403)
 
-        self.assertFalse(manager.can_create_algorithm_pods())
+        ok, message = manager.preflight()
+        self.assertFalse(ok)
+        self.assertIn("tenant", message)
 
 
 if __name__ == "__main__":

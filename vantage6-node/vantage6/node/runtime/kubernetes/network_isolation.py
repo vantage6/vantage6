@@ -10,10 +10,10 @@ from vantage6.common.enum import AlgorithmStepType
 
 from vantage6.node.globals import (
     ISOLATION_PROBE_CANDIDATES,
-    ISOLATION_PROBE_CURL_MAX_TIME_SECONDS,
     ISOLATION_PROBE_IMAGE,
     ISOLATION_PROBE_TIMEOUT_SECONDS,
 )
+from vantage6.node.runtime.probe import probe_args
 
 
 def _probe_containers(
@@ -32,14 +32,7 @@ def _probe_containers(
             name=f"probe-{idx}",
             image=image,
             command=["curl"],
-            args=[
-                "-s",
-                "-o",
-                "/dev/null",
-                "--max-time",
-                str(ISOLATION_PROBE_CURL_MAX_TIME_SECONDS),
-                url,
-            ],
+            args=probe_args(url),
         )
         for idx, url in enumerate(ISOLATION_PROBE_CANDIDATES)
     ]

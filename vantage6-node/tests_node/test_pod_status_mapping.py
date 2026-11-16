@@ -14,7 +14,7 @@ from kubernetes.client import (
 
 from vantage6.common.enum import RunStatus
 
-from vantage6.node.k8s.jobpod_state_to_run_status_mapper import (
+from vantage6.node.runtime.kubernetes.status import (
     compute_run_pod_status,
 )
 

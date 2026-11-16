@@ -57,15 +57,15 @@ from vantage6.common.log import get_file_logger
 from vantage6.cli.context.node import NodeContext
 
 from vantage6.node import proxy_server
+from vantage6.node.container.container_manager import ContainerManager
+from vantage6.node.container.data_classes import Result, ToBeKilled
+from vantage6.node.container.run_io import RunIO
 from vantage6.node.globals import (
     PRIVATE_KEY_MOUNT_PATH,
     SLEEP_BTWN_NODE_LOGIN_TRIES,
     TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET,
     TIME_LIMIT_RETRY_CONNECT_NODE,
 )
-from vantage6.node.k8s.container_manager import ContainerManager
-from vantage6.node.k8s.data_classes import Result, ToBeKilled
-from vantage6.node.k8s.run_io import RunIO
 from vantage6.node.socket import NodeTaskNamespace
 
 __version__ = importlib.metadata.version(__package__)
@@ -118,15 +118,17 @@ class Node:
         # initialize Node connection to HQ
         self.client = self._setup_node_client(self.config)
 
-        self.k8s_container_manager = ContainerManager(self.ctx, self.client)
+        self.container_manager = ContainerManager(self.ctx, self.client)
 
-        self.log.debug("Checking that pods for algorithm runs can be created")
-        if not self.k8s_container_manager.can_create_algorithm_pods():
+        self.log.debug("Checking that algorithm containers can be started")
+        can_start, preflight_message = self.container_manager.preflight()
+        if not can_start:
             self.log.error(
-                "Could not create pods for algorithm runs in namespace '%s'. Exiting.",
-                self.k8s_container_manager.task_namespace,
+                "Algorithm containers cannot be started: %s Exiting.",
+                preflight_message,
             )
             sys.exit(1)
+        self.log.info(preflight_message)
 
         self.check_algorithm_isolation()
 
@@ -150,7 +152,7 @@ class Node:
         # Create a long-lasting websocket connection.
         self.log.debug("Creating websocket connection with HQ")
         self.connect_to_socket()
-        self.k8s_container_manager.set_socket(self.socketIO)
+        self.container_manager.set_socket(self.socketIO)
 
         self.start_processing_threads()
 
@@ -202,21 +204,20 @@ class Node:
         if not (self.config.get("network_isolation") or {}).get("verify", True):
             self.log.warning(
                 "Algorithm network isolation is NOT verified, as configured. Make sure "
-                "your cluster administrator prevents algorithm pods from reaching "
-                "anything but the node proxy."
+                "algorithm containers cannot reach anything but the node proxy."
             )
             return
         isolated, isolation_message = (
-            self.k8s_container_manager.validate_algorithm_isolation()
+            self.container_manager.validate_algorithm_isolation()
         )
         if not isolated:
             if self.config.get("production", True):
                 self.log.error(
                     "Algorithm network isolation check failed: %s. Nodes with "
-                    "production=true require a Kubernetes environment that enforces "
-                    "NetworkPolicies. Common causes: Docker Desktop Kubernetes, missing "
-                    "NetworkPolicies in the task namespace, or a broad "
-                    "central_compute egress whitelist (e.g. 0.0.0.0/0).",
+                    "production=true require that algorithm containers are isolated. "
+                    "Common causes: a Kubernetes cluster that does not enforce "
+                    "NetworkPolicies (e.g. Docker Desktop), missing NetworkPolicies, "
+                    "or a broad central_compute egress whitelist (e.g. 0.0.0.0/0).",
                     isolation_message,
                 )
                 sys.exit(1)
@@ -275,7 +276,7 @@ class Node:
         metadata = {
             "cpu_percent": psutil.cpu_percent(interval=1),
             "memory_percent": psutil.virtual_memory().percent,
-            "num_algorithm_containers": self.k8s_container_manager.num_active_tasks,
+            "num_algorithm_containers": self.container_manager.num_active_tasks,
             "os": os.name,
             "platform": sys.platform,
             "cpu_count": psutil.cpu_count(),
@@ -341,8 +342,8 @@ class Node:
         """
 
         # The V6_PROXY_HOST is required for the node to work. There are no default
-        # values for it as its value (a FQDN) depends on the namespace where the
-        # K8S-service with the node is running.
+        # values for it as it depends on the runtime: on Kubernetes the FQDN of the
+        # node service, on Docker the name of the node container.
         if "V6_PROXY_HOST" in os.environ:
             proxy_host = os.environ.get("V6_PROXY_HOST")
             os.environ["V6_PROXY_HOST"] = proxy_host
@@ -444,7 +445,7 @@ class Node:
         """
         for run_to_execute in runs_to_execute:
             try:
-                if not self.k8s_container_manager.is_running(
+                if not self.container_manager.is_running(
                     RunIO.container_name_for(run_to_execute["id"])
                 ):
                     self.runs_queue.put(run_to_execute)
@@ -517,7 +518,7 @@ class Node:
 
         # Run the container. This adds the created container/task to the list
         # __docker.active_tasks
-        run_status: RunStatus = self.k8s_container_manager.run(
+        run_status: RunStatus = self.container_manager.run(
             action=container_action,
             run_id=run_id,
             task_info=task,
@@ -610,7 +611,7 @@ class Node:
         self.log.debug("Waiting for results to send to HQ")
         while True:
             try:
-                results = self.k8s_container_manager.process_next_completed_run()
+                results = self.container_manager.process_next_completed_run()
                 self.log.info(f"Sending result (run={results.run_id}) to HQ!")
                 self.__report_finished_run(results)
             except Exception as e:
@@ -876,9 +877,7 @@ class Node:
         kill_list = kill_info.get("kill_list")
         if kill_list:
             kill_list = [ToBeKilled(**kill_info) for kill_info in kill_list]
-        killed_algos = self.k8s_container_manager.kill_algorithm_runs(
-            kill_list=kill_list
-        )
+        killed_algos = self.container_manager.kill_algorithm_runs(kill_list=kill_list)
         # update logs of killed tasks. Note that the status is already set to KILLED
         # by HQ.
         if self.config.get("share_algorithm_logs", True):
@@ -933,7 +932,7 @@ class Node:
 
         labels = []
         types = {}
-        for label, db_info in self.k8s_container_manager.databases.items():
+        for label, db_info in self.container_manager.databases.items():
             type_ = db_info.type
             labels.append(label)
             types[f"db_type_{label}"] = type_
@@ -946,7 +945,7 @@ class Node:
 
     def cleanup(self) -> None:
         """
-        Cleanup the node by disconnecting from the socket, and cleaning up the k8s
+        Cleanup the node by disconnecting from the socket, and cleaning up the
         container manager.
         """
         self.log.info("Cleaning up node...")
@@ -957,26 +956,26 @@ class Node:
             self.log.exception("Error while disconnecting from socketIO")
 
         try:
-            if hasattr(self, "k8s_container_manager"):
-                self.k8s_container_manager.cleanup()
+            if hasattr(self, "container_manager"):
+                self.container_manager.cleanup()
         except Exception:
-            self.log.exception("Error while cleaning up k8s container manager")
+            self.log.exception("Error while cleaning up the container manager")
 
         self.log.info("Bye!")
 
     def start_processing_threads(self) -> None:
         """
         Start the threads that (1) consumes the queue with the requests produced by HQ,
-        and (2) polls Kubernetes for finished algorithm runs, collects their output,
+        and (2) polls the container runtime for finished algorithm runs, collects their output,
         and sends it to HQ.
         """
         self.log.info("Starting threads")
-        # polls for results on completed jobpods using the k8s api, also reports the
+        # polls for results of completed algorithm runs, also reports the
         # results (or error status) back to HQ
         results_polling_thread = threading.Thread(
             target=self.__send_updates_finished_tasks
         )
-        # polls for new tasks sent by HQ, and starts them using the k8s API
+        # polls for new tasks sent by HQ, and starts them in the container runtime
         queue_processing_thread = threading.Thread(
             target=self.__process_new_tasks_queue
         )

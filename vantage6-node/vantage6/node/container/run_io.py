@@ -17,8 +17,8 @@ from vantage6.common.client.node_client import NodeClient
 from vantage6.common.enum import AlgorithmStepType, RunStatus
 from vantage6.common.globals import APPNAME
 
+from vantage6.node.container.session_manager import SessionFileManager
 from vantage6.node.globals import TASK_FILES_ROOT
-from vantage6.node.k8s.session_manager import SessionFileManager
 
 
 class RunIO:
