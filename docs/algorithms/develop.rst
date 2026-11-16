@@ -50,7 +50,7 @@ package.
 
    # create a Python environment. Be sure to replace <my-algorithm-env> with
    # the name of your environment.
-   conda create -n <my-algorithm-env> python=3.10
+   conda create -n <my-algorithm-env> python=3.13
    conda activate <my-algorithm-env>
 
    # install the algorithm dependencies
