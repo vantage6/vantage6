@@ -1,5 +1,6 @@
-# Set the namespace in which the node will be deployed. Optional, by default the
-# Release.Namespace is used
+# The namespace of the node. The node, the algorithms it runs, their storage and
+# network policies all live in this one namespace. Optional, by default the namespace
+# the node is started in (`v6 node start --namespace`).
 namespace: vantage6-node
 
 node:
@@ -11,10 +12,9 @@ node:
   apiKey: abcdefghijklmnopqrstuvwxyz1234567890
 
   # When true, the node verifies at startup that algorithm network isolation is
-  # enforced by Kubernetes. If the check fails, the node refuses to start. Also, if
-  # true, ensures this node does not share its task namespace, so that data is not shared
-  # with other nodes in the cluster. Set to false for development and sandbox
-  # environments only; failures are then logged as warnings.
+  # enforced by Kubernetes (see `networkPolicy`). If the check fails, the node refuses
+  # to start. Set to false for development and sandbox environments only; failures are
+  # then logged as warnings.
   production: true
 
   # The image to use for the node.
@@ -29,17 +29,37 @@ node:
     port: 7601
     path: /api
 
-  # Namespace in which the task kubernetes resources are created. This must be a
-  # namespace where the node has access to create pods.
-  taskNamespace: vantage6-tasks
+  # Service account of the node pod. The chart binds it to a Role that lets it manage
+  # the jobs, pods and secrets of algorithm runs in the node's namespace. Set `create`
+  # to false and give a `name` to use a service account that already exists.
+  serviceAccount:
+    create: true
 
-  # Whether this chart creates and owns the task namespace above. Disable if your cluster
-  # centrally governs namespace creation (e.g. a platform team's GitOps pipeline) and the
-  # task namespace is provisioned outside Helm instead. Default true.
-  manageTaskNamespace: true
+  # Resource requests and limits, security context and runtime class of the node pod.
+  # Some clusters (e.g. OpenShift projects with strict quotas) reject pods without
+  # requests and limits.
+  resources:
+    requests: {cpu: 250m, memory: 1Gi, ephemeral-storage: 1Gi}
+    limits: {cpu: "2", memory: 4Gi, ephemeral-storage: 4Gi}
+  podSecurityContext: {}
+  securityContext: {}
+  runtimeClassName: ""
 
-  # Kubernetes node name, used for local persistent volumes
-  k8sNodeName: docker-desktop
+  # Settings of the pods (Kubernetes jobs) that run algorithms. These also apply to the
+  # short-lived pods the node starts to check its permissions and network isolation.
+  algorithmPods:
+    resources:
+      requests: {cpu: 500m, memory: 1Gi, ephemeral-storage: 1Gi}
+      limits: {cpu: "4", memory: 8Gi, ephemeral-storage: 10Gi}
+    # Remove finished jobs after this many seconds, even if the node did not do so
+    # itself (for example because it was offline). Set to null to disable.
+    ttlSecondsAfterFinished: 86400
+    # Service account to run algorithm pods with, e.g. `anyuid` on OpenShift for
+    # algorithm images that must run as root. Its API token is never mounted.
+    serviceAccountName: ""
+    runtimeClassName: ""
+    podSecurityContext: {}
+    securityContext: {}
 
   # Keycloak configuration to authenticate the node.
   keycloak:
@@ -59,32 +79,56 @@ node:
   # Port for the node proxy to run on
   proxyPort: 7654
 
-  # Storage settings on host of the node machine. This defines where the database is
-  # stored as well as the task directory (which will contain the input/output of the
-  # tasks).
+  # Storage shared by the node and its algorithm pods. It holds the input, output and
+  # session files of algorithm runs. Each algorithm pod only mounts the files of its own
+  # run.
   persistence:
     tasks:
-      storageClass: local-storage
+      # Use an existing PersistentVolumeClaim instead of letting the chart create one
+      existingClaim: ""
+      # Folder inside the claim to use. Empty uses the root of the claim.
+      subPath: ""
+      # Storage class of the claim. Empty uses the cluster's default storage class.
+      storageClass: ""
+      # ReadWriteOnce: algorithm pods are scheduled on the same machine as the node.
+      # ReadWriteMany: algorithm pods can run on any machine; needs a storage class
+      # that supports it, e.g. NFS or CephFS.
+      accessMode: ReadWriteOnce
       size: 10Gi
-      hostPath: /path/to/where/task/files/are/stored
-    database:
-      storageClass: local-storage
-      size: 5Gi
+
+  # Network policies that isolate algorithm pods: they may only reach the node proxy
+  # and DNS, plus what is added in `whitelist`.
+  networkPolicy:
+    # Set to false if you may not create NetworkPolicies. Your cluster administrator
+    # must then isolate the algorithm pods in another way.
+    enabled: true
+    # Check at startup that algorithm pods cannot reach the internet. With
+    # `production: true` the node refuses to start if they can. Only disable this when
+    # isolation is enforced in another way.
+    verifyIsolation: true
+    # Where the cluster DNS runs. On OpenShift use namespace `openshift-dns` and port
+    # 5353.
+    dns:
+      namespace: kube-system
+      ports: [53]
+    # Image for the isolation check. Empty uses the curl image published with vantage6.
+    probeImage: ""
 
   # Database settings
   databases:
-    # File-based databases - these must be existing local files on the node machine.
-    # They will be mounted in the node container.
+    # File-based databases - files or folders on an existing PersistentVolumeClaim in
+    # the node's namespace. They are mounted in the node container and in the
+    # algorithm containers that use them.
     fileBased:
     - name: olympic_athletes_db
-      uri: /my/local/path/to/data/olympic_athletes_2016.csv
       type: csv
-      volumePath: /my/local/path/to/data
-      originalName: olympic_athletes_2016.csv
+      # The claim that holds the data, and the file or folder inside it
+      existingClaim: hospital-data
+      subPath: exports/olympic_athletes_2016.csv
       # OPTIONAL: controls how file/folder databases are exposed to algorithm
       # containers.
-      # - ro (default): bind-mount host path read-only into algorithm containers
-      # - copy: copy file data into the node data volume
+      # - ro (default): mounted read-only in algorithm containers
+      # - copy: algorithms get a writable copy of the file
       mount_mode: ro
     # Service-based databases - these are databases that are running on the node
     # machine. They will be accessed using the URI.
@@ -250,13 +294,15 @@ node:
     # Format for the log file
     format: "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
 
-    # Storage configuration for logs. Storage size is set to 128M by default,
-    # and storage class is k8s storage class that is used for the node.
-    storageSize: "128M"
-    storageClass: "local-storage"
-
-    # Host path for storing the logs (required for local-storage PV)
-    volumeHostPath: "/var/log/vantage6-node"
+    # Store log files on a PersistentVolumeClaim. If false, log files only last as
+    # long as the pod; console logging is unaffected.
+    persistent: true
+    # Use an existing claim instead of letting the chart create one
+    existingClaim: ""
+    # Size and storage class of the claim. An empty storage class uses the cluster's
+    # default. Many clusters refuse claims smaller than 1Gi.
+    storageSize: "1Gi"
+    storageClass: ""
 
     # Maximum number of log files to keep. Log files are rotated when the size of the
     # current log file exceeds `max_size`.
@@ -284,7 +330,11 @@ node:
     proxy_server: false
 
   # Development settings - these should ONLY be used when running `v6 dev` environment,
-  # which will use these settings automatically.
+  # which will use these settings automatically. The `v6 dev` environment and the
+  # sandbox also set `k8sNodeName`, `persistence.tasks.hostPath`,
+  # `logging.volumeHostPath` and `volumePath`/`originalName` of file-based databases,
+  # to store files in a directory on a single-machine cluster. Do not use these on a
+  # shared cluster.
   dev:
     # Set extension for the task directory. In the development environment, the task
     # directory is mounted as a volume and shared by multiple nodes. This extension is
