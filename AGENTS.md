@@ -9,7 +9,7 @@ Privacy-preserving federated learning infrastructure. Python 3.13 monorepo manag
 - **Never reference issues in code** — no issue, ticket, or PR numbers (and no links to them) in comments or docstrings
 - **Never run `kubectl`** — K8s cluster state is outside the agent's scope, unless explicitly asked to do so
 - **Never run `devspace` or `v6 dev` commands** — these should be user controlled
-- **Never run `v6 sandbox` commands** — these spin up Docker infrastructure
+- **Only run `v6 sandbox` commands when the user asks for a sandbox** — these spin up Docker infrastructure; follow the `run-sandbox` skill
 - **Never modify `uv.lock` directly** — always regenerate through `make lock`
 - **Never run `make image` or `make publish`** — builds and releases are deliberate, user-initiated actions
 - **Never commit changes unless explicitly asked** — always present diffs for review first
@@ -20,6 +20,7 @@ Shared workflow skills live in `.agents/skills/` (`.claude/skills`, `.github/ski
 
 - `issue-to-pr` — take a GitHub issue through assessment, plan, implementation and PR, with user approval at each phase
 - `security-advisory` — take a GitHub security advisory to a fix PR in its private fork, with user approval at each phase
+- `run-sandbox` — run a local sandbox with images built from the checkout to verify a change end to end, and clean it up afterwards
 
 If your tool does not load skills automatically, read the relevant `SKILL.md` and follow it.
 
