@@ -1,5 +1,5 @@
 ---
-name: sandbox
+name: run-sandbox
 description: Run a local vantage6 sandbox (hub + nodes on Kubernetes) to verify changes end to end, with images built from the current checkout for the components that changed, and clean it up afterwards. Use when the user asks to start, test against, rebuild, or remove a sandbox.
 ---
 
