@@ -21,7 +21,8 @@ itself.
 
 ## Setup
 
-- The `project` scope is not needed: there is no sprint board step.
+- The `project` scope is not needed: there is no public issue, so skip `issue-to-pr`'s
+  assignment and sprint board steps (after Gate 1 and in Phase 4).
 - Instead of checking out the latest `release/5.x` branch, confirm the current branch is
   the default branch (`gh repo view --json defaultBranchRef`). If not, tell the user which
   branch is checked out and ask whether to switch — do not switch unasked. The fix branch

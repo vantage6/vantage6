@@ -25,8 +25,8 @@ continue until the user answers. If your tool has a structured question tool (e.
 
 Verify `gh auth status` succeeds. If not, stop and tell the user to run `gh auth login` —
 nothing in this workflow works without it. Also check that the token scopes include
-`project` (needed in Phase 4 to update the sprint board). If missing, tell the user to run
-`gh auth refresh -s project`; this is not a blocker for the earlier phases.
+`project` (needed after Gate 1 and in Phase 4 to update the sprint board). If missing, tell
+the user to run `gh auth refresh -s project`; this is not a blocker for the other steps.
 
 Check the repo state before anything else:
 - The base branch is always the latest `release/5.x` branch, not the default branch.
@@ -70,6 +70,8 @@ Present:
 - Alternatives, including "resolve as won't-fix" or "the reporter's real problem is
   better solved another way", when either is genuinely the better call
 - The intended approach, in a few lines — enough for the user to approve the direction
+- What proceeding will change on GitHub: the issue gets assigned to the user (unless it
+  already is) and moves to "In Progress" on the sprint board (if it is on it)
 
 Do not soften a negative verdict into a neutral one. If the honest read is that the issue
 is misconceived, say so plainly and explain what you'd do instead.
@@ -77,6 +79,12 @@ is misconceived, say so plainly and explain what you'd do instead.
 **Gate 1:** Proceed / proceed with a modified goal / stop here.
 If the user corrects the reading or the goal, revise and re-ask this gate. If the user
 stops, write the assessment somewhere durable if they want it, and end.
+
+Once the user proceeds (covered by the Gate 1 approval; report the outcome of each):
+- **Assign the issue** to the current user if they are not among its assignees yet:
+  `gh issue edit <url> --add-assignee @me`. Do not remove other assignees.
+- **Set the sprint status to "In Progress"** — see [Sprint board](#sprint-board). Only move
+  the issue forward: leave it alone if it is already "To review" or further.
 
 ## Phase 2 — Plan
 
@@ -191,9 +199,16 @@ Re-run the `closingIssuesReferences` query to confirm the issue is now listed. I
 mutation fails, report the error and ask the user to link it manually under
 **Development** — do not fall back to commenting.
 
-**Set sprint status to "To review" (if the issue is in the sprints project).** Requires
-the `project` scope; if missing, tell the user to run `gh auth refresh -s project` and
-offer to do this step afterwards. Find the issue's project items:
+**Set the sprint status to "To review"** — see [Sprint board](#sprint-board).
+
+---
+
+## Sprint board
+
+Used after Gate 1 ("In Progress") and in Phase 4 ("To review"), only if the issue is in the
+sprints project. Requires the `project` scope; if missing, tell the user to run
+`gh auth refresh -s project` and offer to do this step afterwards. Find the issue's project
+items:
 
 ```bash
 gh api graphql -f query='{repository(owner:"<owner>",name:"<repo>"){issue(number:<issue>){projectItems(first:10){nodes{id project{id title} fieldValueByName(name:"Status"){... on ProjectV2ItemFieldSingleSelectValue{name}}}}}}}'
@@ -206,8 +221,8 @@ skip and say so. Otherwise look up the Status field and its options:
 gh api graphql -f query='{node(id:"<project id>"){... on ProjectV2{field(name:"Status"){... on ProjectV2SingleSelectField{id options{id name}}}}}}'
 ```
 
-Pick the option matching "to review" (case-insensitive) — if no option matches, stop and
-show the user the available options rather than guessing — then set it:
+Pick the option matching the target status (case-insensitive) — if no option matches, stop
+and show the user the available options rather than guessing — then set it:
 
 ```bash
 gh project item-edit --id <item id> --project-id <project id> \
