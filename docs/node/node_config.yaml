@@ -235,7 +235,7 @@ node:
   logging:
     # Controls the logging output level. Could be one of the following
     # levels: CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
-    level: DEBUG
+    level: INFO
 
     # Location to the log file
     file: node.log

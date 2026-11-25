@@ -109,14 +109,14 @@ def make_request(
         Response from HQ
     """
 
-    method = get_method(method)
+    send = get_method(method)
 
     # Forward the request to HQ. Retry when an exception is raised (e.g. timeout or
     # connection error) or when HQ gives an error code (i.e. greater than 210)
     url = f"{hq_url}/{endpoint}"
     for i in range(RETRY):
         try:
-            response: Response = method(url, json=json, params=params, headers=headers)
+            response: Response = send(url, json=json, params=params, headers=headers)
             # verify that HQ gave us a valid response, else we
             # would want to try again
             if response.status_code > 210:
@@ -124,12 +124,7 @@ def make_request(
                     "Proxy server received status code %s", response.status_code
                 )
                 log.debug(
-                    "method: %s, url: %s, json: %s, params: %s, headers: %s",
-                    request.method,
-                    url,
-                    json,
-                    params,
-                    headers,
+                    "method: %s, url: %s, params: %s", method.upper(), url, params
                 )
                 if "application/json" in response.headers.get("Content-Type"):
                     log.warning("Error messages: %s", response.json())
@@ -438,13 +433,7 @@ def stream_handler(id: str) -> FlaskResponse:
                 "Could not decode error response as JSON. Response text: %s",
                 backend_response.text,
             )
-        log.debug(
-            "method: %s, url: %s, params: %s, headers: %s",
-            request.method,
-            url,
-            request.args,
-            headers,
-        )
+        log.debug("method: %s, url: %s, params: %s", request.method, url, request.args)
         return (
             backend_response.content,
             backend_response.status_code,
@@ -519,13 +508,7 @@ def stream_handler_post() -> FlaskResponse:
             log.warning("Error messages: %s", backend_response.json())
         except json.JSONDecodeError:
             log.warning("Could not decode error response as JSON.")
-        log.debug(
-            "method: %s, url: %s, params: %s, headers: %s",
-            request.method,
-            url,
-            request.args,
-            headers,
-        )
+        log.debug("method: %s, url: %s, params: %s", request.method, url, request.args)
         return (
             backend_response.content,
             backend_response.status_code,
