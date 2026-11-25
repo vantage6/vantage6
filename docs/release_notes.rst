@@ -420,6 +420,18 @@ more details regarding the lower-level changes required to accomplish it.*
     are multiple concurrent services start at the same time
     (`PR#2510 <https://github.com/vantage6/vantage6/pull/2510>`_).
 
+4.15.4
+------
+
+*9 November 2026*
+
+- **Bugfix**
+
+  - Fix a crash in the server when nodes and users ping it over the socket connection,
+    which left their ``last_seen`` unchanged. The server used ``datetime.UTC``, which
+    does not exist in Python 3.10
+    (`PR#2847 <https://github.com/vantage6/vantage6/pull/2847>`_).
+
 4.15.3
 ------
 

@@ -1,0 +1,10 @@
+# Overrides the repository .dockerignore for this Dockerfile (BuildKit), so the
+# scanner also sees the Helm charts, Dockerfiles and tools.
+.git/
+.venv/
+venv/
+**/__pycache__/
+**/*.py[cod]
+**/node_modules/
+vantage6-ui/dist/
+.claude/
