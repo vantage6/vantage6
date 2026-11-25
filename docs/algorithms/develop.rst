@@ -56,6 +56,22 @@ package.
    # install the algorithm dependencies
    pip install -r requirements.txt
 
+.. note::
+   From vantage6 4.16 onwards, the algorithm base image
+   (``ghcr.io/vantage6/infrastructure/algorithm-base:4.16``) runs Python 3.13.
+   Python 3.10 has reached its end of life and should no longer be used for
+   algorithms. Algorithm images that have already been built keep working, but
+   keep the following in mind when you rebuild an algorithm on the new base
+   image:
+
+   - Use ``vantage6-algorithm-tools`` 4.16 or later. Earlier versions were not
+     written for Python 3.11 and later, and pinning one of them replaces the
+     version that is installed in the base image.
+   - The base image comes with numpy 2. numpy 1.x has no prebuilt packages for
+     Python 3.13, so a requirement such as ``numpy<2`` fails to install.
+     Remove such pins and check your other dependencies for Python 3.13
+     support.
+
 Also, it is always good to use a version control system such as ``git`` to
 keep track of your changes. An initial commit of the boilerplate code could be:
 
