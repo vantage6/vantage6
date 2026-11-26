@@ -762,6 +762,9 @@ class Run(SingleRunBase):
                     dependent_run.finished_at = run.finished_at
                     dependent_run.save()
 
+        if run.status == RunStatus.COMPLETED.value:
+            self._notify_nodes_of_ready_dependent_tasks(run)
+
         # notify collaboration nodes/users that the task has an update
         # TODO refactor it shouldn't be necessary to send two events.
         self.socketio.emit(
@@ -788,6 +791,25 @@ class Run(SingleRunBase):
         )
 
         return run_schema.dump(run, many=False), HTTPStatus.OK
+
+    def _notify_nodes_of_ready_dependent_tasks(self, run: db_Run) -> None:
+        dependent_task_ids = [task.id for task in run.task.required_by]
+        if not dependent_task_ids:
+            return
+
+        # Query after the run is committed, so that when the last runs of a
+        # dependency finish concurrently, at least one request sees them all finished
+        ready_tasks = g.session.scalars(
+            select(Task).where(Task.id.in_(dependent_task_ids), Task.is_open)
+        ).all()
+        log.debug("%s dependent tasks ready to be executed", len(ready_tasks))
+        for task in ready_tasks:
+            self.socketio.emit(
+                "new_task_update",
+                {"id": task.id, "parent_id": task.parent_id},
+                namespace="/tasks",
+                room=f"collaboration_{task.collaboration_id}",
+            )
 
     def _add_dependent_tasks(self, dependent_tasks: list[db.Task]) -> list[db.Task]:
         """Recursively add all dependent tasks to the list of dependent tasks"""
