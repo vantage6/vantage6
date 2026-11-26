@@ -1,3 +1,4 @@
+import json
 import subprocess
 import unittest
 from unittest.mock import MagicMock, call, patch
@@ -67,6 +68,22 @@ class AuthInstallTest(unittest.TestCase):
                 result, kubectl = self._invoke_install(version)
                 self.assertEqual(result.exit_code, 0, result.output)
                 self.assertEqual(self._applied_manifest_names(kubectl), expected)
+
+    def test_clusterrolebinding_patched_to_operator_namespace(self):
+        result, kubectl = self._invoke_install()
+
+        self.assertEqual(result.exit_code, 0, result.output)
+        patch_args = next(
+            invocation.args[0]
+            for invocation in kubectl.call_args_list
+            if invocation.args[0][:2] == ["patch", "clusterrolebinding"]
+        )
+        self.assertEqual(patch_args[2], "keycloak-operator-clusterrole-binding")
+        payload = json.loads(patch_args[-1].removeprefix("-p="))
+        self.assertEqual(
+            payload,
+            [{"op": "replace", "path": "/subjects/0/namespace", "value": "test-ns"}],
+        )
 
     def test_pre_26_7_does_not_install_client_crds(self):
         result, kubectl = self._invoke_install("26.6.9")

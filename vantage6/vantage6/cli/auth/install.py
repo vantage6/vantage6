@@ -1,3 +1,4 @@
+import json
 import re
 import subprocess
 import sys
@@ -95,18 +96,23 @@ def cli_auth_install_operator(
         k8s_config,
     )
 
-    # Adapt the clusterrolebinding to use the correct namespace (see
+    # The upstream manifest binds the service account in a fixed namespace; point it
+    # at the namespace the operator was installed in (see
     # https://www.keycloak.org/operator/installation)
+    patch = [
+        {
+            "op": "replace",
+            "path": "/subjects/0/namespace",
+            "value": k8s_config.namespace,
+        }
+    ]
     run_kubectl_command(
         [
             "patch",
             "clusterrolebinding",
             "keycloak-operator-clusterrole-binding",
             "--type=json",
-            (
-                '-p=[{"op": "replace", "path": "/subjects/0/namespace", "value":"'
-                'custom-namespace"}]'
-            ),
+            f"-p={json.dumps(patch)}",
         ],
         k8s_config=k8s_config,
     )
