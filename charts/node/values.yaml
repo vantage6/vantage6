@@ -28,7 +28,7 @@ node:
     serviceBased: []
 
   logging:
-    level: DEBUG
+    level: INFO
     file: node.log
     max_size: 1024
     use_console: true
