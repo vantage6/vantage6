@@ -1,3 +1,5 @@
+.. _algorithm-isolation:
+
 Algorithm container isolation
 -----------------------------
 
@@ -15,6 +17,17 @@ given access to the internet (neither outbound nor inbound).
   Kubernetes does **not** meet this requirement at the time of writing, making it
   unsuitable for production use. Nodes with setting ``production: true``
   will verify isolation at startup and refuse to run if the check fails.
+
+The node's Helm chart creates these NetworkPolicies in the node's namespace. They
+apply to the pods the node starts for algorithm runs, which carry the labels
+``v6-pod-type: algorithm`` and ``v6-node-release: <release name>``, and leave other
+workloads in the namespace alone.
+
+If you may not create NetworkPolicies, set ``networkPolicy.enabled: false`` in the node
+configuration and have your cluster administrator isolate pods with these labels in
+another way. Then also set ``networkPolicy.verifyIsolation: false``: the node then
+skips its startup check and logs a warning instead. Only do so when you are sure that
+isolation is enforced, as the node can no longer detect that it is not.
 
 .. note::
 

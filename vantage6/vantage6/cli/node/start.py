@@ -62,9 +62,9 @@ def cli_node_start(
     """
     info("Starting node...")
 
-    prestart_checks(ctx, InstanceType.NODE, name, system_folders)
-
     k8s_config = select_k8s_config(context=context, namespace=namespace)
+
+    prestart_checks(ctx, InstanceType.NODE, name, system_folders, k8s_config)
 
     if ctx.config.get("node", {}).get("encryption", {}).get("enabled"):
         _check_private_key_secret(ctx, k8s_config)

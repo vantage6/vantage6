@@ -1,0 +1,40 @@
+# OpenShift (OKD) project such as the DSRI at Maastricht University: CephFS storage
+# shared between machines, the anyuid service account for algorithm images that run
+# as root, the selinux runtime class and OpenShift's DNS.
+node:
+  name: test-node
+  apiKey: test-api-key
+  keycloak:
+    url: https://auth.example.org
+  hq:
+    url: https://hq.example.org
+  runtimeClassName: selinux
+  resources:
+    requests: {cpu: 250m, memory: 1Gi, ephemeral-storage: 1Gi}
+    limits: {cpu: "2", memory: 4Gi, ephemeral-storage: 4Gi}
+  algorithmPods:
+    serviceAccountName: anyuid
+    runtimeClassName: selinux
+    resources:
+      requests: {cpu: 500m, memory: 1Gi, ephemeral-storage: 1Gi}
+      limits: {cpu: "4", memory: 8Gi, ephemeral-storage: 10Gi}
+  persistence:
+    tasks:
+      storageClass: ocs-storagecluster-cephfs
+      accessMode: ReadWriteMany
+      size: 20Gi
+  logging:
+    storageClass: ocs-storagecluster-ceph-rbd
+  networkPolicy:
+    dns:
+      namespace: openshift-dns
+      ports: [5353]
+  databases:
+    fileBased:
+      - name: hospital-csv
+        type: csv
+        existingClaim: hospital-data
+        subPath: data.csv
+  policies:
+    allowed_algorithm_stores:
+      - https://store.uluru.vantage6.ai

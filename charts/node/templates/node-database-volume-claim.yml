@@ -1,19 +1,19 @@
+{{- /* Development only: claims on top of the host path database volumes. */}}
 {{- range .Values.node.databases.fileBased }}
-{{- $pvcName := include "node.databasePvcName" (dict "releaseName" $.Release.Name "databaseName" .name) }}
-{{- if not (lookup "v1" "PersistentVolumeClaim" ($.Values.namespace | default $.Release.Namespace) $pvcName) }}
+{{- if and .volumePath (not .existingClaim) }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ $pvcName }}
-  namespace: {{ $.Values.namespace | default $.Release.Namespace }}
+  name: {{ include "node.databasePvcName" (dict "releaseName" $.Release.Name "databaseName" .name) }}
+  namespace: {{ include "node.namespace" $ }}
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: {{ $.Values.node.persistence.database.storageClass }}
+  storageClassName: local-storage
   resources:
     requests:
-      storage: {{ $.Values.node.persistence.database.size }}
+      storage: 1Gi
   selector:
     matchLabels:
       type: local-database

@@ -1,6 +1,60 @@
 Release notes
 =============
 
+Unreleased
+----------
+
+- **Upgrade notes**
+
+  - The node now runs algorithms in its own namespace instead of a separate task
+    namespace. The settings ``taskNamespace`` and ``manageTaskNamespace`` are removed.
+    Jobs that are still running in the old task namespace are not cleaned up; remove
+    that namespace yourself once the node has been upgraded.
+  - Algorithm pods now mount the node's task PersistentVolumeClaim instead of host
+    paths. On a cluster with more than one machine, set
+    ``persistence.tasks.accessMode`` to ``ReadWriteMany`` if your storage class
+    supports it; otherwise algorithm pods are scheduled on the node pod's machine.
+  - File-based databases are read from an existing PersistentVolumeClaim: set
+    ``existingClaim`` and ``subPath`` instead of ``uri``, ``volumePath`` and
+    ``originalName``. Host path volumes (``k8sNodeName``,
+    ``persistence.tasks.hostPath``, ``logging.volumeHostPath`` and ``volumePath``)
+    remain available for single-machine development clusters only.
+  - ``persistence.database`` is removed, and the default storage class of the task and
+    log claims is now the cluster's default instead of ``local-storage``.
+  - Recreate the configuration with ``v6 node new``, or update it by hand, before
+    restarting the node with the new chart.
+
+- **Feature**
+
+  - The node can run in a single namespace on a managed Kubernetes cluster: its chart
+    creates no Namespaces, ClusterRoles, ClusterRoleBindings, PersistentVolumes or
+    StorageClasses, and no pod is tied to a specific machine.
+  - New settings for clusters with stricter rules: resource requests and limits,
+    security contexts, runtime class and service account for the node pod and for
+    algorithm pods, a TTL for finished algorithm jobs, an existing claim for task files
+    and logs, and the namespace and ports of the cluster DNS.
+  - NetworkPolicies can be switched off with ``networkPolicy.enabled``, and the
+    startup isolation check with ``networkPolicy.verifyIsolation``, for clusters where
+    the administrator enforces isolation.
+  - ``v6 node new`` asks for the storage, network policy and resource settings, and
+    produces a configuration the node chart understands.
+  - A ``Test build`` GitHub Actions workflow publishes the node image and chart from
+    any branch, for testing on a cluster before a release.
+
+- **Change**
+
+  - The network isolation check uses the curl image published with vantage6 and no
+    longer needs a shell in that image.
+  - ``v6 node start`` and ``v6 node stop`` only look in the selected Kubernetes context
+    and namespace.
+  - The node image can run as an arbitrary user, as OpenShift does by default.
+  - The node's log claim defaults to 1Gi instead of 128M, as many clusters refuse
+    smaller claims.
+  - ``helm upgrade`` of a node now restarts the node pod when its configuration or
+    secrets change. Before, the pod kept running with the old configuration.
+  - The node's Role only grants ``get`` on pod logs. Kubernetes does not let a
+    namespace administrator grant more, so installing the chart as one failed.
+
 5.1.0
 -----
 

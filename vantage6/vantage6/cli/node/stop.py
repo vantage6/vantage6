@@ -93,33 +93,40 @@ def _stop_node(
     """
     helm_uninstall(release_name=node_helm_name, k8s_config=k8s_config)
 
-    _stop_node_tasks(node_helm_name, system_folders, is_sandbox)
+    _stop_node_tasks(node_helm_name, k8s_config, system_folders, is_sandbox)
 
     info(f"Node {node_helm_name} stopped successfully.")
 
 
 def _stop_node_tasks(
-    node_helm_name: str, system_folders: bool, is_sandbox: bool
+    node_helm_name: str,
+    k8s_config: KubernetesConfig,
+    system_folders: bool,
+    is_sandbox: bool,
 ) -> None:
     """
-    Stop the tasks of a node
+    Stop the tasks of a node. They run in the node's own namespace.
     """
     node_name = get_config_name_from_helm_release_name(node_helm_name)
     node_ctx = get_context(
         InstanceType.NODE, node_name, system_folders, is_sandbox=is_sandbox
     )
 
-    task_namespace = node_ctx.config.get("node", {}).get("taskNamespace")
+    task_namespace = node_ctx.config.get("namespace") or k8s_config.namespace
     if not task_namespace:
-        warning("Could not find node's task namespace. Node tasks will not be stopped.")
+        warning("Could not find node's namespace. Node tasks will not be stopped.")
         return
 
-    # detect tasks from the task namespace that this node is assigned to
-    cleanup_task_jobs(task_namespace, node_ctx, all_nodes=False)
+    cleanup_task_jobs(
+        task_namespace, node_ctx, all_nodes=False, context=k8s_config.context
+    )
 
 
 def cleanup_task_jobs(
-    namespace: str, node_ctx: NodeContext | None = None, all_nodes: bool = False
+    namespace: str,
+    node_ctx: NodeContext | None = None,
+    all_nodes: bool = False,
+    context: str | None = None,
 ) -> bool:
     """
     Cleanup Vantage6 task jobs in a given namespace.
@@ -132,6 +139,8 @@ def cleanup_task_jobs(
         Node context to cleanup. If not given, all_nodes must be True.
     all_nodes: bool
         Cleanup all nodes. If not given, node_name must be given.
+    context: str | None
+        Kubeconfig context to use. If None, the current context is used.
 
     Returns
     -------
@@ -146,7 +155,7 @@ def cleanup_task_jobs(
 
     # Load Kubernetes configuration with SSL handling
     try:
-        core_api, batch_api = create_kubernetes_apis_with_ssl_handling()
+        core_api, batch_api = create_kubernetes_apis_with_ssl_handling(context)
     except RuntimeError as exc:
         error(f"Failed to load Kubernetes configuration: {exc}")
         return False

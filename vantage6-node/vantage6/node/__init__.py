@@ -119,12 +119,12 @@ class Node:
 
         self.k8s_container_manager = ContainerManager(self.ctx, self.client)
 
-        # ensure that the namespace to create tasks in is set up correctly or try to
-        # create it
-        self.log.debug("Ensuring that the task namespace is properly configured")
-        namespace_created = self.k8s_container_manager.ensure_task_namespace()
-        if not namespace_created:
-            self.log.error("Could not create the task namespace. Exiting.")
+        self.log.debug("Checking that pods for algorithm runs can be created")
+        if not self.k8s_container_manager.can_create_algorithm_pods():
+            self.log.error(
+                "Could not create pods for algorithm runs in namespace '%s'. Exiting.",
+                self.k8s_container_manager.task_namespace,
+            )
             sys.exit(1)
 
         self.check_algorithm_isolation()
@@ -195,8 +195,16 @@ class Node:
         Verify that algorithm containers cannot reach the public internet.
 
         When ``production`` is true (default), the node exits if isolation is not
-        enforced. Otherwise, a failed check is logged as a warning only.
+        enforced. Otherwise, a failed check is logged as a warning only. The check is
+        skipped when ``network_isolation.verify`` is false.
         """
+        if not (self.config.get("network_isolation") or {}).get("verify", True):
+            self.log.warning(
+                "Algorithm network isolation is NOT verified, as configured. Make sure "
+                "your cluster administrator prevents algorithm pods from reaching "
+                "anything but the node proxy."
+            )
+            return
         isolated, isolation_message = (
             self.k8s_container_manager.validate_algorithm_isolation()
         )
