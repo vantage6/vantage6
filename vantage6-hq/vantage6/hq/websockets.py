@@ -404,20 +404,6 @@ class DefaultSocketNamespace(Namespace):
         else:
             self.log.info(f"{msg} has a new status={status}.")
 
-        # notify nodes that there is a new task available if there are tasks dependent
-        # on this one
-        dependent_tasks = run.task.required_by
-        if status == RunStatus.COMPLETED and dependent_tasks:
-            self.log.debug(
-                f"{len(dependent_tasks)} dependent tasks ready to be executed"
-            )
-            for task in dependent_tasks:
-                emit(
-                    "new_task_update",
-                    {"id": task.id, "parent_id": task.parent_id},
-                    room=f"collaboration_{task.collaboration_id}",
-                )
-
         # emit task status change to other nodes/users in the collaboration
         emit(
             "algorithm_status_change",

@@ -102,6 +102,19 @@ class TestSocketEventVerification(TestResourceBase):
         self.assertEqual(payload["parent_id"], self.parent_task.id)
         self.assertEqual(emits[0].kwargs["room"], f"collaboration_{self.col.id}")
 
+    def test_status_change_does_not_notify_dependent_tasks(self):
+        dependent_task = Task(
+            collaboration=self.col, init_org=self.org_a, depends_on=[self.task]
+        )
+        dependent_task.save()
+        mock_emit = self._call(
+            "on_algorithm_status_change",
+            {"run_id": self.run_a.id, "status": RunStatus.COMPLETED.value},
+            self.node_a,
+        )
+        events = [c.args[0] for c in mock_emit.call_args_list]
+        self.assertEqual(events, ["algorithm_status_change"])
+
     def test_status_change_other_org_run_is_ignored(self):
         mock_emit = self._call(
             "on_algorithm_status_change",

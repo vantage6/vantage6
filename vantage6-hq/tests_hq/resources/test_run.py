@@ -2,6 +2,9 @@ import datetime
 import logging
 import uuid
 from http import HTTPStatus
+from unittest.mock import patch
+
+from flask_socketio import SocketIO
 
 from vantage6.common import logger_name
 from vantage6.common.enum import AlgorithmStepType, RunStatus
@@ -188,3 +191,88 @@ class TestResources(TestResourceBase):
             f"/api/run?collaboration_id={other_col.id}", headers=headers
         )
         self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
+
+
+class TestRunPatchNotifiesDependentTasks(TestResourceBase):
+    def setUp(self):
+        super().setUp()
+        self.org1 = Organization(name=str(uuid.uuid1()))
+        self.org2 = Organization(name=str(uuid.uuid1()))
+        self.col = Collaboration(
+            name=str(uuid.uuid1()), organizations=[self.org1, self.org2]
+        )
+        self.col.save()
+        self.node1 = self.create_node(organization=self.org1, collaboration=self.col)
+        self.node2 = self.create_node(organization=self.org2, collaboration=self.col)
+
+        self.task_a = Task(
+            image="some-image", collaboration=self.col, init_org=self.org1
+        )
+        self.task_a.save()
+        self.run_a1 = Run(
+            task=self.task_a, organization=self.org1, status=RunStatus.ACTIVE.value
+        )
+        self.run_a2 = Run(
+            task=self.task_a, organization=self.org2, status=RunStatus.ACTIVE.value
+        )
+        self.run_a1.save()
+        self.run_a2.save()
+
+        self.task_b = Task(
+            image="some-image",
+            collaboration=self.col,
+            init_org=self.org1,
+            depends_on=[self.task_a],
+        )
+        self.task_b.save()
+        self.run_b = Run(
+            task=self.task_b, organization=self.org1, status=RunStatus.PENDING.value
+        )
+        self.run_b.save()
+
+    def tearDown(self):
+        for run in (self.run_b, self.run_a1, self.run_a2):
+            run.delete()
+        self.task_b.depends_on = []
+        self.task_b.save()
+        for obj in (
+            self.task_b,
+            self.task_a,
+            self.node1,
+            self.node2,
+            self.col,
+            self.org1,
+            self.org2,
+        ):
+            obj.delete()
+        super().tearDown()
+
+    def _patch_run(self, run: Run, node, status: RunStatus) -> list:
+        with patch.object(SocketIO, "emit") as mock_emit:
+            response = self.app.patch(
+                f"/api/run/{run.id}",
+                headers=self.login_node(node),
+                json={
+                    "status": status.value,
+                    "finished_at": datetime.datetime.now(datetime.UTC).isoformat(),
+                },
+            )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        return [c for c in mock_emit.call_args_list if c.args[0] == "new_task_update"]
+
+    def test_notified_when_last_dependency_run_completes(self):
+        emits = self._patch_run(self.run_a1, self.node1, RunStatus.COMPLETED)
+        self.assertEqual(emits, [])
+
+        emits = self._patch_run(self.run_a2, self.node2, RunStatus.COMPLETED)
+        self.assertEqual(len(emits), 1)
+        self.assertEqual(emits[0].args[1], {"id": self.task_b.id, "parent_id": None})
+        self.assertEqual(emits[0].kwargs["namespace"], "/tasks")
+        self.assertEqual(emits[0].kwargs["room"], f"collaboration_{self.col.id}")
+
+    def test_not_notified_when_dependency_fails(self):
+        emits = self._patch_run(self.run_a1, self.node1, RunStatus.FAILED)
+        self.assertEqual(emits, [])
+        self.assertEqual(
+            Run.get(self.run_b.id).status, RunStatus.DEPENDED_ON_FAILED_TASK.value
+        )
