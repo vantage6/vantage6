@@ -204,6 +204,8 @@ jobs:
     name: Build support images
     runs-on: ubuntu-latest
     needs: version
+    outputs:
+      images: ${{ steps.published.outputs.images }}
     env:
       version: ${{ needs.version.outputs.version }}
       branch: ${{ needs.version.outputs.branch }}
@@ -236,6 +238,10 @@ jobs:
       - name: Build and push support images
         run: make support-image TAG=$version PUSH_REG=true TAG_LATEST=$tag_latest
 
+      - name: List published images
+        id: published
+        run: echo "images=ghcr.io/vantage6/infrastructure/alpine:$version" >> "$GITHUB_OUTPUT"
+
   # Re-publish the third-party images defined in docker/mirror-images.txt.
   mirror-images:
     name: Re-publish third-party images
@@ -250,6 +256,8 @@ jobs:
     name: Build infrastructure images
     runs-on: ubuntu-latest
     needs: version
+    outputs:
+      images: ${{ steps.published.outputs.images }}
     env:
       version: ${{ needs.version.outputs.version }}
       major: ${{ needs.version.outputs.major }}
@@ -296,10 +304,19 @@ jobs:
         run: make ui-image TAG=$version BASE=${major}.${minor} PUSH_REG=true
           TAG_LATEST=$tag_latest
 
+      - name: List published images
+        id: published
+        run: |
+          registry=ghcr.io/vantage6/infrastructure
+          echo "images=$registry/hq:$version $registry/node:$version" \
+            "$registry/algorithm-store:$version $registry/ui:$version" >> "$GITHUB_OUTPUT"
+
   algorithm-base-image:
     name: Build algorithm base image
     runs-on: ubuntu-latest
     needs: version
+    outputs:
+      images: ${{ steps.published.outputs.images }}
     env:
       major: ${{ needs.version.outputs.major }}
       minor: ${{ needs.version.outputs.minor }}
@@ -339,6 +356,14 @@ jobs:
         if: ${{ env.stage == '' || env.patch == 0 }}
         run: make algorithm-omop-base-image BASE=${major}.${minor} TAG=${major}.${minor}
           PUSH_REG=true TAG_LATEST=$tag_latest
+
+      - name: List published images
+        id: published
+        if: ${{ env.stage == '' || env.patch == 0 }}
+        run: |
+          registry=ghcr.io/vantage6/infrastructure
+          echo "images=$registry/algorithm-base:$major.$minor" \
+            "$registry/algorithm-ohdsi-base:$major.$minor" >> "$GITHUB_OUTPUT"
 
   # The basic algorithm images only expose functions of the vantage6 algorithm tools.
   # Creating a new patch tag in their repositories triggers their release workflow,
@@ -497,3 +522,82 @@ jobs:
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
         run: |
           make publish
+
+  # Collect the image references the jobs above published under the version
+  # (or, for the algorithm base images, the major.minor) tag. Moving tags such as
+  # latest and the major name are left out.
+  published-images:
+    name: List published images
+    runs-on: ubuntu-latest
+    needs:
+      [ infrastructure-images, support-images, mirror-images, algorithm-base-image ]
+    outputs:
+      images: ${{ steps.list.outputs.images }}
+    steps:
+      - name: List published images
+        id: list
+        env:
+          INFRASTRUCTURE: ${{ needs.infrastructure-images.outputs.images }}
+          SUPPORT: ${{ needs.support-images.outputs.images }}
+          MIRROR: ${{ needs.mirror-images.outputs.images }}
+          ALGORITHM_BASE: ${{ needs.algorithm-base-image.outputs.images }}
+        run: |
+          images=$(echo $INFRASTRUCTURE $SUPPORT $MIRROR $ALGORITHM_BASE)
+          echo "images=$images" >> "$GITHUB_OUTPUT"
+          echo "$images" | tr ' ' '\n'
+
+  # Report vulnerabilities in the published images. This does not fail the
+  # release: the images are already published.
+  scan-images:
+    name: Scan published images
+    needs: published-images
+    permissions:
+      contents: read
+      packages: read
+      security-events: write
+    uses: ./.github/workflows/scanner.yml
+    with:
+      images: ${{ needs.published-images.outputs.images }}
+
+  # Open a pull request that adds the published images of a final release to
+  # docker/maintained-images.toml, so that the weekly scan picks them up.
+  maintained-images:
+    name: Add release to maintained images
+    runs-on: ubuntu-latest
+    needs: [ version, published-images ]
+    if: ${{ needs.version.outputs.stage == '' }}
+    env:
+      version: ${{ needs.version.outputs.version }}
+      default_branch: ${{ github.event.repository.default_branch }}
+      IMAGES: ${{ needs.published-images.outputs.images }}
+      # pull requests created with the default GITHUB_TOKEN do not trigger workflows
+      GH_TOKEN: ${{ secrets.COMMIT_PAT }}
+    steps:
+      - name: Checkout default branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.default_branch }}
+          token: ${{ secrets.COMMIT_PAT }}
+
+      - name: Install uv
+        # pinned to: https://github.com/astral-sh/setup-uv/releases/tag/v10.3.2
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e
+
+      - name: Add published images
+        run: uv run tools/add-maintained-images.py $IMAGES > "$RUNNER_TEMP/body.md"
+
+      - name: Open pull request
+        run: |
+          if git diff --quiet; then
+            echo "All published images are already listed"
+            exit 0
+          fi
+          branch="maintained-images/$version"
+          git config --local user.name github-actions
+          git config --local user.email github-actions@github.com
+          git checkout -b "$branch"
+          git commit -am "Add $version to maintained images"
+          git push origin "$branch"
+          gh pr create --base "$default_branch" --head "$branch" \
+            --title "Add $version to maintained images" \
+            --body-file "$RUNNER_TEMP/body.md"
