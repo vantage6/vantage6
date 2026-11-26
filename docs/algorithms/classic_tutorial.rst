@@ -244,7 +244,7 @@ requires.
        long_description_content_type='text/markdown',
        url='https://github.com/IKNL/v6-average-py',
        packages=find_packages(),
-       python_requires='>=3.10',
+       python_requires='>=3.13',
        install_requires=[
            'vantage6-client',
            # list your dependencies here:
@@ -273,7 +273,7 @@ This name should be the same as as the name you specified in the
    # different image here (e.g. python:3). In that case it is important that
    # `vantage6-client` is a dependancy of you project as this contains the wrapper
    # we are using in this example.
-   FROM harbor2.vantage6.ai/algorithms/algorithm-base
+   FROM ghcr.io/vantage6/infrastructure/algorithm-base:4.16
 
    # Change this to the package name of your project. This needs to be the same
    # as what you specified for the name in the `setup.py`.

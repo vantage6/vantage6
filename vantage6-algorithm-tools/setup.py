@@ -30,10 +30,10 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/vantage6/vantage6",
     packages=find_namespace_packages(),
-    python_requires=">=3.6",
+    python_requires=">=3.10",
     install_requires=[
         "openpyxl>=3.0.0",
-        "pandas>=1.5.3",
+        "pandas>=1.5.3,<3",
         "pyjwt==2.12.1",
         "pyfiglet==1.0.4",
         # psycopg2-binary is not used directly in algorithm tools, but is necessary when
