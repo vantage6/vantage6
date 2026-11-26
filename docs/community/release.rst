@@ -56,22 +56,22 @@ the following steps to test a release:
 
 .. code:: bash
 
+    version=<your_version>  # e.g. 1.2.3rc1
     uv venv --python 3.13
     source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-    uv pip install vantage6==<version> --prerelease=allow
+    uv pip install vantage6==$version --prerelease=allow
 
 3. *Start hub and nodes*. Start the hub and the nodes for the
    release candidate using a ``v6 sandbox`` network:
 
 .. code:: bash
 
-    version=<your_version>
     v6 sandbox new \
         --hq-image ghcr.io/vantage6/infrastructure/hq:$version \
         --ui-image ghcr.io/vantage6/infrastructure/ui:$version \
         --node-image ghcr.io/vantage6/infrastructure/node:$version \
         --store-image ghcr.io/vantage6/infrastructure/algorithm-store:$version \
-        --chart-version 5.x.y-rcN
+        --chart-version $version
 
 4. *Test code changes*. Go through all issues that are part of the new release
    and test if they work as intended.

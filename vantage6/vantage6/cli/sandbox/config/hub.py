@@ -13,6 +13,7 @@ from vantage6.cli.auth.new import parse_database_uri_to_config
 from vantage6.cli.common.new import new
 from vantage6.cli.k8s_config import KubernetesConfig
 from vantage6.cli.sandbox.config.base import BaseSandboxConfigManager
+from vantage6.cli.utils import normalize_image_tag
 from vantage6.cli.utils_kubernetes import replace_localhost_for_k8s
 
 
@@ -56,9 +57,9 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
         external_db_uris: dict[str, str] | None = None,
     ) -> None:
         super().__init__(hub_name, custom_data_dir)
-        self.hq_image = hq_image
-        self.store_image = store_image
-        self.ui_image = ui_image
+        self.hq_image = normalize_image_tag(hq_image)
+        self.store_image = normalize_image_tag(store_image)
+        self.ui_image = normalize_image_tag(ui_image)
         self.extra_hq_config = extra_hq_config
         self.extra_store_config = extra_store_config
         self.extra_auth_config = extra_auth_config
