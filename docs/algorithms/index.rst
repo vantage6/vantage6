@@ -15,7 +15,6 @@ for that.
    develop
    code_details
    review_guidelines
-   classic_tutorial
 ..    Tutorial
 
 .. todo explain somewhere which data sources are supported and how to use them
