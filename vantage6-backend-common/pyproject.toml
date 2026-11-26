@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vantage6-backend-common"
-version = "5.0.4rc1"
+version = "5.1.0"
 description = "Vantage6 backend common utilities"
 readme = "README.md"
 license = {text = "Apache-2.0"}
@@ -33,7 +33,7 @@ dependencies = [
     "sqlalchemy==2.0.37",
     "werkzeug==3.1.9",
     "requests==2.33.1",
-    "vantage6-common==5.0.4rc1",
+    "vantage6-common==5.1.0",
 ]
 
 [tool.hatch.build.targets.wheel]

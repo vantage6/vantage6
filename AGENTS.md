@@ -18,11 +18,19 @@ Privacy-preserving federated learning infrastructure. Python 3.13 monorepo manag
 
 Shared workflow skills live in `.agents/skills/` (`.claude/skills`, `.github/skills` and `.cursor/skills` are symlinks to it):
 
-- `issue-to-pr` — take a GitHub issue through assessment, plan, implementation and PR, with user approval at each phase
-- `security-advisory` — take a GitHub security advisory to a fix PR in its private fork, with user approval at each phase
+- `issue-to-pr` — take a GitHub issue through assessment, plan, implementation and PR, with user approval before implementing and before opening the PR
+- `security-advisory` — take a GitHub security advisory to a fix PR in its private fork, with user approval before implementing and before opening the PR
 - `run-sandbox` — run a local sandbox with images built from the checkout to verify a change end to end, and clean it up afterwards
 
 If your tool does not load skills automatically, read the relevant `SKILL.md` and follow it.
+
+## Creating issues
+
+Issue templates are shared organisation-wide from the `vantage6/.github` repository, but they are not applied to issues created through `gh` or the API. When creating an issue:
+
+- List the templates with `gh api repos/vantage6/.github/contents/.github/ISSUE_TEMPLATE --jq '.[].name'` and read the one that fits (`gh api repos/vantage6/.github/contents/.github/ISSUE_TEMPLATE/<file> -H 'Accept: application/vnd.github.raw'`)
+- Use the template's field labels as `### <label>` headings in the issue body, and fill in its required fields
+- Apply the template's `labels` yourself (`--label`), and set its issue `type` after creation with `gh api -X PATCH repos/vantage6/vantage6/issues/<number> -f type=<type>`
 
 ## Packages (8 PyPI + 1 Angular UI)
 

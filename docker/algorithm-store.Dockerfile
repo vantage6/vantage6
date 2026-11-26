@@ -5,7 +5,7 @@
 # * ghcr.io/vantage6/infrastructure/algorithm-store:x.x.x
 #
 ARG TAG=latest
-ARG BASE=5.0
+ARG BASE=5.1
 FROM ghcr.io/astral-sh/uv:python3.13-bookworm
 
 ARG TAG=latest
