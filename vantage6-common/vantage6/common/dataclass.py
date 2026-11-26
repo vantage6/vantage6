@@ -21,6 +21,12 @@ class TaskDB:
         The type of the database
     uri: str
         The uri of the database
+    claim_name: str, optional
+        For file and folder databases: the PersistentVolumeClaim that holds them
+    sub_path: str, optional
+        For file and folder databases: their path inside ``claim_name``
+    host_path: str, optional
+        For file and folder databases on Docker: their path on the container host
     """
 
     label: str
@@ -31,6 +37,9 @@ class TaskDB:
     env: dict | None = None
     local_uri: str | None = None
     mount_mode: str | None = None
+    claim_name: str | None = None
+    sub_path: str | None = None
+    host_path: str | None = None
 
     @classmethod
     def from_dict(cls, data: dict) -> Self:

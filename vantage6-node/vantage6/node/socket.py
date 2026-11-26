@@ -5,7 +5,7 @@ from socketio import ClientNamespace
 from vantage6.common import logger_name
 from vantage6.common.enum import RunStatus
 
-from vantage6.node.k8s.session_manager import SessionFileManager
+from vantage6.node.container.session_manager import SessionFileManager
 
 
 class NodeTaskNamespace(ClientNamespace):

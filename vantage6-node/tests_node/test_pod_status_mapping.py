@@ -14,7 +14,7 @@ from kubernetes.client import (
 
 from vantage6.common.enum import RunStatus
 
-from vantage6.node.k8s.jobpod_state_to_run_status_mapper import (
+from vantage6.node.runtime.kubernetes.status import (
     compute_run_pod_status,
 )
 
@@ -147,7 +147,7 @@ class TestPodStatus(unittest.TestCase):
         )
 
     def test_completed_job(self):
-        self.mock_pod.status.phase = "Succeded"
+        self.mock_pod.status.phase = "Succeeded"
         self.assertEqual(
             compute_run_pod_status(
                 log=self.silent_logger, task_namespace="", label="", pod=self.mock_pod

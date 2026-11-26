@@ -16,7 +16,7 @@ from vantage6.common.colors import ColorStreamHandler
 from vantage6.common.configuration_manager import ConfigurationManager
 from vantage6.common.globals import APPNAME, SANDBOX_SUFFIX, InstanceType
 from vantage6.common.kubernetes.utils import (
-    running_in_pod,
+    running_in_container,
     running_in_wsl,
     running_on_windows,
 )
@@ -340,7 +340,7 @@ class AppContext(metaclass=Singleton):
         if isinstance(instance_type, enum.Enum):
             instance_type = instance_type.value
 
-        if running_in_pod():
+        if running_in_container():
             return {
                 "log": Path("/mnt/log"),
                 "data": Path("/mnt/data"),
@@ -467,6 +467,11 @@ class AppContext(metaclass=Singleton):
         Get the name of the Helm release for a vantage6 component.
         """
         return f"{APPNAME}-{self.name}-{self.scope}-{self.instance_type.value}"
+
+    @property
+    def deployment_name(self) -> str:
+        """Name of the component's Helm release or container."""
+        return self.helm_release_name
 
     @property
     def config_file_name(self) -> str:

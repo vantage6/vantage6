@@ -2,15 +2,49 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ .Release.Name }}-configmap
-  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  namespace: {{ include "node.namespace" . }}
 data:
   config.yml: |
     hq_url: {{ .Values.node.hq.url }}
     api_path: {{ .Values.node.hq.path }}
     port: {{ .Values.node.hq.port }}
     node_proxy_port: {{ .Values.node.proxyPort }}
-    task_dir: {{ .Values.node.persistence.tasks.hostPath }}
-    task_namespace: {{ .Values.node.taskNamespace }}
+    task_namespace: {{ include "node.namespace" . }}
+    release_name: {{ .Release.Name }}
+    task_storage:
+      claim_name: {{ include "node.taskClaimName" . }}
+      sub_path: {{ .Values.node.persistence.tasks.subPath | default "" | quote }}
+      {{- /* Host path volumes already pin every pod that uses them to one machine. */}}
+      colocate_with_node: {{ and (not (include "node.tasksStatic" .)) (eq .Values.node.persistence.tasks.accessMode "ReadWriteOnce") }}
+    node_pod_labels:
+{{ include "node.podLabels" . | indent 6 }}
+    {{- with .Values.node.algorithmPods }}
+    algorithm_pods:
+      {{- with .resources }}
+      resources:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      {{- if not (kindIs "invalid" .ttlSecondsAfterFinished) }}
+      ttl_seconds_after_finished: {{ .ttlSecondsAfterFinished }}
+      {{- end }}
+      {{- with .serviceAccountName }}
+      service_account_name: {{ . }}
+      {{- end }}
+      {{- with .runtimeClassName }}
+      runtime_class_name: {{ . }}
+      {{- end }}
+      {{- with .podSecurityContext }}
+      pod_security_context:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      {{- with .securityContext }}
+      security_context:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+    {{- end }}
+    network_isolation:
+      verify: {{ .Values.node.networkPolicy.verifyIsolation }}
+      probe_image: {{ include "common.supportImage" (dict "Chart" .Chart "name" "curl" "override" .Values.node.networkPolicy.probeImage) }}
     production: {{ .Values.node.production }}
     share_config: {{ .Values.node.share_config }}
     share_algorithm_logs: {{ .Values.node.share_algorithm_logs }}

@@ -26,3 +26,4 @@ The following pages explain how to install and run the node software.
     install
     use
     configure
+    docker

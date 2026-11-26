@@ -1,5 +1,5 @@
 """
-Cleanup jobs in the task namespace.
+Cleanup the jobs of algorithm runs in the namespace of the dev nodes.
 """
 
 import argparse
@@ -9,7 +9,7 @@ from vantage6.cli.node.stop import cleanup_task_jobs
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Cleanup Vantage6 task jobs")
-    parser.add_argument("--namespace", type=str, help="Task namespace")
+    parser.add_argument("--namespace", type=str, help="Namespace of the dev nodes")
     args = parser.parse_args()
 
     namespace = args.namespace

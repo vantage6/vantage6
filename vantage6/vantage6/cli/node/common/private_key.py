@@ -1,12 +1,14 @@
 """
-Helpers to store a node's private key in a Kubernetes secret.
+Helpers to store a node's private key.
 
-The secret is created with the Kubernetes API rather than by the Helm chart, so that it
-is kept when the node is stopped (``helm uninstall``) and only deleted when the node is
-removed.
+On Kubernetes, the key is kept in a secret that is created with the Kubernetes API
+rather than by the Helm chart, so that it is kept when the node is stopped (``helm
+uninstall``) and only deleted when the node is removed. A Docker node keeps it in a
+file next to its configuration, which is removed with the node as well.
 """
 
 import base64
+from pathlib import Path
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
@@ -23,6 +25,22 @@ from vantage6.cli.k8s_config import KubernetesConfig
 from vantage6.cli.utils_kubernetes import get_core_api_with_ssl_handling
 
 PRIVATE_KEY_SECRET_KEY = "private_key.pem"
+
+
+def _uses_key_file(ctx: NodeContext) -> bool:
+    return isinstance(ctx.config, dict) and ctx.config.get("runtime") == "docker"
+
+
+def private_key_file(ctx: NodeContext) -> Path:
+    """File that holds the private key of a Docker node."""
+    return Path(ctx.config_dir) / ctx.name / PRIVATE_KEY_SECRET_KEY
+
+
+def private_key_location(ctx: NodeContext) -> str:
+    """Where the node's private key is kept, for messages."""
+    if _uses_key_file(ctx):
+        return f"file '{private_key_file(ctx)}'"
+    return f"secret '{private_key_secret_name(ctx)}'"
 
 
 class KeyPolicy(StrEnumBase):
@@ -106,7 +124,7 @@ def _read_secret(
 
 
 def read_private_key_secret(
-    ctx: NodeContext, k8s_config: KubernetesConfig
+    ctx: NodeContext, k8s_config: KubernetesConfig | None
 ) -> bytes | None:
     """
     Read the node's private key from its Kubernetes secret.
@@ -116,6 +134,9 @@ def read_private_key_secret(
     bytes | None
         The PEM-encoded private key, or None if the secret does not exist
     """
+    if _uses_key_file(ctx):
+        path = private_key_file(ctx)
+        return path.read_bytes() if path.exists() else None
     core_api = get_core_api_with_ssl_handling(context=k8s_config.context)
     secret = _read_secret(core_api, private_key_secret_name(ctx), k8s_config.namespace)
     if secret is None:
@@ -123,15 +144,19 @@ def read_private_key_secret(
     return base64.b64decode(secret.data[PRIVATE_KEY_SECRET_KEY])
 
 
-def private_key_secret_exists(ctx: NodeContext, k8s_config: KubernetesConfig) -> bool:
+def private_key_secret_exists(
+    ctx: NodeContext, k8s_config: KubernetesConfig | None
+) -> bool:
     """Check whether the node's private key secret exists."""
+    if _uses_key_file(ctx):
+        return private_key_file(ctx).exists()
     core_api = get_core_api_with_ssl_handling(context=k8s_config.context)
     secret = _read_secret(core_api, private_key_secret_name(ctx), k8s_config.namespace)
     return secret is not None
 
 
 def write_private_key_secret(
-    ctx: NodeContext, k8s_config: KubernetesConfig, pem: bytes
+    ctx: NodeContext, k8s_config: KubernetesConfig | None, pem: bytes
 ) -> None:
     """
     Store the node's private key in its Kubernetes secret, replacing an existing one.
@@ -145,6 +170,9 @@ def write_private_key_secret(
     pem: bytes
         PEM-encoded private key to store
     """
+    if _uses_key_file(ctx):
+        _write_key_file(private_key_file(ctx), pem)
+        return
     core_api = get_core_api_with_ssl_handling(context=k8s_config.context)
     name = private_key_secret_name(ctx)
     namespace = k8s_config.namespace
@@ -162,7 +190,9 @@ def write_private_key_secret(
     info(f"Private key stored in Kubernetes secret '{name}' (namespace '{namespace}')")
 
 
-def delete_private_key_secret(ctx: NodeContext, k8s_config: KubernetesConfig) -> bool:
+def delete_private_key_secret(
+    ctx: NodeContext, k8s_config: KubernetesConfig | None
+) -> bool:
     """
     Delete the node's private key secret.
 
@@ -171,6 +201,12 @@ def delete_private_key_secret(ctx: NodeContext, k8s_config: KubernetesConfig) ->
     bool
         True if a secret was deleted, False if it did not exist
     """
+    if _uses_key_file(ctx):
+        path = private_key_file(ctx)
+        if not path.exists():
+            return False
+        path.unlink()
+        return True
     core_api = get_core_api_with_ssl_handling(context=k8s_config.context)
     try:
         core_api.delete_namespaced_secret(
@@ -181,3 +217,13 @@ def delete_private_key_secret(ctx: NodeContext, k8s_config: KubernetesConfig) ->
             return False
         raise
     return True
+
+
+def _write_key_file(path: Path, pem: bytes) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        info(f"Replacing existing private key {path}")
+    path.touch(mode=0o600, exist_ok=True)
+    path.chmod(0o600)
+    path.write_bytes(pem)
+    info(f"Private key stored in {path}")

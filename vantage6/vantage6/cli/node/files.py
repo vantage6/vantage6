@@ -5,6 +5,7 @@ from vantage6.common.globals import InstanceType
 
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.context.node import NodeContext
+from vantage6.cli.deployment import runtime_of
 
 
 @click.command()
@@ -20,11 +21,15 @@ def cli_node_files(ctx: NodeContext) -> None:
     info(f"Configuration file = {ctx.config_file}")
     info(f"Log file           = {ctx.log_file}")
     info(f"Data folders       = {ctx.data_dir}")
+    info(f"Runtime            = {runtime_of(ctx)}")
     info("Database labels and files")
     for db in ctx.databases.get("fileBased", []):
-        info(
-            f" - {db['name']:15} = {db['volumePath']}/{db['originalName']} "
-            f"(type: {db['type']})"
-        )
+        if db.get("path"):
+            location = db["path"]
+        elif db.get("existingClaim"):
+            location = f"claim {db['existingClaim']}: {db.get('subPath', '')}"
+        else:
+            location = f"{db.get('volumePath')}/{db.get('originalName')}"
+        info(f" - {db['name']:15} = {location} (type: {db['type']})")
     for db in ctx.databases.get("serviceBased", []):
         info(f" - {db['name']:15} = {db['uri']} (type: {db['type']})")

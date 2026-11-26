@@ -1,4 +1,6 @@
+{{- /* Development only: file-based databases in a directory on one machine. */}}
 {{- range .Values.node.databases.fileBased }}
+{{- if and .volumePath (not .existingClaim) }}
 {{- $pvName := include "node.databasePvName" (dict "releaseName" $.Release.Name "databaseName" .name) }}
 {{- if not (lookup "v1" "PersistentVolume" "" $pvName) }}
 ---
@@ -11,10 +13,10 @@ metadata:
     database: {{ .name | quote }}
 spec:
   capacity:
-    storage: {{ $.Values.node.persistence.database.size }}
+    storage: 1Gi
   accessModes:
     - ReadWriteOnce
-  storageClassName: {{ $.Values.node.persistence.database.storageClass }}
+  storageClassName: local-storage
   persistentVolumeReclaimPolicy: Delete
   local:
     path: {{ .volumePath | quote }}
@@ -25,6 +27,7 @@ spec:
             - key: kubernetes.io/hostname
               operator: In
               values:
-                - {{ $.Values.node.k8sNodeName }}
+                - {{ required "node.k8sNodeName is required for databases with volumePath" $.Values.node.k8sNodeName }}
+{{- end }}
 {{- end }}
 {{- end }}

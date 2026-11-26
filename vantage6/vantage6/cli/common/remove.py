@@ -24,6 +24,7 @@ def execute_remove(
     name: str,
     system_folders: bool,
     force: bool,
+    is_running: bool | None = None,
 ) -> None:
     """
     Function to remove a vantage6 service instance.
@@ -42,8 +43,14 @@ def execute_remove(
         Whether to use system folders or user folders
     force : bool
         Whether to ask for confirmation before removing or not
+    is_running : bool | None
+        Whether the instance runs, if the caller knows; otherwise Helm is asked
     """
-    if check_running(ctx.helm_release_name, instance_type, name, system_folders):
+    if is_running is None:
+        is_running = check_running(
+            ctx.helm_release_name, instance_type, name, system_folders
+        )
+    if is_running:
         error(
             f"The {infra_component.value} {name} is still running! Please stop the "
             f"{infra_component.value} before deleting it."

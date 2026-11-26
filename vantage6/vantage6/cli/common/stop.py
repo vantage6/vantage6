@@ -104,7 +104,7 @@ def execute_stop(
 
     if stop_all:
         for service in running_services:
-            stop_function(service, k8s_config.namespace, k8s_config.context)
+            stop_function(service, k8s_config, **stop_function_args)
     else:
         if not to_stop:
             helm_name = select_running_service(running_services, instance_type)

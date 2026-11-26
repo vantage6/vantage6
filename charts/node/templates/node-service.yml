@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ .Release.Name }}
-  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  namespace: {{ include "node.namespace" . }}
 spec:
   selector:
 {{ include "node.matchLabels" . | indent 4 }}

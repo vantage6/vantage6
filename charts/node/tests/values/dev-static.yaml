@@ -1,0 +1,25 @@
+# Single-machine development cluster with host path volumes, as set by devspace.yaml
+# and the sandbox.
+node:
+  production: false
+  name: dummy-node-name
+  apiKey: dummy-api-key
+  keycloak:
+    url: http://vantage6-auth-kc-service.default.svc.cluster.local:7680
+  hq:
+    url: http://vantage6-hq-hq
+  numberOfNodes: 3
+  nodeProxyStartingPortNumber: 7654
+  k8sNodeName: docker-desktop
+  persistence:
+    tasks:
+      hostPath: /tmp/vantage6/.tasks
+  logging:
+    volumeHostPath: /tmp/vantage6/.log/node
+  databases:
+    fileBased:
+      - name: olympic-athletes
+        uri: /tmp/vantage6/.data/olympic_athletes_2016.csv
+        type: csv
+        volumePath: /tmp/vantage6/.data
+        originalName: olympic_athletes_2016.csv

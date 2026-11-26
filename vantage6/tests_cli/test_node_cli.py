@@ -21,7 +21,7 @@ from vantage6.cli.node.new import cli_node_new_configuration
 from vantage6.cli.node.remove import cli_node_remove
 from vantage6.cli.node.restart import cli_node_restart
 from vantage6.cli.node.start import cli_node_start
-from vantage6.cli.node.stop import cli_node_stop
+from vantage6.cli.node.stop import _stop_node_tasks, cleanup_task_jobs, cli_node_stop
 
 TEST_PRIVATE_KEY_PEM = RSACryptor.create_new_rsa_key_pem()
 OTHER_PRIVATE_KEY_PEM = RSACryptor.create_new_rsa_key_pem()
@@ -45,13 +45,11 @@ class NodeCLITest(unittest.TestCase):
         find_running_service_names.return_value = [f"{APPNAME}-{node_name}-user-node"]
 
         # returns a list of configurations and failed inports
-        def side_effect(system_folders):
+        def side_effect(system_folders, is_sandbox=False):
             config = MagicMock()
             config.name = node_name
-            if not system_folders:
-                return [[config], []]
-            else:
-                return [[config], []]
+            config.config = {}
+            return [[config], []]
 
         available_configurations.side_effect = side_effect
 
@@ -65,11 +63,11 @@ class NodeCLITest(unittest.TestCase):
         # check printed lines
         self.assertEqual(
             result.output,
-            "\nName                     Status          System/User\n"
-            "-----------------------------------------------------\n"
-            "iknl                     Not running     System \n"
-            "iknl                     Running         User   \n"
-            "-----------------------------------------------------\n",
+            "\nName                     Status          System/User  Runtime\n"
+            "--------------------------------------------------------------\n"
+            "iknl                     Not running     System  kubernetes\n"
+            "iknl                     Running         User    kubernetes\n"
+            "--------------------------------------------------------------\n",
         )
 
     @patch("vantage6.cli.common.new.make_configuration")
@@ -248,10 +246,10 @@ class NodeCLITest(unittest.TestCase):
         # check for non zero exit-code
         self.assertNotEqual(result.exit_code, 0)
 
-    @patch("vantage6.cli.node.start.select_k8s_config")
+    @patch("vantage6.cli.deployment.kubernetes.select_k8s_config")
     @patch("os.makedirs")
     @patch("vantage6.cli.common.decorator.get_context")
-    @patch("vantage6.cli.node.start.helm_install")
+    @patch("vantage6.cli.deployment.kubernetes.helm_install")
     def test_start(
         self,
         helm_install,
@@ -282,11 +280,11 @@ class NodeCLITest(unittest.TestCase):
 
         self.assertEqual(result.exit_code, 0)
 
-    @patch("vantage6.cli.node.start.private_key_secret_exists")
-    @patch("vantage6.cli.node.start.select_k8s_config")
+    @patch("vantage6.cli.deployment.kubernetes.private_key_secret_exists")
+    @patch("vantage6.cli.deployment.kubernetes.select_k8s_config")
     @patch("os.makedirs")
     @patch("vantage6.cli.common.decorator.get_context")
-    @patch("vantage6.cli.node.start.helm_install")
+    @patch("vantage6.cli.deployment.kubernetes.helm_install")
     def test_start_encrypted_without_private_key_secret(
         self, helm_install, context, os_makedirs, ctx_ns, secret_exists
     ):
@@ -645,3 +643,50 @@ class NodeCLITest(unittest.TestCase):
 
         # should not trigger an exception
         create_client_and_authenticate(ctx)
+
+
+class NodeStopTasksTest(unittest.TestCase):
+    """Algorithm jobs run in the node's own namespace."""
+
+    @patch("vantage6.cli.node.stop.cleanup_task_jobs")
+    @patch("vantage6.cli.node.stop.get_context")
+    def test_tasks_cleaned_up_in_release_namespace(self, get_context, cleanup):
+        ctx = MagicMock()
+        ctx.config = {"node": {}}
+        get_context.return_value = ctx
+
+        _stop_node_tasks(
+            "vantage6-iknl-user-node",
+            KubernetesConfig(context="dsri", namespace="tenant"),
+            system_folders=False,
+            is_sandbox=False,
+        )
+
+        cleanup.assert_called_once_with("tenant", ctx, all_nodes=False, context="dsri")
+
+    @patch("vantage6.cli.node.stop.cleanup_task_jobs")
+    @patch("vantage6.cli.node.stop.get_context")
+    def test_namespace_from_values_takes_precedence(self, get_context, cleanup):
+        ctx = MagicMock()
+        ctx.config = {"namespace": "from-values", "node": {}}
+        get_context.return_value = ctx
+
+        _stop_node_tasks(
+            "vantage6-iknl-user-node",
+            KubernetesConfig(context="dsri", namespace="tenant"),
+            system_folders=False,
+            is_sandbox=False,
+        )
+
+        self.assertEqual(cleanup.call_args.args[0], "from-values")
+
+    @patch("vantage6.cli.node.stop.create_kubernetes_apis_with_ssl_handling")
+    def test_cleanup_uses_selected_context(self, create_apis):
+        core_api, batch_api = MagicMock(), MagicMock()
+        batch_api.list_namespaced_job.return_value.items = []
+        create_apis.return_value = (core_api, batch_api)
+
+        self.assertTrue(cleanup_task_jobs("tenant", MagicMock(), context="dsri"))
+
+        create_apis.assert_called_once_with("dsri")
+        batch_api.list_namespaced_job.assert_called_once_with(namespace="tenant")

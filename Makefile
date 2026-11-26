@@ -129,6 +129,7 @@ support-image:
 	@echo "Building support images"
 	@echo "All support images are also tagged with 'latest'"
 	make support-alpine-image
+	make support-squid-image
 
 support-alpine-image:
 	@echo "Building ${REGISTRY}/alpine:${TAG}"
@@ -137,6 +138,15 @@ support-alpine-image:
 		$(if ${_condition_tag_latest},--tag ${REGISTRY}/alpine:latest) \
 		--platform ${PLATFORMS} \
 		-f ./docker/alpine.Dockerfile \
+		$(if ${_condition_push},--push .,.)
+
+support-squid-image:
+	@echo "Building ${REGISTRY}/squid:${TAG}"
+	docker buildx build \
+		--tag ${REGISTRY}/squid:${TAG} \
+		$(if ${_condition_tag_latest},--tag ${REGISTRY}/squid:latest) \
+		--platform ${PLATFORMS} \
+		-f ./docker/squid.Dockerfile \
 		$(if ${_condition_push},--push .,.)
 
 # Copy the third-party support images listed in docker/mirror-images.txt

@@ -10,6 +10,7 @@ from vantage6.cli.common.utils import (
     find_running_service_names,
     get_config_name_from_helm_release_name,
 )
+from vantage6.cli.deployment import docker_node_context
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
 from vantage6.cli.k8s_config import select_k8s_config
 from vantage6.cli.node.stop import cli_node_stop
@@ -52,6 +53,25 @@ def cli_node_restart(
     is_sandbox: bool,
 ) -> None:
     """Restart the node"""
+    if name and (ctx := docker_node_context(name, system_folders, is_sandbox)):
+        click_ctx.invoke(
+            cli_node_stop,
+            name=name,
+            system_folders=system_folders,
+            context=None,
+            namespace=None,
+            all_nodes=False,
+            is_sandbox=is_sandbox,
+        )
+        cmd = ["v6", "node", "start", "--name", ctx.name]
+        cmd.append("--system" if system_folders else "--user")
+        if attach:
+            cmd.append("--attach")
+        if is_sandbox:
+            cmd.append("--sandbox")
+        subprocess.run(cmd, check=True)
+        return
+
     k8s_config = select_k8s_config(context=context, namespace=namespace)
 
     running_node_names = find_running_service_names(

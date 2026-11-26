@@ -1,11 +1,7 @@
-import sys
-
 import click
 import requests
-from kubernetes.client.exceptions import ApiException
-from urllib3.exceptions import HTTPError
 
-from vantage6.common import error, info, warning
+from vantage6.common import info, warning
 from vantage6.common.globals import (
     DEFAULT_NODE_IMAGE,
     DEFAULT_NODE_IMAGE_WO_TAG,
@@ -13,26 +9,22 @@ from vantage6.common.globals import (
 )
 
 from vantage6.cli import __version__
-from vantage6.cli.common.attach import attach_logs
 from vantage6.cli.common.decorator import click_insert_context
-from vantage6.cli.common.start import (
-    helm_install,
-    prestart_checks,
-)
 from vantage6.cli.common.utils import create_directory_if_not_exists
 from vantage6.cli.context.node import NodeContext
-from vantage6.cli.globals import ChartName, InfraComponentName
-from vantage6.cli.k8s_config import select_k8s_config
+from vantage6.cli.deployment import get_node_deployment
 from vantage6.cli.node.common import create_client
-from vantage6.cli.node.common.private_key import (
-    private_key_secret_exists,
-    private_key_secret_name,
-)
 
 
 @click.command()
-@click.option("--context", default=None, help="Kubernetes context to use")
-@click.option("--namespace", default=None, help="Kubernetes namespace to use")
+@click.option(
+    "--context", default=None, help="Kubernetes context to use (Kubernetes nodes)"
+)
+@click.option(
+    "--namespace",
+    default=None,
+    help="Kubernetes namespace to use (Kubernetes nodes)",
+)
 @click.option(
     "--attach/--detach",
     default=False,
@@ -62,87 +54,53 @@ def cli_node_start(
     """
     info("Starting node...")
 
-    prestart_checks(ctx, InstanceType.NODE, name, system_folders)
-
-    k8s_config = select_k8s_config(context=context, namespace=namespace)
-
-    if ctx.config.get("node", {}).get("encryption", {}).get("enabled"):
-        _check_private_key_secret(ctx, k8s_config)
+    deployment = get_node_deployment(
+        ctx,
+        name=name,
+        system_folders=system_folders,
+        context=context,
+        namespace=namespace,
+        local_chart_dir=local_chart_dir,
+        chart_version=chart_version,
+    )
+    deployment.prestart_checks()
 
     create_directory_if_not_exists(ctx.log_dir)
     create_directory_if_not_exists(ctx.data_dir)
 
-    # Determine image-name. First we check if the image is set in the config file.
-    # If so, we use it. Otherwise, we use the same version as HQ.
-    if custom_image := ctx.config.get("node", {}).get("image"):
-        image = custom_image
-    else:
-        # if no custom image is specified, find HQ version and use
-        # the latest images from that minor version
-        client = create_client(ctx, use_sandbox_port=ctx.is_sandbox)
-        major_minor = None
-        try:
-            # try to get HQ version, skip if can't get a connection
-            version = client.util.get_hq_version(attempts_on_timeout=3)["version"]
-            major_minor = ".".join(version.split(".")[:2])
-            image = f"{DEFAULT_NODE_IMAGE_WO_TAG}:{major_minor}"
-        except (requests.RequestException, KeyError):
-            warning("Could not determine HQ version. Using default node image")
-
-        if major_minor and not __version__.startswith(major_minor):
-            warning(
-                "Version mismatch between CLI and HQ/node. CLI is running on "
-                f"version {__version__}, while node and HQ are on version "
-                f"{major_minor}. This might cause unexpected issues; changing to "
-                f"{major_minor}.<latest> is recommended."
-            )
-
-    # fail safe, in case no custom image is specified and we can't get the HQ version
-    if not image:
-        image = DEFAULT_NODE_IMAGE
-
-    helm_install(
-        release_name=ctx.helm_release_name,
-        chart_name=ChartName.NODE,
-        values_file=ctx.config_file,
-        k8s_config=k8s_config,
-        local_chart_dir=local_chart_dir,
-        custom_values=[f"node.image={image}"],
-        chart_version=chart_version,
-    )
+    image = resolve_node_image(ctx)
+    deployment.start(image)
 
     if attach:
-        attach_logs(
-            name,
-            instance_type=InstanceType.NODE,
-            infra_component=InfraComponentName.NODE,
-            system_folders=system_folders,
-            k8s_config=k8s_config,
-            is_sandbox=ctx.is_sandbox,
-        )
+        deployment.attach_logs()
 
 
-def _check_private_key_secret(ctx: NodeContext, k8s_config) -> None:
+def resolve_node_image(ctx: NodeContext) -> str:
     """
-    Exit if encryption is enabled but the node's private key secret is missing.
-
-    The secret is mounted into the node by the Helm chart; without it the node pod
-    cannot start.
+    The image set in the node configuration, otherwise the latest node image of the
+    minor version HQ runs.
     """
-    secret_name = private_key_secret_name(ctx)
+    if custom_image := ctx.config.get("node", {}).get("image"):
+        return custom_image
+
+    image = None
+    client = create_client(ctx, use_sandbox_port=ctx.is_sandbox)
+    major_minor = None
     try:
-        exists = private_key_secret_exists(ctx, k8s_config)
-    except (RuntimeError, ApiException, HTTPError) as exc:
-        warning(f"Could not check whether private key secret '{secret_name}' exists")
-        warning(str(exc))
-        return
-    if not exists:
-        error(
-            f"Encryption is enabled, but the private key secret '{secret_name}' does "
-            f"not exist in namespace '{k8s_config.namespace}'."
+        # try to get HQ version, skip if can't get a connection
+        version = client.util.get_hq_version(attempts_on_timeout=3)["version"]
+        major_minor = ".".join(version.split(".")[:2])
+        image = f"{DEFAULT_NODE_IMAGE_WO_TAG}:{major_minor}"
+    except (requests.RequestException, KeyError):
+        warning("Could not determine HQ version. Using default node image")
+
+    if major_minor and not __version__.startswith(major_minor):
+        warning(
+            "Version mismatch between CLI and HQ/node. CLI is running on "
+            f"version {__version__}, while node and HQ are on version "
+            f"{major_minor}. This might cause unexpected issues; changing to "
+            f"{major_minor}.<latest> is recommended."
         )
-        info(
-            "Create it with 'v6 node create-private-key', or use "
-            "'v6 node create-private-key --from-file <path>' to store an existing key."
-        )
-        sys.exit(1)
+
+    # fail safe, in case we can't get the HQ version
+    return image or DEFAULT_NODE_IMAGE
