@@ -28,6 +28,10 @@ ifeq ($(TAG_LATEST), true)
 	_condition_tag_latest := not_empty_so_true
 endif
 
+# Use `make algorithm-base-image MAJOR_TAG=5` to also tag the algorithm base images
+# with the major version only. Algorithms build on that tag to get the latest minor.
+MAJOR_TAG ?=
+
 # Use `make devdocs FUNCTIONDOCS=true` to build the function documentation
 FUNCTIONDOCS ?= false
 
@@ -106,6 +110,7 @@ algorithm-base-image:
 	docker buildx build \
 		--tag ${REGISTRY}/algorithm-base:${TAG} \
 		$(if ${_condition_tag_latest},--tag ${REGISTRY}/algorithm-base:latest) \
+		$(if ${MAJOR_TAG},--tag ${REGISTRY}/algorithm-base:${MAJOR_TAG}) \
 		--platform ${PLATFORMS} \
 		--build-arg TAG=${TAG} \
 		-f ./docker/algorithm-base.Dockerfile \
@@ -118,6 +123,7 @@ algorithm-omop-base-image:
 	docker buildx build \
 		--tag ${REGISTRY}/algorithm-ohdsi-base:${TAG} \
 		$(if ${_condition_tag_latest},--tag ${REGISTRY}/algorithm-ohdsi-base:latest) \
+		$(if ${MAJOR_TAG},--tag ${REGISTRY}/algorithm-ohdsi-base:${MAJOR_TAG}) \
 		--build-arg BASE=${BASE} \
 		--build-arg TAG=${TAG} \
 		--build-arg REGISTRY=${REGISTRY} \
