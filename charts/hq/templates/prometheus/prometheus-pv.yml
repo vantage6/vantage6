@@ -1,6 +1,5 @@
 {{- $global := .Values.global | default (dict) }}
 {{- if and (.Values.prometheus.enabled) (ne (.Values.database.k8sNodeName | default $global.k8sNodeName) "") }}
-{{- if not (lookup "v1" "PersistentVolume" "" (printf "%s-prom-pv" .Release.Name)) }}
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -27,5 +26,4 @@ spec:
               operator: In
               values:
                 - {{ .Values.database.k8sNodeName | default $global.k8sNodeName }}
-{{- end }}
 {{- end }}

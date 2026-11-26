@@ -1,4 +1,3 @@
-{{- if not (lookup "v1" "PersistentVolumeClaim" "" (printf "%s-logs-pvc" .Release.Name)) }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -18,4 +17,3 @@ spec:
     matchLabels:
       type: local-logs
       app: vantage6-node
-{{- end }}

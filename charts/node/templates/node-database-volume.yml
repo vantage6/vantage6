@@ -1,6 +1,5 @@
 {{- range .Values.node.databases.fileBased }}
 {{- $pvName := include "node.databasePvName" (dict "releaseName" $.Release.Name "databaseName" .name) }}
-{{- if not (lookup "v1" "PersistentVolume" "" $pvName) }}
 ---
 apiVersion: v1
 kind: PersistentVolume
@@ -26,5 +25,4 @@ spec:
               operator: In
               values:
                 - {{ $.Values.node.k8sNodeName }}
-{{- end }}
 {{- end }}
