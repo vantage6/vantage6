@@ -29,6 +29,9 @@ spec:
         - name: RABBITMQ_DEFAULT_USER
           value: {{ .Values.rabbitmq.username }}
         - name: RABBITMQ_DEFAULT_PASS
-          value: {{ .Values.rabbitmq.password }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "vantage6.secretName" . }}
+              key: RABBITMQ_PASSWORD
         - name: RABBITMQ_DEFAULT_VHOST
           value: {{ .Values.rabbitmq.vhost }}

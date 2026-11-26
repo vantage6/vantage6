@@ -2,14 +2,18 @@ from __future__ import annotations
 
 import hashlib
 import os.path
+from functools import cached_property
 from pathlib import Path
+from typing import ClassVar
 
 from vantage6.common.context import AppContext
 from vantage6.common.globals import STRING_ENCODING, InstanceType
 
 from vantage6.cli import __version__
+from vantage6.cli.common.utils import read_kubernetes_secret_value
 from vantage6.cli.configuration_manager import NodeConfigurationManager
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
+from vantage6.cli.utils_kubernetes import get_core_api_with_ssl_handling
 
 
 class NodeContext(AppContext):
@@ -34,6 +38,14 @@ class NodeContext(AppContext):
     # The node configuration manager is aware of the structure of the node
     # configuration file and makes sure only valid configuration can be loaded.
     INST_CONFIG_MANAGER = NodeConfigurationManager
+    CONFIG_ENV_OVERRIDES: ClassVar[dict[str, tuple[str, ...]]] = {
+        "V6_PRIVATE_DOCKER_REGISTRIES": ("private_docker_registries",),
+        "V6_ALGORITHM_ENV": ("algorithm_env",),
+    }
+    CONFIG_ENV_JSON: ClassVar[dict[str, type]] = {
+        "V6_PRIVATE_DOCKER_REGISTRIES": list,
+        "V6_ALGORITHM_ENV": dict,
+    }
 
     def __init__(
         self,
@@ -57,7 +69,6 @@ class NodeContext(AppContext):
         )
         if print_log_header:
             self.log.info("vantage6 version '%s'", __version__)
-        self.identifier = self.__create_node_identifier()
 
     @classmethod
     def from_external_config_file(
@@ -213,9 +224,13 @@ class NodeContext(AppContext):
         self.data_dir = dirs.get("data")
         self.config_dir = dirs.get("config")
 
-    def __create_node_identifier(self) -> str:
+    @cached_property
+    def identifier(self) -> str:
         """
-        Create a unique identifier for the node.
+        Unique identifier for the node, derived from its API key.
+
+        Outside the container, the API key is read from the Kubernetes secret
+        referenced by the configuration if it is not in the configuration itself.
 
         Returns
         -------
@@ -224,7 +239,14 @@ class NodeContext(AppContext):
         """
         if self.in_container:
             api_key = os.environ.get("V6_API_KEY")
-        else:
+        elif "apiKey" in self.config["node"]:
             api_key = self.config["node"]["apiKey"]
+        else:
+            api_key = read_kubernetes_secret_value(
+                get_core_api_with_ssl_handling(),
+                self.config["node"]["existingSecret"],
+                self.config.get("namespace", "default"),
+                "V6_API_KEY",
+            )
 
         return hashlib.sha256(api_key.encode(STRING_ENCODING)).hexdigest()[:16]

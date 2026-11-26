@@ -16,4 +16,4 @@ def cli_hq_files(ctx: HQContext) -> None:
     """
     info(f"Configuration file = {ctx.config_file}")
     info(f"Log file           = {ctx.log_file}")
-    info(f"Database           = {ctx.get_database_uri()}")
+    info(f"Database           = {ctx.database_description()}")

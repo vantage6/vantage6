@@ -53,3 +53,10 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Name of the Secret with the store's sensitive configuration
+*/}}
+{{- define "store.secretName" -}}
+{{- .Values.store.existingSecret | default (printf "%s-store-secrets" .Release.Name) -}}
+{{- end }}

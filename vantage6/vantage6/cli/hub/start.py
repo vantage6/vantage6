@@ -10,6 +10,7 @@ from vantage6.cli.auth.k8s_utils import wait_for_keycloak_ready
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.k8s_utils import wait_for_pod_ready
 from vantage6.cli.common.start import helm_install, prestart_checks
+from vantage6.cli.common.utils import ensure_referenced_secrets_exist
 from vantage6.cli.context.hub import HubContext
 from vantage6.cli.globals import ChartName
 from vantage6.cli.hub.install import (
@@ -73,6 +74,7 @@ def cli_hub_start(
     prestart_checks(ctx, InstanceType.HUB, name, system_folders)
 
     k8s_config = select_k8s_config(context=context, namespace=namespace)
+    ensure_referenced_secrets_exist(ctx.config, k8s_config)
 
     # Before starting the hub, ensure required operators / CRDs are installed.
     hub_gateway = ctx.config.get("hubGateway", {})

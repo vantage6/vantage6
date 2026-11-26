@@ -44,6 +44,9 @@ spec:
           value: {{ default $internal.auth $storeKeycloak.url }}
         - name: KEYCLOAK_REALM
           value: {{ (default ($global.keycloak | default (dict)) .Values.store.keycloak).realm }}
+        # the store's own Keycloak client, which can only look up users
+        - name: KEYCLOAK_ADMIN_CLIENT
+          value: {{ (default ($global.keycloak | default (dict)) .Values.store.keycloak).storeAdminClient | default "store-admin-client" | quote }}
         - name: VANTAGE6_CONFIG_LOCATION
           value: /mnt/config.yaml
         - name: V6_PROXY_PORT
@@ -52,7 +55,7 @@ spec:
           value: "1000"
         envFrom:
         - secretRef:
-            name: {{ .Release.Name }}-store-secrets
+            name: {{ include "store.secretName" . }}
         ports:
         - containerPort: {{ .Values.store.internal.port }}
         command:

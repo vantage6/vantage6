@@ -1,4 +1,5 @@
-{% from "_yaml_macros.j2" import yaml_sq %}
+{% from "_yaml_macros.j2" import yaml_sq, secret_field with context %}
+{% set has_secret_ref = keycloak.credentialsInSecrets | default(false) %}
 {% set hg = hubGateway | default({}) %}
 {% set hg_hosts = hg.hosts | default({}) %}
 {% set hg_tls = hg.tls | default({}) %}
@@ -76,13 +77,17 @@ global:
     # Name of the client algorithm stores use to look up users.
     storeAdminClient: {{ keycloak.storeAdminClient | default('store-admin-client') }}
 
-    # Credentials for the Vantage6 admin user. For production deployments you
-    # should override these with secure values, preferably from a secret.
+    # Username of the vantage6 admin user
     adminUsername: {{ keycloak.adminUsername | default('admin') }}
-    adminPassword: {{ yaml_sq(keycloak.adminPassword | default('admin')) }}
-
-    # Secret for the admin client that is used by HQ.
-    hqAdminClientSecret: {{ yaml_sq(keycloak.hqAdminClientSecret | default('myadminclientsecret')) }}
-
-    # Secret for the client algorithm stores use to look up users.
-    storeAdminClientSecret: {{ yaml_sq(keycloak.storeAdminClientSecret | default('mystoreadminclientsecret')) }}
+    {% if has_secret_ref %}
+    # The password of the vantage6 admin user and the secrets of the Keycloak clients
+    # of HQ and the algorithm stores are stored in the Kubernetes secrets referenced
+    # by the auth, hq and store sections.
+    {% else %}
+    # Password of the vantage6 admin user and secrets of the Keycloak clients of HQ
+    # and the algorithm stores. For production, store these in Kubernetes secrets
+    # instead.
+    {% endif %}
+    {{ secret_field('adminPassword', keycloak.adminPassword, 'Keycloak admin password', 'admin', has_secret_ref) }}
+    {{ secret_field('hqAdminClientSecret', keycloak.hqAdminClientSecret, 'Keycloak HQ admin client secret', 'myadminclientsecret', has_secret_ref) }}
+    {{ secret_field('storeAdminClientSecret', keycloak.storeAdminClientSecret, 'Keycloak store admin client secret', 'mystoreadminclientsecret', has_secret_ref) }}

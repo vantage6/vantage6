@@ -2,17 +2,23 @@ import sys
 
 import click
 import questionary as q
+from kubernetes.client.exceptions import ApiException
+from urllib3.exceptions import HTTPError
 
 from vantage6.common import ensure_config_dir_writable, error, info
 from vantage6.common.globals import InstanceType
 
-from vantage6.cli.common.utils import extract_name_and_is_sandbox
+from vantage6.cli.common.utils import (
+    extract_name_and_is_sandbox,
+    update_kubernetes_secret,
+)
 from vantage6.cli.configuration_create import (
     NodeConfigurationManager,
     select_configuration_questionnaire,
 )
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
+from vantage6.cli.utils_kubernetes import get_core_api_with_ssl_handling
 
 
 @click.command()
@@ -33,11 +39,23 @@ from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
     "system folders. This is the default",
 )
 @click.option("--sandbox/--no-sandbox", "is_sandbox", default=False)
+@click.option(
+    "--context",
+    default=None,
+    help="Kubernetes context of the node secret. Defaults to the current context",
+)
 def cli_node_set_api_key(
-    name: str, api_key: str, system_folders: bool, is_sandbox: bool
+    name: str,
+    api_key: str,
+    system_folders: bool,
+    is_sandbox: bool,
+    context: str | None,
 ) -> None:
     """
-    Put a new API key into the node configuration file
+    Set a new API key for the node.
+
+    If the node configuration refers to a Kubernetes secret, the API key is updated
+    in that secret. Otherwise, it is written to the configuration file.
     """
     name, is_sandbox = extract_name_and_is_sandbox(name, is_sandbox)
     if is_sandbox:
@@ -64,8 +82,27 @@ def cli_node_set_api_key(
             error("API key input aborted.")
             sys.exit(1)
 
-    # get configuration manager
     ctx = NodeContext(name, system_folders=system_folders, is_sandbox=is_sandbox)
+    secret_name = ctx.config["node"].get("existingSecret")
+    if secret_name:
+        namespace = ctx.config.get("namespace", "default")
+        try:
+            update_kubernetes_secret(
+                get_core_api_with_ssl_handling(context),
+                secret_name,
+                namespace,
+                {"V6_API_KEY": api_key},
+            )
+        except (RuntimeError, ApiException, HTTPError) as exc:
+            error(f"Failed to update the API key in Kubernetes secret: {exc}")
+            sys.exit(1)
+        info(
+            f"Your new API key has been stored in Kubernetes secret '{secret_name}' "
+            f"(namespace '{namespace}'). Restart the node to use it."
+        )
+        return
+
+    # get configuration manager
     conf_mgr = NodeConfigurationManager.from_file(
         ctx.config_file, is_sandbox=is_sandbox
     )

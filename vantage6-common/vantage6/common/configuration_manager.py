@@ -3,7 +3,7 @@ from __future__ import annotations
 import collections
 from abc import abstractmethod
 from pathlib import Path
-from typing import Any, ClassVar
+from typing import Any, ClassVar, NoReturn
 
 import yaml
 from jinja2 import Environment, FileSystemLoader, Template
@@ -224,7 +224,7 @@ class ConfigurationManager:
             The rendered configuration.
         """
         template = self.get_config_template()
-        return template.render(self.config)
+        return template.render({**self.config, "is_sandbox": self.is_sandbox})
 
     def save(
         self, path: Path | str, extra_configs_to_render: dict[str, str] | None = None
@@ -285,4 +285,10 @@ class ConfigurationManager:
             lstrip_blocks=True,
             autoescape=True,
         )
+        environment.globals["raise_error"] = _raise_template_error
         return environment.get_template(template_file)
+
+
+def _raise_template_error(message: str) -> NoReturn:
+    """Fail rendering a configuration template with the given message."""
+    raise ValueError(message)
