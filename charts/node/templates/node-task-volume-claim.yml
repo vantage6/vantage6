@@ -1,4 +1,3 @@
-{{- if not (lookup "v1" "PersistentVolumeClaim" "" (printf "%s-task-pvc" .Release.Name)) }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -14,4 +13,3 @@ spec:
   selector:
     matchLabels:
       type: local-tasks
-{{- end }}
