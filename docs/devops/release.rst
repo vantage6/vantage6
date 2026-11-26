@@ -57,7 +57,7 @@ the following steps to test a release:
 
   .. code:: bash
 
-    conda create -n <name> python=3.10
+    conda create -n <name> python=3.13
     conda activate <name>
     pip install vantage6==<version>
 
