@@ -186,6 +186,56 @@ in place, you can disable ``hubGateway`` and instead configure your own
 ``Gateway``/ ``HTTPRoute``, ``Ingress`` or ``LoadBalancer`` resources that route to the
 services exposed by the hub chart.
 
+.. _gateway-single-host:
+
+Serving all components on a single hostname
+"""""""""""""""""""""""""""""""""""""""""""
+
+By default, each component gets its own hostname (``hubGateway.hosts``). If you can only
+use one hostname, for instance because you cannot create DNS records for subdomains,
+set ``hubGateway.host`` instead. The gateway then routes the components by path:
+
+.. list-table::
+   :header-rows: 1
+
+   * - Path
+     - Component
+   * - ``/auth``
+     - Keycloak. The gateway strips the ``/auth`` prefix, as Keycloak serves its
+       endpoints at the root.
+   * - ``/hq`` (``hq.hq.apiPath``) and ``/socket.io``
+     - HQ. Its websocket endpoint is served at ``/socket.io``, outside of the API path.
+   * - ``store.store.api_path``, e.g. ``/store-api``
+     - Algorithm store
+   * - ``/``
+     - UI
+
+Use either ``hubGateway.host`` or ``hubGateway.hosts``, not both. A single listener and,
+when using cert-manager, a single certificate are created for the hostname. To use an
+existing TLS secret instead, set ``hubGateway.tls.existingSecrets.hub``.
+
+When using a single hostname, also configure the following:
+
+* The algorithm store API must not be served at ``/store``, as the UI uses
+  ``/store/...`` for its own pages. Set ``store.store.api_path`` to another path, e.g.
+  ``/store-api``, and use the same path for this store in ``hq.hq.algorithm_stores``.
+  Rendering the chart fails if the store API path is still ``/store``.
+* The public URLs include the path: e.g. ``https://mydomain.com/auth`` for
+  ``global.urls.external.auth`` and ``auth.keycloak.hostname``, and
+  ``https://mydomain.com`` for HQ, the UI and the algorithm store.
+
+.. code-block:: yaml
+
+   hubGateway:
+     enabled: true
+     host: mydomain.com
+   store:
+     store:
+       api_path: /store-api
+
+When you create the hub configuration with ``v6 hub new`` and choose to serve all
+services on a single hostname, these settings are configured for you.
+
 Enabling TLS with cert-manager
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

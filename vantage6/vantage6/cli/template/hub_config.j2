@@ -8,6 +8,11 @@ hubGateway:
   # Enable or disable the built‑in Gateway resources for Auth, HQ, Portal and Store.
   enabled: {{ hg.enabled | default(false) }}
 
+  # Single public hostname for all components (path-based routing): /auth, /hq and
+  # /socket.io, the algorithm store API path and / (UI). Use either this or `hosts`.
+  # The algorithm store API path must then differ from /store.
+  host: {{ hg.host | default('') }}
+
   # Public hostnames per component (subdomain routing).
   # Example: auth.mydomain.com, hq.mydomain.com, portal.mydomain.com, store.mydomain.com
   hosts:
@@ -29,6 +34,8 @@ hubGateway:
       hq: {{ hg_tls_existing.hq | default('') }}
       portal: {{ hg_tls_existing.portal | default('') }}
       store: {{ hg_tls_existing.store | default('') }}
+      # Secret for the single hostname, if `host` is used
+      hub: {{ hg_tls_existing.hub | default('') }}
 
   # cert-manager related settings used when tls.mode == "cert-manager".
   certManager:

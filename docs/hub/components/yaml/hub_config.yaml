@@ -6,6 +6,9 @@
 
 hubGateway:
   enabled: true
+  # Alternatively, serve all components on one hostname, separated by path. Use either
+  # `host` or `hosts`, and set the store API path to something other than /store.
+  # host: uluru.vantage6.ai
   hosts:
     auth: auth.uluru.vantage6.ai
     hq: hq.uluru.vantage6.ai

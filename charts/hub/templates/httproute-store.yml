@@ -1,6 +1,7 @@
 {{- $hg := .Values.hubGateway | default (dict) -}}
 {{- $hosts := $hg.hosts | default (dict) -}}
-{{- $storeHost := get $hosts "store" | default "" -}}
+{{- $singleHost := include "hub.singleHost" . -}}
+{{- $storeHost := $singleHost | default (get $hosts "store" | default "") -}}
 {{- $storeValues := .Values.store | default (dict) -}}
 {{- $storeCfg := $storeValues.store | default (dict) -}}
 {{- $storePort := $storeCfg.port | default 7602 -}}
@@ -13,14 +14,14 @@ metadata:
 spec:
   parentRefs:
     - name: {{ .Release.Name }}-gateway
-      sectionName: store
+      sectionName: {{ ternary "hub" "store" (ne $singleHost "") }}
   hostnames:
     - {{ $storeHost | quote }}
   rules:
     - matches:
         - path:
             type: PathPrefix
-            value: /
+            value: {{ ternary (include "hub.storeApiPath" .) "/" (ne $singleHost "") }}
       backendRefs:
         - name: {{ .Release.Name }}-store
           port: {{ $storePort }}

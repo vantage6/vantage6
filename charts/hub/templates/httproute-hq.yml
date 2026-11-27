@@ -1,6 +1,7 @@
 {{- $hg := .Values.hubGateway | default (dict) -}}
 {{- $hosts := $hg.hosts | default (dict) -}}
-{{- $hqHost := get $hosts "hq" | default "" -}}
+{{- $singleHost := include "hub.singleHost" . -}}
+{{- $hqHost := $singleHost | default (get $hosts "hq" | default "") -}}
 {{- $hqValues := .Values.hq | default (dict) -}}
 {{- $hqCfg := $hqValues.hq | default (dict) -}}
 {{- $hqPort := $hqCfg.port | default 7601 -}}
@@ -13,14 +14,24 @@ metadata:
 spec:
   parentRefs:
     - name: {{ .Release.Name }}-gateway
-      sectionName: hq
+      sectionName: {{ ternary "hub" "hq" (ne $singleHost "") }}
   hostnames:
     - {{ $hqHost | quote }}
   rules:
     - matches:
+        {{- if ne $singleHost "" }}
+        - path:
+            type: PathPrefix
+            value: {{ include "hub.hqApiPath" . }}
+        # The websocket endpoint of HQ is served at the root, not under the API path
+        - path:
+            type: PathPrefix
+            value: /socket.io
+        {{- else }}
         - path:
             type: PathPrefix
             value: /
+        {{- end }}
       backendRefs:
         - name: {{ .Release.Name }}-hq
           port: {{ $hqPort }}

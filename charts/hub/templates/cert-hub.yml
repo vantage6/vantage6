@@ -1,0 +1,18 @@
+{{- $hg := .Values.hubGateway | default (dict) -}}
+{{- $singleHost := include "hub.singleHost" . -}}
+{{- $tls := $hg.tls | default (dict) -}}
+{{- $cm := $hg.certManager | default (dict) -}}
+{{- if and ($hg.enabled | default false) (eq ($tls.mode | default "cert-manager") "cert-manager") ($cm.enabled | default true) (ne $singleHost "") -}}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ .Release.Name }}-hub
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+spec:
+  secretName: {{ include "hub.tlsSecretName" (dict "ctx" . "component" "hub") }}
+  dnsNames:
+    - {{ $singleHost | quote }}
+  issuerRef:
+    kind: ClusterIssuer
+    name: {{ $cm.clusterIssuer | default "letsencrypt-prod" | quote }}
+{{- end }}
