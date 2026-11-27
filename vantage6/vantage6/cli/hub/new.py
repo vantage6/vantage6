@@ -30,6 +30,13 @@ from vantage6.cli.k8s_config import (
 )
 from vantage6.cli.utils import prompt_config_name
 
+# Default path prefix of the HQ API in the hub chart
+DEFAULT_HQ_API_PATH = "/hq"
+DEFAULT_STORE_API_PATH = "/store"
+# On a single hostname, the UI uses /store/... for its own pages, so the store API needs
+# another path prefix
+SINGLE_HOST_STORE_API_PATH = "/store-api"
+
 
 @click.command()
 @click.option(
@@ -122,7 +129,7 @@ def cli_hub_new(
             {
                 "name": base_config["store_name"],
                 "url": base_config["store_url"],
-                "api_path": "/store",
+                "api_path": base_config["store_api_path"],
                 "uses_hq_keycloak": True,
             }
         ]
@@ -150,7 +157,7 @@ def cli_hub_new(
                 "logging": {
                     "level": base_config["log_level"],
                 },
-                "api_path": "/store",
+                "api_path": base_config["store_api_path"],
             }
         }
         if auth_config_dict.get("keycloak", {}).get("smtpServer") is not None:
@@ -226,25 +233,24 @@ def _get_base_config() -> dict[str, Any]:
     ).unsafe_ask()
     if k8s_node_name != no_local_storage:
         base_config["k8sNodeName"] = k8s_node_name
-    info("We need you to provide a domain where you will deploy the hub services.")
-    info("For instance, the domain 'mydomain.com' will lead to the following URLs:")
-    info("Authentication:  https://auth.mydomain.com")
-    info("HQ:              https://hq.mydomain.com")
-    info("UI:              https://portal.mydomain.com")
-    info("Algorithm store: https://store.mydomain.com")
-    url_domain = q.text(
-        "On what domain will the services be reachable?",
-        default="vantage6.ai",
-    ).unsafe_ask()
-    base_config["hq_url"] = f"https://hq.{url_domain}"
-    base_config["auth_url"] = f"https://auth.{url_domain}"
-    base_config["ui_url"] = f"https://portal.{url_domain}"
+    single_host = _get_single_host()
+    if single_host:
+        base_config["single_host"] = single_host
+        store_url = f"https://{single_host}"
+        base_config["store_api_path"] = SINGLE_HOST_STORE_API_PATH
+        base_config["hq_url"] = f"https://{single_host}"
+        base_config["auth_url"] = f"https://{single_host}/auth"
+        base_config["ui_url"] = f"https://{single_host}"
+    else:
+        store_url, subdomain_urls = _get_subdomain_urls()
+        base_config["store_api_path"] = DEFAULT_STORE_API_PATH
+        base_config |= subdomain_urls
     base_config["has_store"] = q.confirm(
         "Do you want to use an algorithm store?",
         default=True,
     ).unsafe_ask()
     if base_config["has_store"]:
-        base_config["store_url"] = f"https://store.{url_domain}"
+        base_config["store_url"] = store_url
         base_config["store_name"] = q.text(
             "What is the name of the algorithm store?",
             default="",
@@ -256,6 +262,90 @@ def _get_base_config() -> dict[str, Any]:
         default="INFO",
     ).unsafe_ask()
     return base_config
+
+
+def _get_single_host() -> str:
+    """
+    Ask whether all hub services share a single hostname, and if so, which one.
+
+    Returns
+    -------
+    str
+        The hostname that all services share, or an empty string if each service gets
+        its own subdomain.
+    """
+    subdomains = "Each service on its own subdomain (e.g. hq.mydomain.com)"
+    single_host = "All services on a single hostname, separated by path"
+    routing = q.select(
+        "How will the hub services be reachable?",
+        choices=[subdomains, single_host],
+        default=subdomains,
+    ).unsafe_ask()
+    if routing == subdomains:
+        return ""
+    info("All services will then be reachable on one hostname, e.g. for")
+    info("'mydomain.com' the following URLs are used:")
+    info("Authentication:  https://mydomain.com/auth")
+    info(f"HQ:              https://mydomain.com{DEFAULT_HQ_API_PATH}")
+    info("UI:              https://mydomain.com")
+    info(f"Algorithm store: https://mydomain.com{SINGLE_HOST_STORE_API_PATH}")
+    return (
+        q.text(
+            "On what hostname will the services be reachable?",
+            validate=_validate_hostname,
+        )
+        .unsafe_ask()
+        .strip()
+    )
+
+
+def _validate_hostname(hostname: str) -> bool | str:
+    """
+    Check that a hostname is given without scheme, port or path.
+
+    Parameters
+    ----------
+    hostname: str
+        The hostname entered by the user.
+
+    Returns
+    -------
+    bool | str
+        True if the hostname is valid, otherwise a message explaining the problem.
+    """
+    hostname = hostname.strip()
+    if not hostname or any(char in hostname for char in ":/ "):
+        return (
+            "Enter only the hostname, without 'https://', port or path, e.g. "
+            "'mydomain.com'"
+        )
+    return True
+
+
+def _get_subdomain_urls() -> tuple[str, dict[str, str]]:
+    """
+    Ask for the domain under which each hub service gets its own subdomain.
+
+    Returns
+    -------
+    tuple[str, dict[str, str]]
+        The URL of the algorithm store, and the URLs of HQ, auth and the UI.
+    """
+    info("We need you to provide a domain where you will deploy the hub services.")
+    info("For instance, the domain 'mydomain.com' will lead to the following URLs:")
+    info("Authentication:  https://auth.mydomain.com")
+    info("HQ:              https://hq.mydomain.com")
+    info("UI:              https://portal.mydomain.com")
+    info("Algorithm store: https://store.mydomain.com")
+    url_domain = q.text(
+        "On what domain will the services be reachable?",
+        default="vantage6.ai",
+    ).unsafe_ask()
+    return f"https://store.{url_domain}", {
+        "hq_url": f"https://hq.{url_domain}",
+        "auth_url": f"https://auth.{url_domain}",
+        "ui_url": f"https://portal.{url_domain}",
+    }
 
 
 def _create_hub_config(
@@ -335,6 +425,11 @@ def _create_hub_config(
             "clusterIssuer": "letsencrypt-prod",
         },
     }
+    if base_config.get("single_host"):
+        # all services share one hostname, and are routed by path
+        hub_gateway["host"] = base_config["single_host"]
+        hub_gateway["hosts"] = {}
+        hub_gateway["tls"]["existingSecrets"] = {"hub": ""}
 
     keycloak = {
         "url": urls["external"]["auth"],

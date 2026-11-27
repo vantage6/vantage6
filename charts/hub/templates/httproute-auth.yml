@@ -1,6 +1,7 @@
 {{- $hg := .Values.hubGateway | default (dict) -}}
 {{- $hosts := $hg.hosts | default (dict) -}}
-{{- $authHost := get $hosts "auth" | default "" -}}
+{{- $singleHost := include "hub.singleHost" . -}}
+{{- $authHost := $singleHost | default (get $hosts "auth" | default "") -}}
 {{- $authCfg := .Values.auth | default (dict) -}}
 {{- $authKeycloak := $authCfg.keycloak | default (dict) -}}
 {{- $behindGateway := and ($authKeycloak.behindGateway | default (dict)) (($authKeycloak.behindGateway | default (dict)).enabled | default false) -}}
@@ -13,14 +14,23 @@ metadata:
 spec:
   parentRefs:
     - name: {{ .Release.Name }}-gateway
-      sectionName: auth
+      sectionName: {{ ternary "hub" "auth" (ne $singleHost "") }}
   hostnames:
     - {{ $authHost | quote }}
   rules:
     - matches:
         - path:
             type: PathPrefix
-            value: /
+            value: {{ ternary "/auth" "/" (ne $singleHost "") }}
+      {{- if ne $singleHost "" }}
+      # Keycloak serves its endpoints at the root path, so strip the /auth prefix
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: /
+      {{- end }}
       backendRefs:
         - name: {{ .Release.Name }}-kc
           port: 7680

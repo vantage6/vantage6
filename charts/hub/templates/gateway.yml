@@ -1,7 +1,19 @@
 {{- $hg := .Values.hubGateway | default (dict) -}}
 {{- $hosts := $hg.hosts | default (dict) -}}
 {{- $tls := $hg.tls | default (dict) -}}
+{{- $singleHost := include "hub.singleHost" . -}}
 {{- if $hg.enabled | default false -}}
+{{- if ne $singleHost "" -}}
+{{- range $component, $componentHost := $hosts -}}
+{{- if ne (trim ($componentHost | default "")) "" -}}
+{{- fail (printf "hubGateway.host and hubGateway.hosts.%s are both set. Use hubGateway.host to serve all components on one hostname, or hubGateway.hosts to give each component its own hostname, not both." $component) -}}
+{{- end -}}
+{{- end -}}
+{{- $storeValues := .Values.store | default (dict) -}}
+{{- if and ($storeValues.enabled | default false) (eq (include "hub.storeApiPath" .) "/store") -}}
+{{- fail "hubGateway.host is set, but the algorithm store API path (store.store.api_path) is /store. On a single hostname this path is used by the UI, so set store.store.api_path to another path, e.g. /store-api, and update the api_path of this store in hq.hq.algorithm_stores accordingly." -}}
+{{- end -}}
+{{- end }}
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
@@ -10,6 +22,17 @@ metadata:
 spec:
   gatewayClassName: envoy-gateway
   listeners:
+    {{- if ne $singleHost "" }}
+    - name: hub
+      protocol: HTTPS
+      port: 443
+      hostname: {{ $singleHost | quote }}
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: {{ include "hub.tlsSecretName" (dict "ctx" . "component" "hub") }}
+    {{- else }}
     {{- $authHost := get $hosts "auth" | default "" -}}
     {{- if ne (trim $authHost) "" }}
     - name: auth
@@ -57,5 +80,6 @@ spec:
         certificateRefs:
           - kind: Secret
             name: {{ include "hub.tlsSecretName" (dict "ctx" . "component" "store") }}
+    {{- end }}
     {{- end }}
 {{- end }}

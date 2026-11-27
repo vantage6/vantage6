@@ -10,6 +10,13 @@ store:
 hubGateway:
   enabled: false
 
+  # Serve all components on this single hostname, separated by path: /auth (Keycloak),
+  # the HQ API path (default /hq) and /socket.io (HQ), the store API path and / (UI).
+  # Use either this or `hosts`, not both. The store API path (store.store.api_path) must
+  # then differ from /store, as the UI uses /store/... for its own pages.
+  host: ""
+
+  # Hostname per component (one subdomain per component)
   hosts:
     auth: ""
     hq: ""
@@ -24,6 +31,8 @@ hubGateway:
       hq: ""
       portal: ""
       store: ""
+      # TLS secret for `host`, if that is used
+      hub: ""
 
   certManager:
     enabled: true
